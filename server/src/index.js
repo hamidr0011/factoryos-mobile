@@ -87,6 +87,75 @@ const sendSupabaseResult = (res, { data, error }, status = 200) => {
 
 const body = (schema, req) => schema.parse(req.body ?? {});
 
+const accountSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(8),
+  fullName: z.string().trim().min(2),
+  department: z.string().trim().min(2),
+  employeeId: z.string().trim().min(2),
+});
+
+const createUserSchema = accountSchema.extend({
+  role: z.enum(roles),
+});
+
+const getAdminCount = async () => {
+  const { count, error } = await adminSupabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin");
+
+  if (error) throw error;
+  return count ?? 0;
+};
+
+const createFactoryAccount = async (input) => {
+  const { data: created, error: createError } = await adminSupabase.auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: input.fullName,
+    },
+    app_metadata: {
+      role: input.role,
+      department: input.department,
+      employee_id: input.employeeId,
+    },
+  });
+
+  if (createError) throw createError;
+  if (!created.user) throw new Error("Supabase did not return a created user.");
+
+  const { data: profile, error: profileError } = await adminSupabase
+    .from("profiles")
+    .upsert(
+      {
+        id: created.user.id,
+        full_name: input.fullName,
+        role: input.role,
+        department: input.department,
+        employee_id: input.employeeId,
+      },
+      { onConflict: "id" },
+    )
+    .select("*")
+    .single();
+
+  if (profileError) {
+    await adminSupabase.auth.admin.deleteUser(created.user.id);
+    throw profileError;
+  }
+
+  return {
+    user: {
+      id: created.user.id,
+      email: created.user.email,
+    },
+    profile,
+  };
+};
+
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,
@@ -98,6 +167,44 @@ app.get("/health", (_req, res) => {
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
+
+app.get(
+  "/api/setup/status",
+  asyncRoute(async (_req, res) => {
+    const adminCount = await getAdminCount();
+    res.json({
+      data: {
+        needsSuperAdmin: adminCount === 0,
+        adminCount,
+      },
+    });
+  }),
+);
+
+app.post(
+  "/api/setup/super-admin",
+  asyncRoute(async (req, res) => {
+    const input = body(accountSchema, req);
+    const adminCount = await getAdminCount();
+
+    if (adminCount > 0) {
+      res.status(409).json({ error: "Super admin setup is already complete. Sign in with an admin account." });
+      return;
+    }
+
+    const result = await createFactoryAccount({
+      ...input,
+      role: "admin",
+    });
+
+    res.status(201).json({
+      data: {
+        ...result,
+        setupComplete: true,
+      },
+    });
+  }),
+);
 
 app.use("/api", requireAuth);
 
@@ -111,66 +218,15 @@ app.get("/api/me", (req, res) => {
   });
 });
 
-const createUserSchema = z.object({
-  email: z.string().trim().email(),
-  password: z.string().min(8),
-  fullName: z.string().trim().min(2),
-  role: z.enum(roles),
-  department: z.string().trim().min(2),
-  employeeId: z.string().trim().min(2),
-});
-
 app.post(
   "/api/admin/users",
   requireRoles(["admin"]),
   asyncRoute(async (req, res) => {
     const input = body(createUserSchema, req);
-
-    const { data: created, error: createError } = await adminSupabase.auth.admin.createUser({
-      email: input.email,
-      password: input.password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: input.fullName,
-      },
-      app_metadata: {
-        role: input.role,
-        department: input.department,
-        employee_id: input.employeeId,
-      },
-    });
-
-    if (createError) throw createError;
-    if (!created.user) throw new Error("Supabase did not return a created user.");
-
-    const { data: profile, error: profileError } = await adminSupabase
-      .from("profiles")
-      .upsert(
-        {
-          id: created.user.id,
-          full_name: input.fullName,
-          role: input.role,
-          department: input.department,
-          employee_id: input.employeeId,
-        },
-        { onConflict: "id" },
-      )
-      .select("*")
-      .single();
-
-    if (profileError) {
-      await adminSupabase.auth.admin.deleteUser(created.user.id);
-      throw profileError;
-    }
+    const result = await createFactoryAccount(input);
 
     res.status(201).json({
-      data: {
-        user: {
-          id: created.user.id,
-          email: created.user.email,
-        },
-        profile,
-      },
+      data: result,
     });
   }),
 );

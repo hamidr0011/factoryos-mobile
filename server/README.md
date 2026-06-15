@@ -49,7 +49,33 @@ Do not expose `SUPABASE_SERVICE_ROLE_KEY` to Expo or any frontend.
 
 ## Account Provisioning
 
-Admins can create role-based FactoryOS accounts through:
+Fresh FactoryOS projects start with no admin. The mobile app checks:
+
+```http
+GET /api/setup/status
+```
+
+If `needsSuperAdmin` is `true`, the login screen can create the first owner account through:
+
+```http
+POST /api/setup/super-admin
+```
+
+Body:
+
+```json
+{
+  "email": "owner@company.com",
+  "password": "temporary-password",
+  "fullName": "Owner Name",
+  "department": "Administration",
+  "employeeId": "FOS-0001"
+}
+```
+
+This endpoint only works while there are zero `admin` profiles.
+
+After setup, admins can create role-based FactoryOS accounts through:
 
 ```http
 POST /api/admin/users
