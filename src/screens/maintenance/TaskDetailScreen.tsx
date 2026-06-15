@@ -5,12 +5,13 @@ import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { BottomSheet } from "../../components/ui/BottomSheet";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { maintenanceService } from "../../services/maintenance.service";
 import { useAppStore } from "../../store/appStore";
 import type { MaintenanceTask } from "../../types";
-import { colors, maintenanceTasks, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography } from "../../utils/constants";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
 import { useState } from "react";
@@ -19,19 +20,21 @@ export const TaskDetailScreen = () => {
   const queryClient = useQueryClient();
   const showToast = useAppStore((state) => state.showToast);
   const route = useRoute<any>();
-  const task: MaintenanceTask = route.params?.task || maintenanceTasks[0];
+  const task = route.params?.task as MaintenanceTask | undefined;
   const [complete, setComplete] = useState(false);
-  const [actualHours, setActualHours] = useState((task.estimated_hours || 1).toString());
+  const [actualHours, setActualHours] = useState(task?.estimated_hours ? task.estimated_hours.toString() : "");
   const [workNotes, setWorkNotes] = useState("");
   const [followUp, setFollowUp] = useState("");
   const completeMutation = useMutation({
-    mutationFn: () =>
-      maintenanceService.completeTask({
+    mutationFn: () => {
+      if (!task) throw new Error("No maintenance task selected.");
+      return maintenanceService.completeTask({
         taskId: task.id,
         actualHours: Number(actualHours),
         notes: [workNotes.trim(), followUp.trim() ? `Follow-up: ${followUp.trim()}` : ""].filter(Boolean).join("\n"),
         partsUsed: [],
-      }),
+      });
+    },
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["maintenance_tasks"] }),
@@ -53,6 +56,14 @@ export const TaskDetailScreen = () => {
     }
     completeMutation.mutate();
   };
+
+  if (!task) {
+    return (
+      <ScreenContainer title="Task Detail" subtitle="Maintenance task">
+        <EmptyState variant="maintenance" title="No task selected" subtitle="Open a task from the live maintenance queue." />
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer title={task.title} subtitle={`${task.machine.name} · ${task.type}`}>

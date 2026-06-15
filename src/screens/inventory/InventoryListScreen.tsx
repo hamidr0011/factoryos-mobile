@@ -57,7 +57,7 @@ export const InventoryListScreen = () => {
         contentContainerStyle={styles.list}
         ListEmptyComponent={<EmptyState variant="inventory" title="Inventory is empty" subtitle="Add your first item" cta="Add item" />}
         renderItem={({ item }) => {
-          const stockRatio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 80;
+          const stockRatio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 0;
           const danger = item.quantity_on_hand <= 0;
           const low = item.quantity_on_hand > 0 && item.quantity_on_hand <= item.reorder_level;
           return (

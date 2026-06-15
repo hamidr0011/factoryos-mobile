@@ -7,11 +7,12 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
 import { hrService } from "../../services/hr.service";
+import { inventoryService } from "../../services/inventory.service";
 import { maintenanceService } from "../../services/maintenance.service";
 import { productionService } from "../../services/production.service";
 import { useAppStore } from "../../store/appStore";
-import type { Machine, Profile } from "../../types";
-import { colors, employees, inventoryItems, machines, spacing, typography } from "../../utils/constants";
+import type { InventoryItem, Machine, Profile } from "../../types";
+import { colors, spacing, typography } from "../../utils/constants";
 import { ChipRow, DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
 
 export const CreateTaskScreen = () => {
@@ -20,26 +21,28 @@ export const CreateTaskScreen = () => {
   const showToast = useAppStore((state) => state.showToast);
   const [type, setType] = useState("Preventive");
   const [priority, setPriority] = useState("High");
-  const [title, setTitle] = useState("Servo belt replacement");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [scheduledDate, setScheduledDate] = useState("2026-06-15T10:00:00");
-  const [estimatedHours, setEstimatedHours] = useState("1.5");
-  const { data: machineData = machines } = useQuery({ queryKey: ["machines"], queryFn: productionService.getMachines });
-  const { data: employeeData = employees } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
-  const machine = ((machineData as Machine[])[0] || machines[0]) as Machine;
-  const technician = ((employeeData as Profile[]).find((employee) => employee.role === "operator") || employees[0]) as Profile;
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [estimatedHours, setEstimatedHours] = useState("");
+  const { data: machineData = [] } = useQuery({ queryKey: ["machines"], queryFn: productionService.getMachines });
+  const { data: employeeData = [] } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
+  const { data: inventoryData = [] } = useQuery({ queryKey: ["inventory_items"], queryFn: inventoryService.getItems });
+  const machine = (machineData as Machine[])[0];
+  const technician = (employeeData as Profile[]).find((employee) => employee.role === "operator" || employee.role === "supervisor");
+  const parts = (inventoryData as InventoryItem[]).slice(0, 2);
   const taskMutation = useMutation({
     mutationFn: () =>
       maintenanceService.createTask({
-        machineId: machine.id,
+        machineId: machine!.id,
         type: type.toLowerCase() as "preventive" | "corrective" | "emergency" | "inspection",
         priority: priority.toLowerCase() as "low" | "medium" | "high" | "critical",
         title,
         description,
-        assignedTo: technician.id,
+        assignedTo: technician!.id,
         scheduledDate,
         estimatedHours: Number(estimatedHours),
-        partsUsed: inventoryItems.slice(0, 2).map((item) => ({ sku: item.sku, quantity: 1, unit_cost: item.unit_cost })),
+        partsUsed: parts.map((item) => ({ sku: item.sku, quantity: 1, unit_cost: item.unit_cost })),
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["maintenance_tasks"] });
@@ -53,6 +56,14 @@ export const CreateTaskScreen = () => {
 
   const submitTask = () => {
     const hours = Number(estimatedHours);
+    if (!machine) {
+      showToast("warning", "Add a machine before creating maintenance tasks.");
+      return;
+    }
+    if (!technician) {
+      showToast("warning", "Create an operator or supervisor account before assigning tasks.");
+      return;
+    }
     if (!title.trim() || !Number.isFinite(hours) || hours <= 0) {
       showToast("warning", "Enter a title and valid estimated hours.");
       return;
@@ -64,9 +75,9 @@ export const CreateTaskScreen = () => {
     <ScreenContainer title="Create Task" subtitle="Schedule maintenance work">
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Machine</Text>
-        <DetailRow label="Selected" value={machine.name} />
-        <DetailRow label="Current status" value={machine.status} />
-        <DetailRow label="Location" value={machine.location} />
+        <DetailRow label="Selected" value={machine?.name || "No machine available"} />
+        <DetailRow label="Current status" value={machine?.status || "Unavailable"} />
+        <DetailRow label="Location" value={machine?.location || "Unavailable"} />
       </Card>
       <Card style={styles.form}>
         <Text style={styles.label}>Task type</Text>
@@ -80,11 +91,11 @@ export const CreateTaskScreen = () => {
       </Card>
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Assignment</Text>
-        <DetailRow label="Technician" value={technician.full_name} />
+        <DetailRow label="Technician" value={technician?.full_name || "No operator or supervisor available"} />
         <View style={styles.parts}>
-          {inventoryItems.slice(0, 2).map((item) => (
+          {parts.length ? parts.map((item) => (
             <Badge key={item.id} label={item.sku} color={colors.inventory} />
-          ))}
+          )) : <Text style={styles.meta}>No linked inventory parts available.</Text>}
         </View>
       </Card>
       <Button title="Create Maintenance Task" loading={taskMutation.isPending} onPress={submitTask} />
@@ -113,5 +124,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.xs,
+  },
+  meta: {
+    color: colors.steel500,
+    fontFamily: typography.body,
+    fontSize: 13,
   },
 });

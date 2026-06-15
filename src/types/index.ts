@@ -163,8 +163,6 @@ export interface ModuleDefinition {
   icon: string;
   color: string;
   screen: string;
-  stat: string;
-  delta: string;
 }
 
 export interface ChartPoint {

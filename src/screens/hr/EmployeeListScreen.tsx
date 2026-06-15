@@ -11,10 +11,9 @@ import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
 import { useAppStore } from "../../store/appStore";
 import type { Profile, Role } from "../../types";
-import { colors, employees, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography } from "../../utils/constants";
 import { ChipRow, ScreenContainer, SearchField, WorkCard } from "../shared/ScreenScaffold";
 
-const departments = ["All", "Production", "Quality", "Maintenance", "Finance", "Factory Floor A"];
 const assignableRoles: Role[] = ["admin", "manager", "supervisor", "operator", "viewer"];
 
 export const EmployeeListScreen = () => {
@@ -27,18 +26,20 @@ export const EmployeeListScreen = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<Role>("operator");
-  const [newDepartment, setNewDepartment] = useState("Production");
+  const [newDepartment, setNewDepartment] = useState("");
   const [employeeId, setEmployeeId] = useState("");
-  const { data = employees } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
+  const { data = [] } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
+  const employees = data as Profile[];
+  const departments = useMemo(() => ["All", ...Array.from(new Set(employees.map((employee) => employee.department).filter(Boolean)))], [employees]);
 
   const filtered = useMemo(
     () =>
-      (data as Profile[]).filter((employee) => {
+      employees.filter((employee) => {
         const matchesSearch = `${employee.full_name} ${employee.employee_id}`.toLowerCase().includes(search.toLowerCase());
         const matchesDepartment = department === "All" || employee.department === department;
         return matchesSearch && matchesDepartment;
       }),
-    [data, department, search],
+    [department, employees, search],
   );
 
   const resetForm = () => {
@@ -46,7 +47,7 @@ export const EmployeeListScreen = () => {
     setPassword("");
     setFullName("");
     setRole("operator");
-    setNewDepartment("Production");
+    setNewDepartment("");
     setEmployeeId("");
   };
 

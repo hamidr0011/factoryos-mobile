@@ -3,12 +3,13 @@ import { StyleSheet, Text, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
 import { useAppStore } from "../../store/appStore";
 import type { LeaveRequest } from "../../types";
-import { colors, leaveRequests, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography } from "../../utils/constants";
 import { ChipRow, MetricPill, ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
 
 export const LeaveScreen = () => {
@@ -16,11 +17,12 @@ export const LeaveScreen = () => {
   const showToast = useAppStore((state) => state.showToast);
   const [tab, setTab] = useState("My Leaves");
   const [leaveType, setLeaveType] = useState("annual");
-  const [startDate, setStartDate] = useState("2026-06-20");
-  const [endDate, setEndDate] = useState("2026-06-22");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
-  const { data = leaveRequests } = useQuery({ queryKey: ["leave_requests"], queryFn: hrService.getLeaveRequests });
+  const { data = [] } = useQuery({ queryKey: ["leave_requests"], queryFn: hrService.getLeaveRequests });
   const leaves = data as LeaveRequest[];
+  const pendingLeaves = leaves.filter((leave) => leave.status === "pending");
   const refreshLeaves = async () => {
     await queryClient.invalidateQueries({ queryKey: ["leave_requests"] });
   };
@@ -69,29 +71,37 @@ export const LeaveScreen = () => {
       {tab === "My Leaves" ? (
         <>
           <View style={styles.metrics}>
-            <MetricPill label="Annual" value="14" color={colors.inventory} />
-            <MetricPill label="Sick" value="6" color={colors.production} />
-            <MetricPill label="Pending" value={leaves.filter((leave) => leave.status === "pending").length.toString()} color={colors.amber400} />
+            <MetricPill label="Approved" value={leaves.filter((leave) => leave.status === "approved").length.toString()} color={colors.inventory} />
+            <MetricPill label="Sick" value={leaves.filter((leave) => leave.type === "sick").length.toString()} color={colors.production} />
+            <MetricPill label="Pending" value={pendingLeaves.length.toString()} color={colors.amber400} />
           </View>
-          {leaves.map((leave) => (
-            <WorkCard key={leave.id} title={leave.type} eyebrow={`${leave.start_date} → ${leave.end_date}`} status={leave.status} accentColor={leave.status === "pending" ? colors.amber400 : colors.inventory}>
-              <Text style={styles.meta}>{leave.reason}</Text>
-            </WorkCard>
-          ))}
+          {leaves.length ? (
+            leaves.map((leave) => (
+              <WorkCard key={leave.id} title={leave.type} eyebrow={`${leave.start_date} → ${leave.end_date}`} status={leave.status} accentColor={leave.status === "pending" ? colors.amber400 : colors.inventory}>
+                <Text style={styles.meta}>{leave.reason}</Text>
+              </WorkCard>
+            ))
+          ) : (
+            <EmptyState variant="hr" title="No leave requests" subtitle="Submitted leave applications will appear here." />
+          )}
         </>
       ) : null}
 
       {tab === "Manage Leaves" ? (
         <PermissionGate roles={["admin", "manager", "supervisor"]} fallback={<Text style={styles.meta}>Manager access required.</Text>}>
-          {leaves.filter((leave) => leave.status === "pending").map((leave) => (
-            <WorkCard key={leave.id} title={leave.employee.full_name} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.amber400}>
-              <Text style={styles.meta}>{leave.reason}</Text>
-              <View style={styles.approvals}>
-                <Button title="Approve" variant="secondary" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "approved" })} />
-                <Button title="Reject" variant="ghost" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "rejected" })} />
-              </View>
-            </WorkCard>
-          ))}
+          {pendingLeaves.length ? (
+            pendingLeaves.map((leave) => (
+              <WorkCard key={leave.id} title={leave.employee?.full_name || "Unknown employee"} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.amber400}>
+                <Text style={styles.meta}>{leave.reason}</Text>
+                <View style={styles.approvals}>
+                  <Button title="Approve" variant="secondary" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "approved" })} />
+                  <Button title="Reject" variant="ghost" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "rejected" })} />
+                </View>
+              </WorkCard>
+            ))
+          ) : (
+            <EmptyState variant="hr" title="No approvals pending" subtitle="Leave requests waiting for review will appear here." />
+          )}
         </PermissionGate>
       ) : null}
 

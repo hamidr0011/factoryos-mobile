@@ -1,16 +1,8 @@
-import { maintenanceTasks } from "../utils/constants";
-import { apiRequest, isApiConfigured } from "./api";
-import { shouldUseSupabase, supabase } from "./supabase";
+import { apiRequest } from "./api";
 
 export const maintenanceService = {
   async getTasks() {
-    if (!(await shouldUseSupabase())) return maintenanceTasks;
-    const { data, error } = await supabase
-      .from("maintenance_tasks")
-      .select("*, machine:machines(*), assigned_to:profiles(*)")
-      .order("scheduled_date", { ascending: true });
-    if (error) throw error;
-    return data;
+    return apiRequest("/api/maintenance/tasks");
   },
 
   async createTask(input: {
@@ -24,50 +16,16 @@ export const maintenanceService = {
     estimatedHours: number;
     partsUsed?: unknown[];
   }) {
-    if (isApiConfigured) {
-      return apiRequest("/api/maintenance/tasks", {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-    }
-
-    if (!(await shouldUseSupabase())) return null;
-    const { data, error } = await supabase
-      .from("maintenance_tasks")
-      .insert({
-        machine_id: input.machineId,
-        type: input.type,
-        title: input.title,
-        description: input.description || null,
-        priority: input.priority,
-        status: "open",
-        assigned_to: input.assignedTo || null,
-        scheduled_date: input.scheduledDate,
-        estimated_hours: input.estimatedHours,
-        parts_used: input.partsUsed || [],
-      })
-      .select("*, machine:machines(*), assigned_to:profiles(*)")
-      .single();
-    if (error) throw error;
-    return data;
+    return apiRequest("/api/maintenance/tasks", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
   },
 
   async completeTask(input: { taskId: string; actualHours: number; notes?: string; partsUsed?: unknown[] }) {
-    if (isApiConfigured) {
-      return apiRequest(`/api/maintenance/tasks/${input.taskId}/complete`, {
-        method: "POST",
-        body: JSON.stringify(input),
-      });
-    }
-
-    if (!(await shouldUseSupabase())) return null;
-    const { data, error } = await supabase.rpc("complete_maintenance_task", {
-      p_task_id: input.taskId,
-      p_actual_hours: input.actualHours,
-      p_notes: input.notes || null,
-      p_parts_used: input.partsUsed || [],
+    return apiRequest(`/api/maintenance/tasks/${input.taskId}/complete`, {
+      method: "POST",
+      body: JSON.stringify(input),
     });
-    if (error) throw error;
-    return data;
   },
 };

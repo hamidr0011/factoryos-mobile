@@ -1,32 +1,60 @@
 import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react-native";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Card3D } from "../../components/3d/Card3D";
 import { GlowBorder } from "../../components/3d/GlowBorder";
 import { Card } from "../../components/ui/Card";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { StatusBadge, statusPalette } from "../../components/ui/StatusBadge";
 import { Header } from "../../components/layout/Header";
 import { SectionHeader } from "../../components/layout/SectionHeader";
 import { ModuleIconMark } from "../../components/visuals/ModuleArtwork";
 import { useRealtime } from "../../hooks/useRealtime";
+import { financeService } from "../../services/finance.service";
+import { hrService } from "../../services/hr.service";
+import { inventoryService } from "../../services/inventory.service";
+import { maintenanceService } from "../../services/maintenance.service";
+import { notificationService } from "../../services/notification.service";
+import { productionService } from "../../services/production.service";
+import { qualityService } from "../../services/quality.service";
 import { useAppStore } from "../../store/appStore";
-import { colors, kpiCards, machines, modules, spacing, typography } from "../../utils/constants";
+import type { AttendanceRecord, Budget, FactoryNotification, InventoryItem, Machine, MaintenanceTask, ProductionOrder, QualityCheck } from "../../types";
+import { colors, modules, spacing, typography } from "../../utils/constants";
 import { ProgressBar } from "../shared/ScreenScaffold";
 
-const CountUpValue = ({ value, label }: { value: string; label: number }) => {
+const CountUpValue = ({ value }: { value: string }) => {
   const progress = useSharedValue(0);
   progress.value = withTiming(1, { duration: 800 });
   const style = useAnimatedStyle(() => ({ opacity: progress.value }));
   return <Animated.Text style={[styles.kpiValue, style]}>{value}</Animated.Text>;
 };
 
+const percent = (value: number, total: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
+
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
   const notifications = useAppStore((state) => state.notifications);
+  const setNotifications = useAppStore((state) => state.setNotifications);
   const addNotification = useAppStore((state) => state.addNotification);
   const tabModules = new Set(["Production", "Inventory", "HR"]);
+  const machinesQuery = useQuery({ queryKey: ["machines"], queryFn: productionService.getMachines, refetchInterval: 20_000 });
+  const ordersQuery = useQuery({ queryKey: ["production_orders", "all"], queryFn: () => productionService.getOrders("all"), refetchInterval: 30_000 });
+  const inventoryQuery = useQuery({ queryKey: ["inventory_items"], queryFn: inventoryService.getItems, refetchInterval: 30_000 });
+  const qualityQuery = useQuery({ queryKey: ["quality_checks"], queryFn: qualityService.getChecks, refetchInterval: 30_000 });
+  const attendanceQuery = useQuery({ queryKey: ["attendance"], queryFn: hrService.getAttendance, refetchInterval: 30_000 });
+  const maintenanceQuery = useQuery({ queryKey: ["maintenance_tasks"], queryFn: maintenanceService.getTasks, refetchInterval: 30_000 });
+  const budgetQuery = useQuery({ queryKey: ["budgets"], queryFn: financeService.getBudgets, refetchInterval: 60_000 });
+  const notificationQuery = useQuery({ queryKey: ["notifications"], queryFn: notificationService.getNotifications, refetchInterval: 30_000 });
+  const machineData = (machinesQuery.data || []) as Machine[];
+  const orderData = (ordersQuery.data || []) as ProductionOrder[];
+  const inventoryData = (inventoryQuery.data || []) as InventoryItem[];
+  const qualityData = (qualityQuery.data || []) as QualityCheck[];
+  const attendanceData = (attendanceQuery.data || []) as AttendanceRecord[];
+  const maintenanceData = (maintenanceQuery.data || []) as MaintenanceTask[];
+  const budgetData = (budgetQuery.data || []) as Budget[];
 
   const openModule = (screen: string) => {
     if (tabModules.has(screen)) {
@@ -43,6 +71,53 @@ export const DashboardScreen = () => {
       addNotification(payload.new as any);
     }
   });
+
+  useEffect(() => {
+    if (notificationQuery.data) {
+      setNotifications(notificationQuery.data as FactoryNotification[]);
+    }
+  }, [notificationQuery.data, setNotifications]);
+
+  const kpiCards = useMemo(() => {
+    const averageEfficiency = machineData.length
+      ? machineData.reduce((sum, machine) => sum + Number(machine.efficiency_percent || 0), 0) / machineData.length
+      : 0;
+    const lowStock = inventoryData.filter((item) => Number(item.reorder_level) > 0 && Number(item.quantity_on_hand) <= Number(item.reorder_level)).length;
+    const runningMachines = machineData.filter((machine) => machine.status === "running").length;
+    const totalOutput = orderData.reduce((sum, order) => sum + Number(order.quantity_produced || 0), 0);
+
+    return [
+      { label: "Production Rate", value: `${averageEfficiency.toFixed(1)}%`, delta: machineData.length ? "average machine efficiency" : "no machine telemetry", color: colors.production },
+      { label: "Inventory Items", value: inventoryData.length.toLocaleString(), delta: lowStock ? `${lowStock} low stock` : "no low stock flags", color: colors.inventory },
+      { label: "Active Machines", value: `${runningMachines}/${machineData.length}`, delta: machineData.length ? `${machineData.length - runningMachines} not running` : "no machines connected", color: colors.maintenance },
+      { label: "Total Output", value: totalOutput.toLocaleString(), delta: "units reported by orders", color: colors.quality },
+    ];
+  }, [inventoryData, machineData, orderData]);
+
+  const moduleStats = useMemo(() => {
+    const activeOrders = orderData.filter((order) => ["pending", "in_progress", "on_hold"].includes(order.status)).length;
+    const completedOrders = orderData.filter((order) => order.status === "completed").length;
+    const passedChecks = qualityData.reduce((sum, check) => sum + Number(check.passed || 0), 0);
+    const inspected = qualityData.reduce((sum, check) => sum + Number(check.total_inspected || 0), 0);
+    const present = attendanceData.filter((record) => record.status === "present").length;
+    const openTasks = maintenanceData.filter((task) => ["open", "in_progress"].includes(task.status)).length;
+    const allocated = budgetData.reduce((sum, budget) => sum + Number(budget.allocated || 0), 0);
+    const spent = budgetData.reduce((sum, budget) => sum + Number(budget.spent || 0), 0);
+    const lowStock = inventoryData.filter((item) => Number(item.reorder_level) > 0 && Number(item.quantity_on_hand) <= Number(item.reorder_level)).length;
+
+    return {
+      production: { stat: `${activeOrders} active`, delta: `${completedOrders} completed`, fill: percent(completedOrders, orderData.length) },
+      inventory: {
+        stat: `${inventoryData.length} SKU`,
+        delta: `${lowStock} low stock`,
+        fill: percent(inventoryData.length - lowStock, inventoryData.length),
+      },
+      quality: { stat: `${percent(passedChecks, inspected)}% pass`, delta: `${qualityData.length} inspections`, fill: percent(passedChecks, inspected) },
+      hr: { stat: `${present} present`, delta: `${attendanceData.length} records`, fill: percent(present, attendanceData.length) },
+      maintenance: { stat: `${openTasks} open`, delta: `${maintenanceData.length} tasks`, fill: percent(maintenanceData.length - openTasks, maintenanceData.length) },
+      finance: { stat: `${percent(spent, allocated)}% used`, delta: `${budgetData.length} budgets`, fill: percent(spent, allocated) },
+    };
+  }, [attendanceData, budgetData, inventoryData, maintenanceData, orderData, qualityData]);
 
   const alerts = useMemo(
     () =>
@@ -62,7 +137,7 @@ export const DashboardScreen = () => {
             <GlowBorder key={card.label} color={card.color} style={styles.kpiGlow}>
               <Card3D accentColor={card.color} style={styles.kpiCard}>
                 <Text style={styles.kpiLabel}>{card.label}</Text>
-                <CountUpValue value={card.value} label={card.numericValue} />
+                <CountUpValue value={card.value} />
                 <Text style={[styles.kpiDelta, { color: card.color }]}>{card.delta}</Text>
               </Card3D>
             </GlowBorder>
@@ -72,7 +147,7 @@ export const DashboardScreen = () => {
         <View style={styles.section}>
           <SectionHeader title="Machine Status" meta="Live · realtime" />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.machineRow}>
-            {machines.map((machine) => {
+            {machineData.length ? machineData.map((machine) => {
               const palette = statusPalette(machine.status);
               return (
                 <Card key={machine.id} style={styles.machineCard} onPress={() => navigation.navigate("MachineStatus")}>
@@ -85,7 +160,11 @@ export const DashboardScreen = () => {
                   <Text style={styles.machineEfficiency}>{machine.efficiency_percent}% efficiency</Text>
                 </Card>
               );
-            })}
+            }) : (
+              <View style={styles.emptySlot}>
+                <EmptyState variant="maintenance" title="No machine telemetry" subtitle="Machines will appear here after records are added to Supabase." />
+              </View>
+            )}
           </ScrollView>
         </View>
 
@@ -93,6 +172,7 @@ export const DashboardScreen = () => {
           <SectionHeader title="Modules" meta="2 × 3 command grid" />
           <View style={styles.moduleGrid}>
             {modules.map((module) => {
+              const stats = moduleStats[module.id];
               return (
                 <Pressable key={module.id} style={styles.modulePressable} onPress={() => openModule(module.screen)}>
                   <Animated.View entering={FadeIn.duration(260)} style={[styles.moduleCard, { borderLeftColor: module.color }]}>
@@ -100,12 +180,12 @@ export const DashboardScreen = () => {
                       <View style={[styles.moduleIcon, { backgroundColor: `${module.color}16`, borderColor: `${module.color}40` }]}>
                         <ModuleIconMark id={module.id} color={module.color} size={38} />
                       </View>
-                      <Text style={[styles.moduleStat, { color: module.color }]}>{module.stat}</Text>
+                      <Text style={[styles.moduleStat, { color: module.color }]}>{stats.stat}</Text>
                     </View>
                     <Text style={styles.moduleLabel}>{module.label}</Text>
-                    <Text style={styles.moduleDelta}>{module.delta}</Text>
+                    <Text style={styles.moduleDelta}>{stats.delta}</Text>
                     <View style={[styles.moduleRail, { backgroundColor: `${module.color}33` }]}>
-                      <View style={[styles.moduleRailFill, { backgroundColor: module.color }]} />
+                      <View style={[styles.moduleRailFill, { backgroundColor: module.color, width: `${Math.min(Math.max(stats.fill, 0), 100)}%` }]} />
                     </View>
                   </Animated.View>
                 </Pressable>
@@ -116,15 +196,19 @@ export const DashboardScreen = () => {
 
         <View style={styles.section}>
           <SectionHeader title="Today's Alerts" meta="Critical first" />
-          {alerts.map((alert) => (
-            <Card key={alert.id} accentColor={alert.module === "maintenance" ? colors.maintenance : colors.amber400} style={styles.alertCard} onPress={() => navigation.getParent()?.navigate(alert.action_url || "Notifications")}>
-              <AlertTriangle color={alert.module === "maintenance" ? colors.maintenance : colors.amber400} size={18} />
-              <View style={styles.alertCopy}>
-                <Text style={styles.alertTitle}>{alert.title}</Text>
-                <Text numberOfLines={2} style={styles.alertBody}>{alert.body}</Text>
-              </View>
-            </Card>
-          ))}
+          {alerts.length ? (
+            alerts.map((alert) => (
+              <Card key={alert.id} accentColor={alert.module === "maintenance" ? colors.maintenance : colors.amber400} style={styles.alertCard} onPress={() => navigation.getParent()?.navigate(alert.action_url || "Notifications")}>
+                <AlertTriangle color={alert.module === "maintenance" ? colors.maintenance : colors.amber400} size={18} />
+                <View style={styles.alertCopy}>
+                  <Text style={styles.alertTitle}>{alert.title}</Text>
+                  <Text numberOfLines={2} style={styles.alertBody}>{alert.body}</Text>
+                </View>
+              </Card>
+            ))
+          ) : (
+            <EmptyState variant="quality" title="No unread alerts" subtitle="Realtime alerts from Supabase will appear here." />
+          )}
         </View>
       </ScrollView>
     </View>
@@ -172,6 +256,9 @@ const styles = StyleSheet.create({
   },
   machineRow: {
     gap: spacing.md,
+  },
+  emptySlot: {
+    width: 300,
   },
   machineCard: {
     gap: spacing.sm,

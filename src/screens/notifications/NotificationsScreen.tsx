@@ -1,19 +1,23 @@
 import * as Haptics from "expo-haptics";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { notificationService } from "../../services/notification.service";
 import { useAppStore } from "../../store/appStore";
+import type { FactoryNotification } from "../../types";
 import { colors, modules, spacing, typography } from "../../utils/constants";
 import { formatTimeAgo } from "../../utils/formatters";
 import { ChipRow, ScreenContainer } from "../shared/ScreenScaffold";
 
 const tabs = ["All", "Unread", "Production", "Maintenance", "Quality"];
 
-const NotificationCard = ({ item }: { item: ReturnType<typeof useAppStore.getState>["notifications"][number] }) => {
+const NotificationCard = ({ item, onRead, onDelete }: { item: FactoryNotification; onRead: (id: string) => void; onDelete: (id: string) => void }) => {
   const markRead = useAppStore((state) => state.markRead);
   const remove = useAppStore((state) => state.removeNotification);
   const translateX = useSharedValue(0);
@@ -27,6 +31,7 @@ const NotificationCard = ({ item }: { item: ReturnType<typeof useAppStore.getSta
     .onEnd(() => {
       if (translateX.value < -62) {
         runOnJS(remove)(item.id);
+        runOnJS(onDelete)(item.id);
       } else {
         translateX.value = withSpring(0);
       }
@@ -47,6 +52,7 @@ const NotificationCard = ({ item }: { item: ReturnType<typeof useAppStore.getSta
             onPress={async () => {
               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
               markRead(item.id);
+              onRead(item.id);
             }}
           >
             <View style={[styles.dot, { backgroundColor: color }]} />
@@ -66,9 +72,40 @@ const NotificationCard = ({ item }: { item: ReturnType<typeof useAppStore.getSta
 };
 
 export const NotificationsScreen = () => {
+  const queryClient = useQueryClient();
   const [active, setActive] = useState("All");
   const notifications = useAppStore((state) => state.notifications);
+  const setNotifications = useAppStore((state) => state.setNotifications);
   const markAllRead = useAppStore((state) => state.markAllRead);
+  const { data } = useQuery({ queryKey: ["notifications"], queryFn: notificationService.getNotifications });
+
+  useEffect(() => {
+    if (data) {
+      setNotifications(data as FactoryNotification[]);
+    }
+  }, [data, setNotifications]);
+
+  const markReadMutation = useMutation({
+    mutationFn: notificationService.markRead,
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: notificationService.remove,
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const markAllMutation = useMutation({
+    mutationFn: notificationService.markAllRead,
+    onSuccess: () => markAllRead(),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
 
   const filtered = useMemo(() => {
     if (active === "Unread") return notifications.filter((item) => !item.is_read);
@@ -82,15 +119,19 @@ export const NotificationsScreen = () => {
       subtitle="Realtime cross-module alerts"
       navigationMode="drawer"
       action={
-        <Pressable style={styles.markAll} onPress={markAllRead}>
+        <Pressable style={styles.markAll} onPress={() => markAllMutation.mutate()}>
           <Text style={styles.markAllText}>Mark all read</Text>
         </Pressable>
       }
     >
       <ChipRow items={tabs} active={active} onChange={setActive} />
-      {filtered.map((item) => (
-        <NotificationCard key={item.id} item={item} />
-      ))}
+      {filtered.length ? (
+        filtered.map((item) => (
+          <NotificationCard key={item.id} item={item} onRead={(id) => markReadMutation.mutate(id)} onDelete={(id) => removeMutation.mutate(id)} />
+        ))
+      ) : (
+        <EmptyState variant="quality" title="No notifications" subtitle="Realtime module alerts will appear here after Supabase emits records." />
+      )}
     </ScreenContainer>
   );
 };

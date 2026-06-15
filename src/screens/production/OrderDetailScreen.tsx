@@ -7,12 +7,13 @@ import { GaugeChart } from "../../components/charts/GaugeChart";
 import { Button } from "../../components/ui/Button";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Card } from "../../components/ui/Card";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { productionService } from "../../services/production.service";
 import { useAppStore } from "../../store/appStore";
 import type { ProductionOrder } from "../../types";
-import { colors, productionOrders, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography } from "../../utils/constants";
 import { formatDate } from "../../utils/formatters";
 import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
 
@@ -20,11 +21,11 @@ export const OrderDetailScreen = () => {
   const route = useRoute<any>();
   const queryClient = useQueryClient();
   const showToast = useAppStore((state) => state.showToast);
-  const order: ProductionOrder = route.params?.order || productionOrders[0];
+  const order = route.params?.order as ProductionOrder | undefined;
   const [sheet, setSheet] = useState(false);
-  const [quantity, setQuantity] = useState("120");
+  const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
-  const progress = (order.quantity_produced / order.quantity_planned) * 100;
+  const progress = order ? (order.quantity_produced / order.quantity_planned) * 100 : 0;
   const refreshProduction = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["production_orders"] }),
@@ -33,7 +34,10 @@ export const OrderDetailScreen = () => {
   };
 
   const progressMutation = useMutation({
-    mutationFn: () => productionService.updateProgress(order.id, Number(quantity), notes.trim() || undefined),
+    mutationFn: () => {
+      if (!order) throw new Error("No production order selected.");
+      return productionService.updateProgress(order.id, Number(quantity), notes.trim() || undefined);
+    },
     onSuccess: async () => {
       await refreshProduction();
       setSheet(false);
@@ -45,7 +49,10 @@ export const OrderDetailScreen = () => {
   });
 
   const statusMutation = useMutation({
-    mutationFn: (status: ProductionOrder["status"]) => productionService.updateStatus(order.id, status, notes.trim() || undefined),
+    mutationFn: (status: ProductionOrder["status"]) => {
+      if (!order) throw new Error("No production order selected.");
+      return productionService.updateStatus(order.id, status, notes.trim() || undefined);
+    },
     onSuccess: async () => {
       await refreshProduction();
       showToast("success", "Production order status updated.");
@@ -63,6 +70,14 @@ export const OrderDetailScreen = () => {
     }
     progressMutation.mutate();
   };
+
+  if (!order) {
+    return (
+      <ScreenContainer title="Order Detail" subtitle="Production order">
+        <EmptyState variant="production" title="No order selected" subtitle="Open a production order from the live order list." />
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer title={order.order_number} subtitle={order.product_name}>

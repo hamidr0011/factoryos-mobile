@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import type { FactoryNotification } from "../types";
-import { notifications } from "../utils/constants";
 
 interface AppStore {
   notifications: FactoryNotification[];
   unreadCount: number;
   isLoading: boolean;
   toast: { tone: "success" | "error" | "warning"; message: string } | null;
+  setNotifications: (notifications: FactoryNotification[]) => void;
   addNotification: (notification: FactoryNotification) => void;
   markAllRead: () => void;
   markRead: (id: string) => void;
@@ -19,10 +19,11 @@ interface AppStore {
 const unread = (items: FactoryNotification[]) => items.filter((item) => !item.is_read).length;
 
 export const useAppStore = create<AppStore>((set) => ({
-  notifications,
-  unreadCount: unread(notifications),
+  notifications: [],
+  unreadCount: 0,
   isLoading: false,
   toast: null,
+  setNotifications: (notifications) => set({ notifications, unreadCount: unread(notifications) }),
   addNotification: (notification) =>
     set((state) => {
       const next = [notification, ...state.notifications];

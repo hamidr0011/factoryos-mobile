@@ -5,23 +5,29 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { hrService } from "../../services/hr.service";
 import { useAppStore } from "../../store/appStore";
 import type { AttendanceRecord } from "../../types";
-import { attendanceRecords, colors, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography } from "../../utils/constants";
 import { ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
-
-const days = Array.from({ length: 30 }, (_, index) => index + 1);
 
 export const AttendanceScreen = () => {
   const queryClient = useQueryClient();
   const showToast = useAppStore((state) => state.showToast);
-  const [selectedDay, setSelectedDay] = useState<number | null>(13);
-  const { data = attendanceRecords } = useQuery({ queryKey: ["attendance"], queryFn: hrService.getAttendance });
+  const currentMonth = new Date();
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const monthName = currentMonth.toLocaleDateString([], { month: "long", year: "numeric" });
+  const days = Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, index) => index + 1);
+  const toDateKey = (day: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const [selectedDay, setSelectedDay] = useState<number | null>(currentMonth.getDate());
+  const { data = [] } = useQuery({ queryKey: ["attendance"], queryFn: hrService.getAttendance });
   const records = data as AttendanceRecord[];
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toDateKey(currentMonth.getDate());
   const openShift = records.find((record) => record.date === today && record.check_in && !record.check_out);
+  const selectedRecords = selectedDay ? records.filter((record) => record.date === toDateKey(selectedDay)) : [];
   const clockMutation = useMutation({
     mutationFn: () => (openShift ? hrService.clockOut() : hrService.clockIn()),
     onSuccess: async () => {
@@ -36,11 +42,12 @@ export const AttendanceScreen = () => {
   return (
     <ScreenContainer title="Attendance" subtitle="Month grid and daily roster">
       <Card style={styles.calendar}>
-        <Text style={styles.month}>June 2026</Text>
+        <Text style={styles.month}>{monthName}</Text>
         <View style={styles.grid}>
           {days.map((day) => {
-            const status = day === 13 ? "present" : day % 8 === 0 ? "late" : day % 11 === 0 ? "absent" : "present";
-            const color = status === "present" ? colors.inventory : status === "late" ? colors.amber400 : colors.maintenance;
+            const dayRecords = records.filter((record) => record.date === toDateKey(day));
+            const status = dayRecords.find((record) => record.status === "absent")?.status || dayRecords.find((record) => record.status === "late")?.status || dayRecords[0]?.status;
+            const color = status === "present" ? colors.inventory : status === "late" ? colors.amber400 : status === "absent" ? colors.maintenance : colors.steel700;
             return (
               <Pressable key={day} style={[styles.day, selectedDay === day && styles.selectedDay]} onPress={() => setSelectedDay(day)}>
                 <Text style={styles.dayText}>{day}</Text>
@@ -51,23 +58,31 @@ export const AttendanceScreen = () => {
         </View>
       </Card>
 
-      {records.map((record) => (
-        <WorkCard key={record.id} title={record.employee.full_name} eyebrow={record.employee.employee_id} status={record.status} accentColor={record.status === "late" ? colors.amber400 : colors.inventory}>
-          <Text style={styles.meta}>Check in {record.check_in ? new Date(record.check_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Not clocked"}</Text>
-        </WorkCard>
-      ))}
+      {records.length ? (
+        records.map((record) => (
+          <WorkCard key={record.id} title={record.employee?.full_name || "Unknown employee"} eyebrow={record.employee?.employee_id || "No employee ID"} status={record.status} accentColor={record.status === "late" ? colors.amber400 : colors.inventory}>
+            <Text style={styles.meta}>Check in {record.check_in ? new Date(record.check_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Not clocked"}</Text>
+          </WorkCard>
+        ))
+      ) : (
+        <EmptyState variant="hr" title="No attendance yet" subtitle="Clock-ins and supervisor attendance records will appear here." />
+      )}
 
       <Button title={openShift ? "Clock Out" : "Clock In"} icon={<Clock color={colors.steel950} size={18} />} loading={clockMutation.isPending} onPress={() => clockMutation.mutate()} />
 
       <BottomSheet visible={selectedDay !== null} onClose={() => setSelectedDay(null)}>
         <View style={styles.sheet}>
-          <Text style={styles.sheetTitle}>June {selectedDay}</Text>
-          {records.map((record) => (
-            <View key={record.id} style={styles.sheetRow}>
-              <Text style={styles.sheetName}>{record.employee.full_name}</Text>
-              <StatusBadge status={record.status} />
-            </View>
-          ))}
+          <Text style={styles.sheetTitle}>{monthName} {selectedDay}</Text>
+          {selectedRecords.length ? (
+            selectedRecords.map((record) => (
+              <View key={record.id} style={styles.sheetRow}>
+                <Text style={styles.sheetName}>{record.employee?.full_name || "Unknown employee"}</Text>
+                <StatusBadge status={record.status} />
+              </View>
+            ))
+          ) : (
+            <Text style={styles.meta}>No attendance records for this day.</Text>
+          )}
         </View>
       </BottomSheet>
     </ScreenContainer>

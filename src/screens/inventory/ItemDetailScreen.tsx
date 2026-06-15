@@ -1,34 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Minus, Plus, SlidersHorizontal } from "lucide-react-native";
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { LineChart } from "../../components/charts/LineChart";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { inventoryService } from "../../services/inventory.service";
-import { inventoryItems, inventoryTransactions, colors, spacing, typography } from "../../utils/constants";
-import type { InventoryItem } from "../../types";
+import { colors, spacing, typography } from "../../utils/constants";
+import type { InventoryItem, InventoryTransaction } from "../../types";
 import { DetailRow, ProgressBar, ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
-
-const movement = [
-  { label: "D-6", value: 118 },
-  { label: "D-5", value: 132 },
-  { label: "D-4", value: 126 },
-  { label: "D-3", value: 151 },
-  { label: "D-2", value: 140 },
-  { label: "D-1", value: 148 },
-  { label: "Now", value: 122 },
-];
 
 export const ItemDetailScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const item: InventoryItem = route.params?.item || inventoryItems[0];
-  const { data: transactions = inventoryTransactions } = useQuery({
-    queryKey: ["inventory_transactions", item.id],
-    queryFn: () => inventoryService.getTransactions(item.id),
+  const item = route.params?.item as InventoryItem | undefined;
+  const { data: transactions = [] } = useQuery({
+    queryKey: ["inventory_transactions", item?.id],
+    queryFn: () => inventoryService.getTransactions(item!.id),
+    enabled: Boolean(item?.id),
   });
-  const ratio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 80;
+  const itemTransactions = useMemo(
+    () => (transactions as InventoryTransaction[]).filter((tx) => tx.item_id === item?.id),
+    [item?.id, transactions],
+  );
+  const movement = useMemo(
+    () =>
+      itemTransactions.slice(-7).map((tx) => ({
+        label: new Date(tx.created_at).toLocaleDateString([], { month: "short", day: "numeric" }),
+        value: Math.abs(Number(tx.quantity || 0)),
+      })),
+    [itemTransactions],
+  );
+
+  if (!item) {
+    return (
+      <ScreenContainer title="Item Detail" subtitle="Inventory item">
+        <EmptyState variant="inventory" title="No item selected" subtitle="Open an inventory item from the live stock list." />
+      </ScreenContainer>
+    );
+  }
+
+  const ratio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 0;
   const color = ratio < 20 ? colors.maintenance : ratio < 50 ? colors.amber400 : colors.inventory;
   const openTransaction = (type: "In" | "Out" | "Adjustment") => {
     navigation.navigate("StockTransaction", { item, type });
@@ -47,16 +61,20 @@ export const ItemDetailScreen = () => {
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>30-day Stock Movement</Text>
-        <LineChart data={movement} color={colors.inventory} />
+        {movement.length ? <LineChart data={movement} color={colors.inventory} /> : <EmptyState variant="inventory" title="No stock movement" subtitle="Transactions for this SKU will chart here." />}
       </Card>
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Transaction History</Text>
-        {transactions.filter((tx) => tx.item_id === item.id).map((tx) => (
-          <WorkCard key={tx.id} title={tx.reference} eyebrow={tx.type.toUpperCase()} accentColor={tx.type === "in" ? colors.inventory : tx.type === "out" ? colors.maintenance : colors.production}>
-            <Text style={styles.txQty}>{tx.quantity > 0 ? "+" : ""}{tx.quantity} {item.unit}</Text>
-          </WorkCard>
-        ))}
+        {itemTransactions.length ? (
+          itemTransactions.map((tx) => (
+            <WorkCard key={tx.id} title={tx.reference} eyebrow={tx.type.toUpperCase()} accentColor={tx.type === "in" ? colors.inventory : tx.type === "out" ? colors.maintenance : colors.production}>
+              <Text style={styles.txQty}>{tx.quantity > 0 ? "+" : ""}{tx.quantity} {item.unit}</Text>
+            </WorkCard>
+          ))
+        ) : (
+          <EmptyState variant="inventory" title="No transactions" subtitle="Stock in, stock out, and adjustments will appear here." />
+        )}
       </Card>
 
       <View style={styles.actions}>

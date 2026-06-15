@@ -41,7 +41,7 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
               <ModuleIconMark id={module.id} color={module.color} size={28} />
             </View>
             <Text style={styles.itemText}>{module.label}</Text>
-            <Text style={styles.itemStat}>{module.stat}</Text>
+            <Text style={styles.itemStat}>Open</Text>
           </Pressable>
         ))}
       </View>

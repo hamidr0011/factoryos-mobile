@@ -256,6 +256,49 @@ app.get(
   }),
 );
 
+app.get(
+  "/api/production/orders",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    const status = typeof req.query.status === "string" ? req.query.status : undefined;
+    let query = req.supabase
+      .from("production_orders")
+      .select("*, machine:machines(*), operator:profiles(*)")
+      .order("created_at", { ascending: false });
+
+    if (status && status !== "all") query = query.eq("status", status);
+    sendSupabaseResult(res, await query);
+  }),
+);
+
+app.get(
+  "/api/production/machines",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("machines").select("*").order("machine_code"));
+  }),
+);
+
+app.get(
+  "/api/inventory/items",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("inventory_items").select("*, supplier:suppliers(*)").order("name"));
+  }),
+);
+
+app.get(
+  "/api/inventory/transactions",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    const itemId = typeof req.query.itemId === "string" ? req.query.itemId : undefined;
+    let query = req.supabase.from("inventory_transactions").select("*").order("created_at", { ascending: false });
+
+    if (itemId) query = query.eq("item_id", itemId);
+    sendSupabaseResult(res, await query);
+  }),
+);
+
 const inventoryTransactionSchema = z.object({
   itemId: uuid,
   type: z.enum(["In", "Out", "Transfer", "Adjustment", "in", "out", "transfer", "adjustment"]),
@@ -360,6 +403,20 @@ app.post(
   }),
 );
 
+app.get(
+  "/api/quality/checks",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("quality_checks")
+        .select("*, inspector:profiles(*), order:production_orders(*)")
+        .order("created_at", { ascending: false }),
+    );
+  }),
+);
+
 const qualityCheckSchema = z.object({
   orderId: uuid,
   batchNumber: z.string().trim().min(1),
@@ -390,6 +447,30 @@ app.post(
       }),
       201,
     );
+  }),
+);
+
+app.get(
+  "/api/hr/employees",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("profiles").select("*").order("full_name"));
+  }),
+);
+
+app.get(
+  "/api/hr/attendance",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("attendance").select("*, employee:profiles(*)").order("date", { ascending: false }));
+  }),
+);
+
+app.get(
+  "/api/hr/leave-requests",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("leave_requests").select("*, employee:profiles(*)").order("created_at", { ascending: false }));
   }),
 );
 
@@ -482,6 +563,20 @@ app.post(
   }),
 );
 
+app.get(
+  "/api/maintenance/tasks",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("maintenance_tasks")
+        .select("*, machine:machines(*), assigned_to:profiles(*)")
+        .order("scheduled_date", { ascending: true }),
+    );
+  }),
+);
+
 const maintenanceTaskSchema = z.object({
   machineId: uuid,
   type: z.enum(["preventive", "corrective", "emergency", "inspection"]),
@@ -548,6 +643,22 @@ app.post(
   }),
 );
 
+app.get(
+  "/api/finance/expenses",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("expenses").select("*").order("date", { ascending: false }));
+  }),
+);
+
+app.get(
+  "/api/finance/budgets",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("budgets").select("*").order("department"));
+  }),
+);
+
 const expenseSchema = z.object({
   category: z.string().trim().min(1),
   description: z.string().trim().min(1),
@@ -597,6 +708,55 @@ app.post(
         p_status: input.status,
       }),
     );
+  }),
+);
+
+app.get(
+  "/api/notifications",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("notifications").select("*").order("created_at", { ascending: false }));
+  }),
+);
+
+app.patch(
+  "/api/notifications/read-all",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("user_id", req.user.id)
+        .select("*"),
+    );
+  }),
+);
+
+app.patch(
+  "/api/notifications/:notificationId/read",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    const params = z.object({ notificationId: uuid }).parse(req.params);
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", params.notificationId)
+        .select("*")
+        .single(),
+    );
+  }),
+);
+
+app.delete(
+  "/api/notifications/:notificationId",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    const params = z.object({ notificationId: uuid }).parse(req.params);
+    sendSupabaseResult(res, await req.supabase.from("notifications").delete().eq("id", params.notificationId).select("*").single());
   }),
 );
 

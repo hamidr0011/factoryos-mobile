@@ -25,7 +25,6 @@ export const MachineStatusScreen = () => {
         machineId: machine.id,
         status: machine.status,
         efficiencyPercent: machine.efficiency_percent,
-        outputRate: Math.round(machine.efficiency_percent * 10),
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["machines"] });
@@ -44,7 +43,7 @@ export const MachineStatusScreen = () => {
         numColumns={2}
         columnWrapperStyle={styles.columns}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="maintenance" title="All machines running" subtitle="Schedule preventive maintenance" cta="Create task" />}
+        ListEmptyComponent={<EmptyState variant="maintenance" title="No machines connected" subtitle="Machine records from Supabase will appear here." />}
         renderItem={({ item }) => {
           const palette = statusPalette(item.status);
           return (

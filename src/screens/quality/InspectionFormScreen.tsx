@@ -2,17 +2,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Minus, Plus } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
 import { productionService } from "../../services/production.service";
 import { qualityService } from "../../services/quality.service";
 import { useAppStore } from "../../store/appStore";
 import type { ProductionOrder } from "../../types";
-import { colors, productionOrders, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography } from "../../utils/constants";
 import { ChipRow, ProgressBar, ScreenContainer } from "../shared/ScreenScaffold";
 
 const steps = ["Batch", "Results", "Evidence"];
@@ -27,20 +28,26 @@ export const InspectionFormScreen = () => {
   const queryClient = useQueryClient();
   const showToast = useAppStore((state) => state.showToast);
   const [step, setStep] = useState(0);
-  const [orderNumber, setOrderNumber] = useState(productionOrders[0].order_number);
-  const [batchNumber, setBatchNumber] = useState("B-4811");
-  const [totalInspected, setTotalInspected] = useState("300");
-  const [passed, setPassed] = useState(291);
-  const [failed, setFailed] = useState(9);
-  const [selectedDefects, setSelectedDefects] = useState<string[]>(["Burr"]);
+  const [orderNumber, setOrderNumber] = useState("");
+  const [batchNumber, setBatchNumber] = useState("");
+  const [totalInspected, setTotalInspected] = useState("");
+  const [passed, setPassed] = useState(0);
+  const [failed, setFailed] = useState(0);
+  const [selectedDefects, setSelectedDefects] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | null>(null);
-  const { data: orders = productionOrders } = useQuery({
+  const { data: orders = [] } = useQuery({
     queryKey: ["production_orders"],
     queryFn: () => productionService.getOrders(),
   });
   const typedOrders = orders as ProductionOrder[];
   const selectedOrder = typedOrders.find((order) => order.order_number === orderNumber);
+
+  useEffect(() => {
+    if (!orderNumber && typedOrders[0]) {
+      setOrderNumber(typedOrders[0].order_number);
+    }
+  }, [orderNumber, typedOrders]);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -103,10 +110,16 @@ export const InspectionFormScreen = () => {
 
       {step === 0 ? (
         <Card style={styles.form}>
-          <ChipRow items={typedOrders.map((order) => order.order_number)} active={orderNumber} onChange={setOrderNumber} />
-          <Input label="Batch number" value={batchNumber} onChangeText={setBatchNumber} />
-          <Input label="Total inspected" keyboardType="numeric" value={totalInspected} onChangeText={setTotalInspected} />
-          <Button title="Continue" onPress={() => setStep(1)} />
+          {typedOrders.length ? (
+            <>
+              <ChipRow items={typedOrders.map((order) => order.order_number)} active={orderNumber} onChange={setOrderNumber} />
+              <Input label="Batch number" value={batchNumber} onChangeText={setBatchNumber} />
+              <Input label="Total inspected" keyboardType="numeric" value={totalInspected} onChangeText={setTotalInspected} />
+              <Button title="Continue" onPress={() => setStep(1)} />
+            </>
+          ) : (
+            <EmptyState variant="quality" title="No production orders" subtitle="Create a production order before starting an inspection." />
+          )}
         </Card>
       ) : null}
 

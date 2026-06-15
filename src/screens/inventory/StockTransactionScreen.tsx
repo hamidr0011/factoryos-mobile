@@ -10,7 +10,7 @@ import { Input } from "../../components/ui/Input";
 import { inventoryService } from "../../services/inventory.service";
 import { useAppStore } from "../../store/appStore";
 import type { InventoryItem } from "../../types";
-import { colors, inventoryItems, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography } from "../../utils/constants";
 import { ChipRow, DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
 
 type TransactionType = "In" | "Out" | "Transfer" | "Adjustment";
@@ -22,15 +22,15 @@ export const StockTransactionScreen = () => {
   const route = useRoute<any>();
   const queryClient = useQueryClient();
   const showToast = useAppStore((state) => state.showToast);
-  const initialItem = route.params?.item || inventoryItems[0];
+  const initialItem = route.params?.item as InventoryItem | undefined;
   const initialType: TransactionType = route.params?.type || "In";
   const [permission, requestPermission] = useCameraPermissions();
   const [type, setType] = useState<TransactionType>(initialType);
-  const [sku, setSku] = useState(initialItem.sku);
+  const [sku, setSku] = useState(initialItem?.sku || "");
   const [quantity, setQuantity] = useState("");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
-  const { data: items = inventoryItems } = useQuery({ queryKey: ["inventory_items"], queryFn: inventoryService.getItems });
+  const { data: items = [] } = useQuery({ queryKey: ["inventory_items"], queryFn: inventoryService.getItems });
   const selected = (items as InventoryItem[]).find((item) => item.sku.toLowerCase() === sku.trim().toLowerCase());
 
   const transactionMutation = useMutation({
@@ -88,7 +88,7 @@ export const StockTransactionScreen = () => {
 
       <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
       <Card style={styles.detail}>
-        <DetailRow label="Item" value={selected?.name || "SKU not found"} />
+        <DetailRow label="Item" value={selected?.name || ((items as InventoryItem[]).length ? "SKU not found" : "No inventory items available")} />
         <DetailRow label="Current stock" value={selected ? `${selected.quantity_on_hand} ${selected.unit}` : "Unavailable"} />
         <DetailRow label="Location" value={selected?.warehouse_location || "Unavailable"} />
       </Card>
