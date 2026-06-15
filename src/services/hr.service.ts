@@ -1,4 +1,5 @@
 import { attendanceRecords, employees, leaveRequests } from "../utils/constants";
+import type { Role } from "../types";
 import { apiRequest, isApiConfigured } from "./api";
 import { shouldUseSupabase, supabase } from "./supabase";
 
@@ -22,6 +23,17 @@ export const hrService = {
     const { data, error } = await supabase.from("leave_requests").select("*, employee:profiles(*)").order("created_at", { ascending: false });
     if (error) throw error;
     return data;
+  },
+
+  async createAccount(input: { email: string; password: string; fullName: string; role: Role; department: string; employeeId: string }) {
+    if (!isApiConfigured) {
+      throw new Error("Render API is required to create accounts securely.");
+    }
+
+    return apiRequest("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
   },
 
   async clockIn(shiftId?: string) {

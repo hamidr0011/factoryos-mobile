@@ -46,3 +46,26 @@ Authorization: Bearer <supabase-access-token>
 ```
 
 Do not expose `SUPABASE_SERVICE_ROLE_KEY` to Expo or any frontend.
+
+## Account Provisioning
+
+Admins can create role-based FactoryOS accounts through:
+
+```http
+POST /api/admin/users
+```
+
+Body:
+
+```json
+{
+  "email": "operator@company.com",
+  "password": "temporary-password",
+  "fullName": "Operator Name",
+  "role": "operator",
+  "department": "Production",
+  "employeeId": "FOS-1204"
+}
+```
+
+Allowed roles: `admin`, `manager`, `supervisor`, `operator`, `viewer`.
