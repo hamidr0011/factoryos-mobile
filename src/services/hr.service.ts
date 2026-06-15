@@ -1,4 +1,5 @@
 import { attendanceRecords, employees, leaveRequests } from "../utils/constants";
+import { apiRequest, isApiConfigured } from "./api";
 import { shouldUseSupabase, supabase } from "./supabase";
 
 export const hrService = {
@@ -24,6 +25,13 @@ export const hrService = {
   },
 
   async clockIn(shiftId?: string) {
+    if (isApiConfigured) {
+      return apiRequest("/api/hr/clock-in", {
+        method: "POST",
+        body: JSON.stringify({ shiftId: shiftId || null }),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("clock_in", { p_shift_id: shiftId || null });
     if (error) throw error;
@@ -31,6 +39,10 @@ export const hrService = {
   },
 
   async clockOut() {
+    if (isApiConfigured) {
+      return apiRequest("/api/hr/clock-out", { method: "POST" });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("clock_out");
     if (error) throw error;
@@ -38,6 +50,13 @@ export const hrService = {
   },
 
   async requestLeave(input: { type: "annual" | "sick" | "emergency" | "unpaid"; startDate: string; endDate: string; reason: string }) {
+    if (isApiConfigured) {
+      return apiRequest("/api/hr/leave-requests", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("request_leave", {
       p_type: input.type,
@@ -50,6 +69,13 @@ export const hrService = {
   },
 
   async reviewLeaveRequest(requestId: string, status: "approved" | "rejected") {
+    if (isApiConfigured) {
+      return apiRequest(`/api/hr/leave-requests/${requestId}/review`, {
+        method: "POST",
+        body: JSON.stringify({ status }),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("review_leave_request", {
       p_request_id: requestId,
@@ -60,6 +86,13 @@ export const hrService = {
   },
 
   async assignShift(input: { shiftId: string; employeeId: string; machineId?: string; productionOrderId?: string; startsAt: string; endsAt: string; role?: string }) {
+    if (isApiConfigured) {
+      return apiRequest("/api/hr/shift-assignments", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("assign_shift", {
       p_shift_id: input.shiftId,

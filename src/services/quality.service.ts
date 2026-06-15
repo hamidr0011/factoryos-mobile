@@ -1,4 +1,5 @@
 import { qualityChecks } from "../utils/constants";
+import { apiRequest, isApiConfigured } from "./api";
 import { shouldUseSupabase, supabase } from "./supabase";
 
 export const qualityService = {
@@ -31,6 +32,13 @@ export const qualityService = {
   },
 
   async submitCheck(input: { orderId: string; batchNumber: string; totalInspected: number; passed: number; failed: number; defectTypes?: string[]; notes?: string; images?: string[] }) {
+    if (isApiConfigured) {
+      return apiRequest("/api/quality/checks", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("submit_quality_check", {
       p_order_id: input.orderId,

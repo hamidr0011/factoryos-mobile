@@ -1,4 +1,5 @@
 import { maintenanceTasks } from "../utils/constants";
+import { apiRequest, isApiConfigured } from "./api";
 import { shouldUseSupabase, supabase } from "./supabase";
 
 export const maintenanceService = {
@@ -23,6 +24,13 @@ export const maintenanceService = {
     estimatedHours: number;
     partsUsed?: unknown[];
   }) {
+    if (isApiConfigured) {
+      return apiRequest("/api/maintenance/tasks", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase
       .from("maintenance_tasks")
@@ -45,6 +53,13 @@ export const maintenanceService = {
   },
 
   async completeTask(input: { taskId: string; actualHours: number; notes?: string; partsUsed?: unknown[] }) {
+    if (isApiConfigured) {
+      return apiRequest(`/api/maintenance/tasks/${input.taskId}/complete`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("complete_maintenance_task", {
       p_task_id: input.taskId,

@@ -1,4 +1,5 @@
 import { machines, productionOrders } from "../utils/constants";
+import { apiRequest, isApiConfigured } from "./api";
 import { shouldUseSupabase, supabase } from "./supabase";
 
 export const productionService = {
@@ -26,6 +27,13 @@ export const productionService = {
   },
 
   async updateProgress(orderId: string, quantityDelta: number, notes?: string) {
+    if (isApiConfigured) {
+      return apiRequest(`/api/production/orders/${orderId}/progress`, {
+        method: "POST",
+        body: JSON.stringify({ quantityDelta, notes }),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("update_production_progress", {
       p_order_id: orderId,
@@ -37,6 +45,13 @@ export const productionService = {
   },
 
   async updateStatus(orderId: string, status: "pending" | "in_progress" | "completed" | "on_hold" | "cancelled", notes?: string) {
+    if (isApiConfigured) {
+      return apiRequest(`/api/production/orders/${orderId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status, notes }),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const payload: { status: string; notes?: string; end_date?: string } = { status };
     if (notes) payload.notes = notes;
@@ -53,6 +68,13 @@ export const productionService = {
   },
 
   async recordMachineTelemetry(input: { machineId: string; status: string; efficiencyPercent: number; outputRate?: number; temperatureC?: number; vibrationMmS?: number }) {
+    if (isApiConfigured) {
+      return apiRequest(`/api/production/machines/${input.machineId}/telemetry`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("record_machine_telemetry", {
       p_machine_id: input.machineId,

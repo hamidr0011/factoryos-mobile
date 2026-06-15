@@ -1,4 +1,5 @@
 import { budgets, expenses } from "../utils/constants";
+import { apiRequest, isApiConfigured } from "./api";
 import { shouldUseSupabase, supabase } from "./supabase";
 
 export const financeService = {
@@ -25,6 +26,13 @@ export const financeService = {
     department: string;
     receiptUrl?: string;
   }) {
+    if (isApiConfigured) {
+      return apiRequest("/api/finance/expenses", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase
       .from("expenses")
@@ -45,6 +53,13 @@ export const financeService = {
   },
 
   async reviewExpense(expenseId: string, status: "approved" | "rejected" | "paid") {
+    if (isApiConfigured) {
+      return apiRequest(`/api/finance/expenses/${expenseId}/review`, {
+        method: "POST",
+        body: JSON.stringify({ status }),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("review_expense", {
       p_expense_id: expenseId,

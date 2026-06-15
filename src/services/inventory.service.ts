@@ -1,4 +1,5 @@
 import { inventoryItems, inventoryTransactions } from "../utils/constants";
+import { apiRequest, isApiConfigured } from "./api";
 import { shouldUseSupabase, supabase } from "./supabase";
 
 export const inventoryService = {
@@ -19,6 +20,13 @@ export const inventoryService = {
   },
 
   async recordTransaction(input: { itemId: string; type: "In" | "Out" | "Transfer" | "Adjustment"; quantity: number; reference?: string; notes?: string; toLocation?: string }) {
+    if (isApiConfigured) {
+      return apiRequest("/api/inventory/transactions", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+    }
+
     if (!(await shouldUseSupabase())) return null;
     const { data, error } = await supabase.rpc("record_inventory_transaction", {
       p_item_id: input.itemId,
