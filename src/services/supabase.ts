@@ -8,7 +8,8 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 export const isSupabaseConfigured =
   Boolean(supabaseUrl && supabaseAnonKey) &&
   supabaseUrl !== "your-project-url" &&
-  supabaseAnonKey !== "your-anon-key";
+  supabaseAnonKey !== "your-anon-key" &&
+  supabaseAnonKey !== "your-publishable-key";
 
 export const supabase = createClient(
   supabaseUrl || "https://example.supabase.co",
@@ -22,3 +23,11 @@ export const supabase = createClient(
     },
   },
 );
+
+export const getSupabaseSession = async () => {
+  if (!isSupabaseConfigured) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session;
+};
+
+export const shouldUseSupabase = async () => Boolean(await getSupabaseSession());

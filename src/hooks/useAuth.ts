@@ -1,6 +1,5 @@
 import { useCallback, useEffect } from "react";
 import type { Profile } from "../types";
-import { demoProfile } from "../utils/constants";
 import { authService } from "../services/auth.service";
 import { isSupabaseConfigured, supabase } from "../services/supabase";
 import { useAuthStore } from "../store/authStore";
@@ -44,16 +43,11 @@ export const useAuth = () => {
     async (email: string, password: string) => {
       const result = await authService.signIn(email, password);
       setSession(result.session);
-      setProfile(result.profile || demoProfile);
+      setProfile(result.profile || null);
       return result;
     },
     [setProfile, setSession],
   );
-
-  const signInDemo = useCallback(() => {
-    setSession(null);
-    setProfile(demoProfile);
-  }, [setProfile, setSession]);
 
   const logout = useCallback(async () => {
     await authService.signOut();
@@ -65,9 +59,8 @@ export const useAuth = () => {
     profile,
     userRole,
     hydrated,
-    isAuthenticated: Boolean(session || profile),
+    isAuthenticated: Boolean(session),
     signIn,
-    signInDemo,
     logout,
   };
 };

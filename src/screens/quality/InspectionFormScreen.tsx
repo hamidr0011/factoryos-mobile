@@ -1,3 +1,5 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Minus, Plus } from "lucide-react-native";
 import { useState } from "react";
@@ -6,6 +8,10 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
+import { productionService } from "../../services/production.service";
+import { qualityService } from "../../services/quality.service";
+import { useAppStore } from "../../store/appStore";
+import type { ProductionOrder } from "../../types";
 import { colors, productionOrders, spacing, typography } from "../../utils/constants";
 import { ChipRow, ProgressBar, ScreenContainer } from "../shared/ScreenScaffold";
 
@@ -17,15 +23,69 @@ const defectTypes = [
 ];
 
 export const InspectionFormScreen = () => {
+  const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
+  const showToast = useAppStore((state) => state.showToast);
   const [step, setStep] = useState(0);
+  const [orderNumber, setOrderNumber] = useState(productionOrders[0].order_number);
+  const [batchNumber, setBatchNumber] = useState("B-4811");
+  const [totalInspected, setTotalInspected] = useState("300");
   const [passed, setPassed] = useState(291);
   const [failed, setFailed] = useState(9);
   const [selectedDefects, setSelectedDefects] = useState<string[]>(["Burr"]);
+  const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | null>(null);
+  const { data: orders = productionOrders } = useQuery({
+    queryKey: ["production_orders"],
+    queryFn: () => productionService.getOrders(),
+  });
+  const typedOrders = orders as ProductionOrder[];
+  const selectedOrder = typedOrders.find((order) => order.order_number === orderNumber);
+
+  const submitMutation = useMutation({
+    mutationFn: async () => {
+      const uploadedImages = image ? [await qualityService.uploadEvidence(image, batchNumber)] : [];
+      return qualityService.submitCheck({
+        orderId: selectedOrder!.id,
+        batchNumber,
+        totalInspected: Number(totalInspected),
+        passed,
+        failed,
+        defectTypes: selectedDefects,
+        notes: notes.trim() || undefined,
+        images: uploadedImages,
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["quality_checks"] });
+      showToast("success", "Inspection submitted.");
+      navigation.goBack();
+    },
+    onError: (error) => {
+      showToast("error", error instanceof Error ? error.message : "Could not submit inspection.");
+    },
+  });
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.75 });
     if (!result.canceled) setImage(result.assets[0].uri);
+  };
+
+  const submitInspection = () => {
+    const total = Number(totalInspected);
+    if (!selectedOrder) {
+      showToast("warning", "Select a valid production order.");
+      return;
+    }
+    if (!batchNumber.trim() || !Number.isFinite(total) || total <= 0) {
+      showToast("warning", "Enter a batch number and total inspected quantity.");
+      return;
+    }
+    if (passed + failed > total) {
+      showToast("warning", "Passed plus failed cannot exceed total inspected.");
+      return;
+    }
+    submitMutation.mutate();
   };
 
   return (
@@ -43,9 +103,9 @@ export const InspectionFormScreen = () => {
 
       {step === 0 ? (
         <Card style={styles.form}>
-          <ChipRow items={productionOrders.map((order) => order.order_number)} active={productionOrders[0].order_number} onChange={() => undefined} />
-          <Input label="Batch number" defaultValue="B-4811" />
-          <Input label="Total inspected" keyboardType="numeric" defaultValue="300" />
+          <ChipRow items={typedOrders.map((order) => order.order_number)} active={orderNumber} onChange={setOrderNumber} />
+          <Input label="Batch number" value={batchNumber} onChangeText={setBatchNumber} />
+          <Input label="Total inspected" keyboardType="numeric" value={totalInspected} onChangeText={setTotalInspected} />
           <Button title="Continue" onPress={() => setStep(1)} />
         </Card>
       ) : null}
@@ -71,7 +131,7 @@ export const InspectionFormScreen = () => {
               );
             })}
           </View>
-          <Input label="Notes" placeholder="Inspection notes" />
+          <Input label="Notes" placeholder="Inspection notes" value={notes} onChangeText={setNotes} />
           <Button title="Continue" onPress={() => setStep(2)} />
         </Card>
       ) : null}
@@ -82,8 +142,8 @@ export const InspectionFormScreen = () => {
           <Pressable style={styles.photoBox} onPress={pickImage}>
             {image ? <Image source={{ uri: image }} style={styles.photo} /> : <Camera color={colors.amber400} size={48} />}
           </Pressable>
-          <Text style={styles.meta}>Photos are ready to upload to Supabase Storage bucket `quality-evidence` when configured.</Text>
-          <Button title="Submit Inspection" />
+          <Text style={styles.meta}>Photos upload to the `quality-evidence` bucket when Supabase is active.</Text>
+          <Button title="Submit Inspection" loading={submitMutation.isPending} onPress={submitInspection} />
         </Card>
       ) : null}
     </ScreenContainer>

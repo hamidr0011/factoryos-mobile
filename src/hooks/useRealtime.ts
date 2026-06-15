@@ -1,21 +1,27 @@
 import { useEffect } from "react";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-import { isSupabaseConfigured, supabase } from "../services/supabase";
+import { shouldUseSupabase, supabase } from "../services/supabase";
 
 export const useRealtime = <T extends Record<string, unknown>>(
   table: string,
   onChange?: (payload: RealtimePostgresChangesPayload<T>) => void,
 ) => {
   useEffect(() => {
-    if (!isSupabaseConfigured || !onChange) return undefined;
+    if (!onChange) return undefined;
+    let active = true;
+    let channel: ReturnType<typeof supabase.channel> | undefined;
 
-    const channel = supabase
-      .channel(`realtime:${table}`)
-      .on("postgres_changes", { event: "*", schema: "public", table }, onChange)
-      .subscribe();
+    shouldUseSupabase().then((enabled) => {
+      if (!enabled || !active) return;
+      channel = supabase
+        .channel(`realtime:${table}`)
+        .on("postgres_changes", { event: "*", schema: "public", table }, onChange)
+        .subscribe();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      active = false;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [onChange, table]);
 };

@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "@react-navigation/native";
 import { Play, Wrench } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
@@ -6,6 +7,8 @@ import { Card } from "../../components/ui/Card";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Input } from "../../components/ui/Input";
 import { StatusBadge } from "../../components/ui/StatusBadge";
+import { maintenanceService } from "../../services/maintenance.service";
+import { useAppStore } from "../../store/appStore";
 import type { MaintenanceTask } from "../../types";
 import { colors, maintenanceTasks, spacing, typography } from "../../utils/constants";
 import { formatCurrency, formatDate } from "../../utils/formatters";
@@ -13,9 +16,43 @@ import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
 import { useState } from "react";
 
 export const TaskDetailScreen = () => {
+  const queryClient = useQueryClient();
+  const showToast = useAppStore((state) => state.showToast);
   const route = useRoute<any>();
   const task: MaintenanceTask = route.params?.task || maintenanceTasks[0];
   const [complete, setComplete] = useState(false);
+  const [actualHours, setActualHours] = useState((task.estimated_hours || 1).toString());
+  const [workNotes, setWorkNotes] = useState("");
+  const [followUp, setFollowUp] = useState("");
+  const completeMutation = useMutation({
+    mutationFn: () =>
+      maintenanceService.completeTask({
+        taskId: task.id,
+        actualHours: Number(actualHours),
+        notes: [workNotes.trim(), followUp.trim() ? `Follow-up: ${followUp.trim()}` : ""].filter(Boolean).join("\n"),
+        partsUsed: [],
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["maintenance_tasks"] }),
+        queryClient.invalidateQueries({ queryKey: ["machines"] }),
+      ]);
+      setComplete(false);
+      showToast("success", "Maintenance task completed.");
+    },
+    onError: (error) => {
+      showToast("error", error instanceof Error ? error.message : "Could not complete maintenance task.");
+    },
+  });
+
+  const submitCompletion = () => {
+    const parsed = Number(actualHours);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      showToast("warning", "Enter actual hours greater than zero.");
+      return;
+    }
+    completeMutation.mutate();
+  };
 
   return (
     <ScreenContainer title={task.title} subtitle={`${task.machine.name} · ${task.type}`}>
@@ -52,10 +89,10 @@ export const TaskDetailScreen = () => {
       <BottomSheet visible={complete} onClose={() => setComplete(false)}>
         <View style={styles.sheet}>
           <Text style={styles.sheetTitle}>Completion Form</Text>
-          <Input label="Actual hours" keyboardType="numeric" defaultValue={(task.estimated_hours || 1).toString()} />
-          <Input label="Work performed" placeholder="Describe repairs and verification" />
-          <Input label="Follow-up required" placeholder="Optional follow-up" />
-          <Button title="Complete Task" onPress={() => setComplete(false)} />
+          <Input label="Actual hours" keyboardType="numeric" value={actualHours} onChangeText={setActualHours} />
+          <Input label="Work performed" placeholder="Describe repairs and verification" value={workNotes} onChangeText={setWorkNotes} />
+          <Input label="Follow-up required" placeholder="Optional follow-up" value={followUp} onChangeText={setFollowUp} />
+          <Button title="Complete Task" loading={completeMutation.isPending} onPress={submitCompletion} />
         </View>
       </BottomSheet>
     </ScreenContainer>

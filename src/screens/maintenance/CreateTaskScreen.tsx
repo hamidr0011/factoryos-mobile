@@ -1,17 +1,64 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
+import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
+import { hrService } from "../../services/hr.service";
+import { maintenanceService } from "../../services/maintenance.service";
+import { productionService } from "../../services/production.service";
+import { useAppStore } from "../../store/appStore";
+import type { Machine, Profile } from "../../types";
 import { colors, employees, inventoryItems, machines, spacing, typography } from "../../utils/constants";
 import { ChipRow, DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
-import { useState } from "react";
 
 export const CreateTaskScreen = () => {
+  const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
+  const showToast = useAppStore((state) => state.showToast);
   const [type, setType] = useState("Preventive");
   const [priority, setPriority] = useState("High");
-  const machine = machines[0];
-  const technician = employees.find((employee) => employee.role === "operator") || employees[0];
+  const [title, setTitle] = useState("Servo belt replacement");
+  const [description, setDescription] = useState("");
+  const [scheduledDate, setScheduledDate] = useState("2026-06-15T10:00:00");
+  const [estimatedHours, setEstimatedHours] = useState("1.5");
+  const { data: machineData = machines } = useQuery({ queryKey: ["machines"], queryFn: productionService.getMachines });
+  const { data: employeeData = employees } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
+  const machine = ((machineData as Machine[])[0] || machines[0]) as Machine;
+  const technician = ((employeeData as Profile[]).find((employee) => employee.role === "operator") || employees[0]) as Profile;
+  const taskMutation = useMutation({
+    mutationFn: () =>
+      maintenanceService.createTask({
+        machineId: machine.id,
+        type: type.toLowerCase() as "preventive" | "corrective" | "emergency" | "inspection",
+        priority: priority.toLowerCase() as "low" | "medium" | "high" | "critical",
+        title,
+        description,
+        assignedTo: technician.id,
+        scheduledDate,
+        estimatedHours: Number(estimatedHours),
+        partsUsed: inventoryItems.slice(0, 2).map((item) => ({ sku: item.sku, quantity: 1, unit_cost: item.unit_cost })),
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["maintenance_tasks"] });
+      showToast("success", "Maintenance task created.");
+      navigation.goBack();
+    },
+    onError: (error) => {
+      showToast("error", error instanceof Error ? error.message : "Could not create maintenance task.");
+    },
+  });
+
+  const submitTask = () => {
+    const hours = Number(estimatedHours);
+    if (!title.trim() || !Number.isFinite(hours) || hours <= 0) {
+      showToast("warning", "Enter a title and valid estimated hours.");
+      return;
+    }
+    taskMutation.mutate();
+  };
 
   return (
     <ScreenContainer title="Create Task" subtitle="Schedule maintenance work">
@@ -26,10 +73,10 @@ export const CreateTaskScreen = () => {
         <ChipRow items={["Preventive", "Corrective", "Emergency", "Inspection"]} active={type} onChange={setType} />
         <Text style={styles.label}>Priority</Text>
         <ChipRow items={["Low", "Medium", "High", "Critical"]} active={priority} onChange={setPriority} />
-        <Input label="Title" defaultValue="Servo belt replacement" />
-        <Input label="Description" placeholder="Task details" />
-        <Input label="Schedule" defaultValue="2026-06-15 10:00" />
-        <Input label="Estimated hours" keyboardType="numeric" defaultValue="1.5" />
+        <Input label="Title" value={title} onChangeText={setTitle} />
+        <Input label="Description" placeholder="Task details" value={description} onChangeText={setDescription} />
+        <Input label="Schedule" value={scheduledDate} onChangeText={setScheduledDate} />
+        <Input label="Estimated hours" keyboardType="numeric" value={estimatedHours} onChangeText={setEstimatedHours} />
       </Card>
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Assignment</Text>
@@ -40,7 +87,7 @@ export const CreateTaskScreen = () => {
           ))}
         </View>
       </Card>
-      <Button title="Create Maintenance Task" />
+      <Button title="Create Maintenance Task" loading={taskMutation.isPending} onPress={submitTask} />
     </ScreenContainer>
   );
 };

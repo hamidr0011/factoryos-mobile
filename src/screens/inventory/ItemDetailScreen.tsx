@@ -1,9 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Minus, Plus, SlidersHorizontal } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { LineChart } from "../../components/charts/LineChart";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { inventoryService } from "../../services/inventory.service";
 import { inventoryItems, inventoryTransactions, colors, spacing, typography } from "../../utils/constants";
 import type { InventoryItem } from "../../types";
 import { DetailRow, ProgressBar, ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
@@ -22,6 +24,10 @@ export const ItemDetailScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const item: InventoryItem = route.params?.item || inventoryItems[0];
+  const { data: transactions = inventoryTransactions } = useQuery({
+    queryKey: ["inventory_transactions", item.id],
+    queryFn: () => inventoryService.getTransactions(item.id),
+  });
   const ratio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 80;
   const color = ratio < 20 ? colors.maintenance : ratio < 50 ? colors.amber400 : colors.inventory;
   const openTransaction = (type: "In" | "Out" | "Adjustment") => {
@@ -46,7 +52,7 @@ export const ItemDetailScreen = () => {
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Transaction History</Text>
-        {inventoryTransactions.filter((tx) => tx.item_id === item.id).map((tx) => (
+        {transactions.filter((tx) => tx.item_id === item.id).map((tx) => (
           <WorkCard key={tx.id} title={tx.reference} eyebrow={tx.type.toUpperCase()} accentColor={tx.type === "in" ? colors.inventory : tx.type === "out" ? colors.maintenance : colors.production}>
             <Text style={styles.txQty}>{tx.quantity > 0 ? "+" : ""}{tx.quantity} {item.unit}</Text>
           </WorkCard>

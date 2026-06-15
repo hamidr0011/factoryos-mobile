@@ -11,9 +11,9 @@ import { colors, spacing, typography } from "../../utils/constants";
 import { isEmail } from "../../utils/validators";
 
 export const LoginScreen = () => {
-  const { signIn, signInDemo } = useAuth();
-  const [email, setEmail] = useState("supervisor@factoryos.app");
-  const [password, setPassword] = useState("factoryos");
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -62,10 +62,10 @@ export const LoginScreen = () => {
             <View style={styles.card}>
               <View>
                 <Text style={styles.heading}>Secure Access</Text>
-                <Text style={styles.subheading}>{isSupabaseConfigured ? "Sign in with Supabase credentials." : "Local demo mode active. Add Supabase env vars to connect live auth."}</Text>
+                <Text style={styles.subheading}>{isSupabaseConfigured ? "Sign in with your FactoryOS account." : "Supabase credentials are not configured for this build."}</Text>
               </View>
-              <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-              <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+              <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="name@company.com" />
+              <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Password" />
               <Pressable style={styles.remember} onPress={() => setRemember((value) => !value)}>
                 <View style={[styles.toggle, remember && styles.toggleOn]}>
                   <View style={[styles.thumb, remember && styles.thumbOn]} />
@@ -73,8 +73,7 @@ export const LoginScreen = () => {
                 <Text style={styles.rememberText}>Remember Me</Text>
               </Pressable>
               {error ? <Text style={styles.error}>{error}</Text> : null}
-              <Button title="Login" loading={loading} onPress={handleLogin} />
-              <Button title="Enter Demo Floor" variant="secondary" onPress={signInDemo} />
+              <Button title="Login" loading={loading} disabled={!isSupabaseConfigured} onPress={handleLogin} />
               <Text style={styles.forgot}>Forgot Password</Text>
             </View>
           </BlurView>

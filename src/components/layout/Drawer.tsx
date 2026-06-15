@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../hooks/useAuth";
 import { colors, modules, spacing, typography } from "../../utils/constants";
+import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
 export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
   const insets = useSafeAreaInsets();
@@ -36,7 +37,9 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
       <View style={styles.section}>
         {modules.map((module) => (
           <Pressable key={module.id} style={styles.item} onPress={() => openModule(module.screen)}>
-            <View style={[styles.moduleDot, { backgroundColor: module.color }]} />
+            <View style={[styles.moduleIcon, { backgroundColor: `${module.color}12`, borderColor: `${module.color}30` }]}>
+              <ModuleIconMark id={module.id} color={module.color} size={28} />
+            </View>
             <Text style={styles.itemText}>{module.label}</Text>
             <Text style={styles.itemStat}>{module.stat}</Text>
           </Pressable>
@@ -114,10 +117,13 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: spacing.sm,
   },
-  moduleDot: {
-    borderRadius: 5,
-    height: 10,
-    width: 10,
+  moduleIcon: {
+    alignItems: "center",
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
   },
   itemText: {
     color: colors.steel100,

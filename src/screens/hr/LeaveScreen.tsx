@@ -1,19 +1,67 @@
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
+import { useAppStore } from "../../store/appStore";
 import type { LeaveRequest } from "../../types";
 import { colors, leaveRequests, spacing, typography } from "../../utils/constants";
 import { ChipRow, MetricPill, ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
 
 export const LeaveScreen = () => {
+  const queryClient = useQueryClient();
+  const showToast = useAppStore((state) => state.showToast);
   const [tab, setTab] = useState("My Leaves");
+  const [leaveType, setLeaveType] = useState("annual");
+  const [startDate, setStartDate] = useState("2026-06-20");
+  const [endDate, setEndDate] = useState("2026-06-22");
+  const [reason, setReason] = useState("");
   const { data = leaveRequests } = useQuery({ queryKey: ["leave_requests"], queryFn: hrService.getLeaveRequests });
   const leaves = data as LeaveRequest[];
+  const refreshLeaves = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["leave_requests"] });
+  };
+
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "approved" | "rejected" }) => hrService.reviewLeaveRequest(id, status),
+    onSuccess: async () => {
+      await refreshLeaves();
+      showToast("success", "Leave request reviewed.");
+    },
+    onError: (error) => {
+      showToast("error", error instanceof Error ? error.message : "Could not review leave request.");
+    },
+  });
+
+  const requestMutation = useMutation({
+    mutationFn: () =>
+      hrService.requestLeave({
+        type: leaveType as "annual" | "sick" | "emergency" | "unpaid",
+        startDate,
+        endDate,
+        reason,
+      }),
+    onSuccess: async () => {
+      await refreshLeaves();
+      setReason("");
+      setTab("My Leaves");
+      showToast("success", "Leave request submitted.");
+    },
+    onError: (error) => {
+      showToast("error", error instanceof Error ? error.message : "Could not submit leave request.");
+    },
+  });
+
+  const submitLeaveRequest = () => {
+    if (!["annual", "sick", "emergency", "unpaid"].includes(leaveType) || !startDate || !endDate || !reason.trim()) {
+      showToast("warning", "Enter leave type, dates, and reason.");
+      return;
+    }
+    requestMutation.mutate();
+  };
 
   return (
     <ScreenContainer title="Leave" subtitle="Balances, applications, approvals">
@@ -39,8 +87,8 @@ export const LeaveScreen = () => {
             <WorkCard key={leave.id} title={leave.employee.full_name} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.amber400}>
               <Text style={styles.meta}>{leave.reason}</Text>
               <View style={styles.approvals}>
-                <Button title="Approve" variant="secondary" style={styles.buttonFlex} />
-                <Button title="Reject" variant="ghost" style={styles.buttonFlex} />
+                <Button title="Approve" variant="secondary" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "approved" })} />
+                <Button title="Reject" variant="ghost" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "rejected" })} />
               </View>
             </WorkCard>
           ))}
@@ -49,11 +97,11 @@ export const LeaveScreen = () => {
 
       {tab === "Apply" ? (
         <Card style={styles.form}>
-          <Input label="Type" defaultValue="annual" />
-          <Input label="Start date" defaultValue="2026-06-20" />
-          <Input label="End date" defaultValue="2026-06-22" />
-          <Input label="Reason" placeholder="Reason for leave" />
-          <Button title="Submit Leave Request" />
+          <Input label="Type" value={leaveType} onChangeText={(value) => setLeaveType(value.toLowerCase())} />
+          <Input label="Start date" value={startDate} onChangeText={setStartDate} />
+          <Input label="End date" value={endDate} onChangeText={setEndDate} />
+          <Input label="Reason" placeholder="Reason for leave" value={reason} onChangeText={setReason} />
+          <Button title="Submit Leave Request" loading={requestMutation.isPending} onPress={submitLeaveRequest} />
         </Card>
       ) : null}
     </ScreenContainer>

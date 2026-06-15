@@ -1,12 +1,13 @@
 import { Clock } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { hrService } from "../../services/hr.service";
+import { useAppStore } from "../../store/appStore";
 import type { AttendanceRecord } from "../../types";
 import { attendanceRecords, colors, spacing, typography } from "../../utils/constants";
 import { ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
@@ -14,9 +15,23 @@ import { ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
 const days = Array.from({ length: 30 }, (_, index) => index + 1);
 
 export const AttendanceScreen = () => {
+  const queryClient = useQueryClient();
+  const showToast = useAppStore((state) => state.showToast);
   const [selectedDay, setSelectedDay] = useState<number | null>(13);
   const { data = attendanceRecords } = useQuery({ queryKey: ["attendance"], queryFn: hrService.getAttendance });
   const records = data as AttendanceRecord[];
+  const today = new Date().toISOString().slice(0, 10);
+  const openShift = records.find((record) => record.date === today && record.check_in && !record.check_out);
+  const clockMutation = useMutation({
+    mutationFn: () => (openShift ? hrService.clockOut() : hrService.clockIn()),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["attendance"] });
+      showToast("success", openShift ? "Clocked out." : "Clocked in.");
+    },
+    onError: (error) => {
+      showToast("error", error instanceof Error ? error.message : "Could not update attendance.");
+    },
+  });
 
   return (
     <ScreenContainer title="Attendance" subtitle="Month grid and daily roster">
@@ -42,7 +57,7 @@ export const AttendanceScreen = () => {
         </WorkCard>
       ))}
 
-      <Button title="Clock In / Clock Out" icon={<Clock color={colors.steel950} size={18} />} />
+      <Button title={openShift ? "Clock Out" : "Clock In"} icon={<Clock color={colors.steel950} size={18} />} loading={clockMutation.isPending} onPress={() => clockMutation.mutate()} />
 
       <BottomSheet visible={selectedDay !== null} onClose={() => setSelectedDay(null)}>
         <View style={styles.sheet}>

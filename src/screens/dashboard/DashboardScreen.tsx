@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { AlertTriangle, Factory, Package, ShieldCheck, TrendingUp, Users, Wrench } from "lucide-react-native";
+import { AlertTriangle } from "lucide-react-native";
 import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
@@ -9,19 +9,11 @@ import { Card } from "../../components/ui/Card";
 import { StatusBadge, statusPalette } from "../../components/ui/StatusBadge";
 import { Header } from "../../components/layout/Header";
 import { SectionHeader } from "../../components/layout/SectionHeader";
+import { ModuleIconMark } from "../../components/visuals/ModuleArtwork";
 import { useRealtime } from "../../hooks/useRealtime";
 import { useAppStore } from "../../store/appStore";
 import { colors, kpiCards, machines, modules, spacing, typography } from "../../utils/constants";
 import { ProgressBar } from "../shared/ScreenScaffold";
-
-const moduleIcons = {
-  production: Factory,
-  inventory: Package,
-  quality: ShieldCheck,
-  hr: Users,
-  maintenance: Wrench,
-  finance: TrendingUp,
-};
 
 const CountUpValue = ({ value, label }: { value: string; label: number }) => {
   const progress = useSharedValue(0);
@@ -101,15 +93,20 @@ export const DashboardScreen = () => {
           <SectionHeader title="Modules" meta="2 × 3 command grid" />
           <View style={styles.moduleGrid}>
             {modules.map((module) => {
-              const Icon = moduleIcons[module.id];
               return (
                 <Pressable key={module.id} style={styles.modulePressable} onPress={() => openModule(module.screen)}>
                   <Animated.View entering={FadeIn.duration(260)} style={[styles.moduleCard, { borderLeftColor: module.color }]}>
-                    <View style={[styles.moduleIcon, { backgroundColor: `${module.color}26` }]}>
-                      <Icon color={module.color} size={22} />
+                    <View style={styles.moduleTop}>
+                      <View style={[styles.moduleIcon, { backgroundColor: `${module.color}16`, borderColor: `${module.color}40` }]}>
+                        <ModuleIconMark id={module.id} color={module.color} size={38} />
+                      </View>
+                      <Text style={[styles.moduleStat, { color: module.color }]}>{module.stat}</Text>
                     </View>
                     <Text style={styles.moduleLabel}>{module.label}</Text>
                     <Text style={styles.moduleDelta}>{module.delta}</Text>
+                    <View style={[styles.moduleRail, { backgroundColor: `${module.color}33` }]}>
+                      <View style={[styles.moduleRailFill, { backgroundColor: module.color }]} />
+                    </View>
                   </Animated.View>
                 </Pressable>
               );
@@ -212,17 +209,27 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderRadius: 8,
     borderWidth: 1,
-    minHeight: 128,
+    minHeight: 154,
     padding: spacing.md,
     width: "100%",
+  },
+  moduleTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.md,
   },
   moduleIcon: {
     alignItems: "center",
     borderRadius: 8,
-    height: 40,
+    borderWidth: 1,
+    height: 52,
     justifyContent: "center",
-    marginBottom: spacing.md,
-    width: 40,
+    width: 52,
+  },
+  moduleStat: {
+    fontFamily: typography.mono,
+    fontSize: 12,
   },
   moduleLabel: {
     color: colors.steel100,
@@ -234,6 +241,18 @@ const styles = StyleSheet.create({
     fontFamily: typography.body,
     fontSize: 12,
     marginTop: 4,
+  },
+  moduleRail: {
+    borderRadius: 2,
+    height: 3,
+    marginTop: "auto",
+    overflow: "hidden",
+    width: "100%",
+  },
+  moduleRailFill: {
+    borderRadius: 2,
+    height: "100%",
+    width: "58%",
   },
   alertCard: {
     alignItems: "center",

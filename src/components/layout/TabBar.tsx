@@ -1,14 +1,12 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Factory, Home, MoreHorizontal, Package, Users } from "lucide-react-native";
+import { Home, MoreHorizontal } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { colors, spacing, typography } from "../../utils/constants";
+import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
 const icons = {
   Dashboard: Home,
-  Production: Factory,
-  Inventory: Package,
-  HR: Users,
   More: MoreHorizontal,
 };
 
@@ -24,6 +22,7 @@ const TabBarItem = ({
   onPress: () => void;
 }) => {
   const Icon = icons[routeName as keyof typeof icons] || Home;
+  const moduleId = routeName === "Production" ? "production" : routeName === "Inventory" ? "inventory" : routeName === "HR" ? "hr" : null;
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: withSpring(isFocused ? -3 : 0, { damping: 14 }) }],
   }));
@@ -31,7 +30,11 @@ const TabBarItem = ({
   return (
     <Pressable accessibilityRole="button" style={styles.item} onPress={onPress}>
       <Animated.View style={[styles.iconWrap, isFocused && styles.iconWrapActive, animatedStyle]}>
-        <Icon color={isFocused ? colors.amber400 : colors.steel300} size={22} />
+        {moduleId ? (
+          <ModuleIconMark id={moduleId} color={isFocused ? colors.amber400 : colors.steel300} size={24} />
+        ) : (
+          <Icon color={isFocused ? colors.amber400 : colors.steel300} size={22} />
+        )}
       </Animated.View>
       <Text style={[styles.label, { color: isFocused ? colors.amber400 : colors.steel500 }]}>{label}</Text>
       <View style={[styles.underline, { opacity: isFocused ? 1 : 0 }]} />

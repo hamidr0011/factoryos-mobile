@@ -72,7 +72,7 @@ export const modules: ModuleDefinition[] = [
   { id: "finance", label: "Finance", icon: "trending-up", color: colors.finance, screen: "Finance", stat: "72%", delta: "budget used" },
 ];
 
-export const demoProfile: Profile = {
+export const seedSupervisorProfile: Profile = {
   id: "00000000-0000-4000-8000-000000000001",
   full_name: "Aisha Khan",
   role: "supervisor",
@@ -81,7 +81,7 @@ export const demoProfile: Profile = {
 };
 
 export const employees: Profile[] = [
-  demoProfile,
+  seedSupervisorProfile,
   { id: "00000000-0000-4000-8000-000000000002", full_name: "Daniel Ortiz", role: "operator", department: "Production", employee_id: "FOS-1041" },
   { id: "00000000-0000-4000-8000-000000000003", full_name: "Mei Tan", role: "manager", department: "Quality", employee_id: "FOS-1011" },
   { id: "00000000-0000-4000-8000-000000000004", full_name: "Omar Farooq", role: "operator", department: "Maintenance", employee_id: "FOS-1107" },
@@ -154,9 +154,9 @@ export const budgets: Budget[] = [
 ];
 
 export const notifications: FactoryNotification[] = [
-  { id: "n1", user_id: demoProfile.id, module: "maintenance", title: "Critical machine fault", body: "Laser Cutter 09 is down and blocking Line D.", is_read: false, action_url: "Maintenance", created_at: "2026-06-13T11:02:00Z" },
-  { id: "n2", user_id: demoProfile.id, module: "inventory", title: "Packaging cartons depleted", body: "Medium export cartons are out of stock.", is_read: false, action_url: "Inventory", created_at: "2026-06-13T10:44:00Z" },
-  { id: "n3", user_id: demoProfile.id, module: "quality", title: "Conditional batch release", body: "Batch B-4811 requires supervisor review.", is_read: true, action_url: "Quality", created_at: "2026-06-13T10:18:00Z" },
+  { id: "n1", user_id: seedSupervisorProfile.id, module: "maintenance", title: "Critical machine fault", body: "Laser Cutter 09 is down and blocking Line D.", is_read: false, action_url: "Maintenance", created_at: "2026-06-13T11:02:00Z" },
+  { id: "n2", user_id: seedSupervisorProfile.id, module: "inventory", title: "Packaging cartons depleted", body: "Medium export cartons are out of stock.", is_read: false, action_url: "Inventory", created_at: "2026-06-13T10:44:00Z" },
+  { id: "n3", user_id: seedSupervisorProfile.id, module: "quality", title: "Conditional batch release", body: "Batch B-4811 requires supervisor review.", is_read: true, action_url: "Quality", created_at: "2026-06-13T10:18:00Z" },
 ];
 
 export const kpiCards = [
