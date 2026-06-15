@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://factoryos-api-imya.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ysewghajvnhkqhxnrpbz.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_EBOg4WzevTHXvu8MMcI6Sw_WrhrP3R6"
+      }
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  }
+}
