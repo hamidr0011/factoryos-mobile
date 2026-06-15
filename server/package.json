@@ -1,0 +1,23 @@
+{
+  "name": "factoryos-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FactoryOS Render API for protected Supabase workflows.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "check": "node --check src/env.js && node --check src/supabase.js && node --check src/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "zod": "^3.25.76"
+  }
+}
