@@ -152,8 +152,8 @@ export const LoginScreen = () => {
                       : "Supabase credentials are not configured for this build."}
                 </Text>
               </View>
-              {setupState === "checking" ? <Text style={styles.status}>Checking first-admin setup...</Text> : null}
-              {setupState === "unavailable" ? (
+              {setupMode && setupState === "checking" ? <Text style={styles.status}>Checking first-admin setup...</Text> : null}
+              {setupMode && setupState === "unavailable" ? (
                 <Text style={styles.warning}>First-admin setup needs your Render API URL in EXPO_PUBLIC_API_URL.</Text>
               ) : null}
               {setupMode ? (
@@ -189,7 +189,7 @@ export const LoginScreen = () => {
                 </Pressable>
               ) : (
                 <>
-                  {setupState === "needed" || setupState === "unavailable" ? (
+                  {setupState === "needed" ? (
                     <Pressable style={styles.setupLink} onPress={() => setSetupMode(true)}>
                       <Text style={styles.setupText}>Create first Super Admin</Text>
                     </Pressable>
