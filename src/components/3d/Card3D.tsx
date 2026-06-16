@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { StyleSheet, ViewStyle } from "react-native";
+import { Platform, StyleSheet, ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { colors, radii, spacing } from "../../utils/constants";
@@ -23,9 +23,20 @@ export const Card3D = ({ children, accentColor = colors.amber400, style }: Card3
       rotateY.value = withSpring(0, { damping: 18, mass: 0.8 });
     });
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ perspective: 900 }, { rotateX: `${rotateX.value}deg` }, { rotateY: `${rotateY.value}deg` }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    if (Platform.OS === "web") {
+      return {
+        transform: [{ perspective: 900 }, { rotateX: `${rotateX.value}deg` }, { rotateY: `${rotateY.value}deg` }],
+      };
+    }
+    return {
+      transform: [
+        { scale: 1 + Math.abs(rotateX.value + rotateY.value) / 120 },
+        { translateX: rotateY.value / 2 },
+        { translateY: -rotateX.value / 2 },
+      ],
+    };
+  });
 
   return (
     <GestureDetector gesture={pan}>

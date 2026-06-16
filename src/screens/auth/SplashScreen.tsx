@@ -70,12 +70,16 @@ export const SplashScreen = ({ navigation }: Props) => {
 
   useEffect(() => {
     progress.value = withTiming(1, { duration: 2800, easing: Easing.out(Easing.cubic) });
-    const timer = setTimeout(() => {
-      exit.value = withTiming(1, { duration: 520 }, () => {
-        navigation.replace("Onboarding");
-      });
+    const timer1 = setTimeout(() => {
+      exit.value = withTiming(1, { duration: 520 });
     }, 3100);
-    return () => clearTimeout(timer);
+    const timer2 = setTimeout(() => {
+      navigation.replace("Onboarding");
+    }, 3620);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [exit, navigation, progress]);
 
   const progressStyle = useAnimatedStyle(() => ({ width: 200 * progress.value }));

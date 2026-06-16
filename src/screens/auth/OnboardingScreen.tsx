@@ -55,9 +55,21 @@ export const OnboardingScreen = ({ navigation }: Props) => {
     setPage(Math.round(event.nativeEvent.contentOffset.x / slideWidth));
   };
 
-  const roleCardStyle = useAnimatedStyle(() => ({
-    transform: [{ perspective: 800 }, { rotateY: `${flip.value}deg` }],
-  }));
+  const roleCardStyle = useAnimatedStyle(() => {
+    if (Platform.OS === "web") {
+      return {
+        transform: [{ perspective: 800 }, { rotateY: `${flip.value}deg` }],
+      };
+    }
+    const scale = flip.value === 0 ? 1 : 0.95;
+    const rotate = flip.value === 0 ? "0deg" : "4deg";
+    return {
+      transform: [
+        { scale: withSpring(scale, { damping: 18, mass: 0.8 }) },
+        { rotate: withSpring(rotate, { damping: 18, mass: 0.8 }) },
+      ],
+    };
+  });
 
   const advance = () => {
     if (page === 2) {
