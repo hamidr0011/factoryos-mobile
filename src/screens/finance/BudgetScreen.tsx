@@ -37,9 +37,6 @@ export const BudgetScreen = () => {
               />
             </View>
             <ProgressBar value={pct} color={danger ? colors.maintenance : colors.finance} />
-            <PermissionGate roles={["admin"]}>
-              <Button title="Edit Budget" variant="secondary" />
-            </PermissionGate>
           </Card>
         );
       }) : <EmptyState variant="finance" title="No budgets configured" subtitle="Admin-created department budgets will appear here." />}

@@ -68,7 +68,12 @@ export const ItemDetailScreen = () => {
         <Text style={styles.sectionTitle}>Transaction History</Text>
         {itemTransactions.length ? (
           itemTransactions.map((tx) => (
-            <WorkCard key={tx.id} title={tx.reference} eyebrow={tx.type.toUpperCase()} accentColor={tx.type === "in" ? colors.inventory : tx.type === "out" ? colors.maintenance : colors.production}>
+            <WorkCard
+              key={tx.id}
+              title={tx.reference || (tx.type === "in" ? "Receive Stock" : tx.type === "out" ? "Issue Stock" : "Stock Adjustment")}
+              eyebrow={tx.type.toUpperCase()}
+              accentColor={tx.type === "in" ? colors.inventory : tx.type === "out" ? colors.maintenance : colors.production}
+            >
               <Text style={styles.txQty}>{tx.quantity > 0 ? "+" : ""}{tx.quantity} {item.unit}</Text>
             </WorkCard>
           ))

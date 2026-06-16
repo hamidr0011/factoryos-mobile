@@ -81,6 +81,7 @@ export interface InventoryTransaction {
 export interface QualityCheck {
   id: string;
   order_id: string;
+  order?: ProductionOrder;
   batch_number: string;
   total_inspected: number;
   passed: number;

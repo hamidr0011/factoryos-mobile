@@ -1,18 +1,22 @@
 import { useNavigation } from "@react-navigation/native";
 import { StyleSheet, Text, View } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DonutChart } from "../../components/charts/DonutChart";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { hrService } from "../../services/hr.service";
+import { useAppStore } from "../../store/appStore";
 import type { AttendanceRecord, ChartPoint, LeaveRequest } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { MetricPill, ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
 
 export const HRDashboardScreen = () => {
   const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
+  const showToast = useAppStore((state) => state.showToast);
+
   const attendanceQuery = useQuery({ queryKey: ["attendance"], queryFn: hrService.getAttendance });
   const leaveQuery = useQuery({ queryKey: ["leave_requests"], queryFn: hrService.getLeaveRequests });
   const attendance = (attendanceQuery.data as AttendanceRecord[]) || [];
@@ -30,6 +34,20 @@ export const HRDashboardScreen = () => {
       return acc;
     }, {}),
   );
+
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "approved" | "rejected" }) => hrService.reviewLeaveRequest(id, status),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["leave_requests"] }),
+        queryClient.invalidateQueries({ queryKey: ["attendance"] }),
+      ]);
+      showToast("success", "Leave request reviewed.");
+    },
+    onError: (error) => {
+      showToast("error", error instanceof Error ? error.message : "Could not review leave request.");
+    },
+  });
 
   return (
     <ScreenContainer title="HR & Workforce" subtitle="Attendance, leave, and shift coverage" navigationMode="drawer">
@@ -53,9 +71,10 @@ export const HRDashboardScreen = () => {
           pendingLeaves.map((leave) => (
             <WorkCard key={leave.id} title={leave.employee?.full_name || "Unknown employee"} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.amber400}>
               <Text style={styles.meta}>{leave.start_date} → {leave.end_date}</Text>
+              <Text style={styles.metaReason}>{leave.reason}</Text>
               <View style={styles.approvals}>
-                <Button title="Approve" variant="secondary" style={styles.approvalButton} />
-                <Button title="Reject" variant="ghost" style={styles.approvalButton} />
+                <Button title="Approve" variant="secondary" style={styles.approvalButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "approved" })} />
+                <Button title="Reject" variant="ghost" style={styles.approvalButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "rejected" })} />
               </View>
             </WorkCard>
           ))
@@ -95,6 +114,12 @@ const styles = StyleSheet.create({
     color: colors.steel500,
     fontFamily: typography.body,
     fontSize: 12,
+  },
+  metaReason: {
+    color: colors.steel300,
+    fontFamily: typography.body,
+    fontSize: 13,
+    marginVertical: spacing.xxs,
   },
   approvals: {
     flexDirection: "row",

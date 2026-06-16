@@ -38,7 +38,12 @@ export const QualityCheckListScreen = () => {
         renderItem={({ item }) => {
           const passRate = item.total_inspected ? (item.passed / item.total_inspected) * 100 : 0;
           return (
-            <WorkCard title={`Batch ${item.batch_number}`} eyebrow={`Order ${item.order_id}`} status={item.status} accentColor={item.status === "fail" ? colors.maintenance : item.status === "conditional" ? colors.amber400 : colors.inventory}>
+            <WorkCard
+              title={`Batch ${item.batch_number}`}
+              eyebrow={item.order?.order_number ? `Order ${item.order.order_number}` : `Order ${item.order_id.slice(0, 8)}...`}
+              status={item.status}
+              accentColor={item.status === "fail" ? colors.maintenance : item.status === "conditional" ? colors.amber400 : colors.inventory}
+            >
               <View style={styles.row}>
                 <Text style={styles.ratio}>{item.passed}/{item.total_inspected} pass</Text>
                 <Text style={styles.ratio}>{item.failed} failed</Text>
