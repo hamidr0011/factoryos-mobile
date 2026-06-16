@@ -101,7 +101,8 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.xs,
+    justifyContent: "space-between",
+    rowGap: spacing.xs,
   },
   day: {
     alignItems: "center",
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     height: 44,
     justifyContent: "center",
-    width: "12.4%",
+    width: "13%",
   },
   selectedDay: {
     borderColor: colors.amber400,

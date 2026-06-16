@@ -285,10 +285,11 @@ const styles = StyleSheet.create({
   moduleGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.md,
+    justifyContent: "space-between",
+    rowGap: spacing.md,
   },
   modulePressable: {
-    width: "47%",
+    width: "48%",
   },
   moduleCard: {
     backgroundColor: colors.steel900,

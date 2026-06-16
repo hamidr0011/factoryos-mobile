@@ -111,7 +111,8 @@ const styles = StyleSheet.create({
   calendar: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.xs,
+    justifyContent: "space-between",
+    rowGap: spacing.xs,
   },
   day: {
     alignItems: "center",
