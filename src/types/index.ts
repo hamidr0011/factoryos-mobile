@@ -20,6 +20,7 @@ export interface Profile {
   avatar_url?: string | null;
   employee_id: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthStateShape {

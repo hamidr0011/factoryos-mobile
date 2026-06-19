@@ -22,7 +22,7 @@ export const AttendanceScreen = () => {
   const monthName = currentMonth.toLocaleDateString([], { month: "long", year: "numeric" });
   const days = Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, index) => index + 1);
   const toDateKey = (day: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const [selectedDay, setSelectedDay] = useState<number | null>(currentMonth.getDate());
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const { data = [] } = useQuery({ queryKey: ["attendance"], queryFn: hrService.getAttendance });
   const records = data as AttendanceRecord[];
   const today = toDateKey(currentMonth.getDate());

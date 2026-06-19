@@ -15,7 +15,7 @@ import { ProgressBar, ScreenContainer } from "../shared/ScreenScaffold";
 export const BudgetScreen = () => {
   const { data = [] } = useQuery({ queryKey: ["budgets"], queryFn: financeService.getBudgets });
   const budgetData = data as Budget[];
-  const spendData = budgetData.map((budget) => ({ label: budget.department.slice(0, 8), value: Number(budget.spent || 0) }));
+  const spendData = budgetData.map((budget) => ({ label: (budget.department || "").slice(0, 8), value: Number(budget.spent || 0) }));
 
   return (
     <ScreenContainer title="Budgets" subtitle="Department utilization and comparison">

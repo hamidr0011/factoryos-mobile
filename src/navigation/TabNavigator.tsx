@@ -1,7 +1,9 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator, CardStyleInterpolators } from "@react-navigation/stack";
 import { View } from "react-native";
+import { RoleGuard } from "../components/auth/RoleGuard";
 import { CustomTabBar } from "../components/layout/TabBar";
+import { usePermissions } from "../hooks/usePermissions";
 import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { ProductionListScreen } from "../screens/production/ProductionListScreen";
 import { OrderDetailScreen } from "../screens/production/OrderDetailScreen";
@@ -27,36 +29,46 @@ const screenOptions = {
 const EmptyMore = () => <View />;
 
 export const ProductionStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
-    <Stack.Screen name="ProductionList" component={ProductionListScreen} />
-    <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
-    <Stack.Screen name="MachineStatus" component={MachineStatusScreen} />
-  </Stack.Navigator>
+  <RoleGuard area="production">
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen name="ProductionList" component={ProductionListScreen} />
+      <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <Stack.Screen name="MachineStatus" component={MachineStatusScreen} />
+    </Stack.Navigator>
+  </RoleGuard>
 );
 
 export const InventoryStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
-    <Stack.Screen name="InventoryList" component={InventoryListScreen} />
-    <Stack.Screen name="ItemDetail" component={ItemDetailScreen} />
-    <Stack.Screen name="StockTransaction" component={StockTransactionScreen} />
-  </Stack.Navigator>
+  <RoleGuard area="inventory">
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen name="InventoryList" component={InventoryListScreen} />
+      <Stack.Screen name="ItemDetail" component={ItemDetailScreen} />
+      <Stack.Screen name="StockTransaction" component={StockTransactionScreen} />
+    </Stack.Navigator>
+  </RoleGuard>
 );
 
 export const HRStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
-    <Stack.Screen name="HRDashboard" component={HRDashboardScreen} />
-    <Stack.Screen name="Attendance" component={AttendanceScreen} />
-    <Stack.Screen name="Leave" component={LeaveScreen} />
-    <Stack.Screen name="EmployeeList" component={EmployeeListScreen} />
-  </Stack.Navigator>
+  <RoleGuard area="hr">
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen name="HRDashboard" component={HRDashboardScreen} />
+      <Stack.Screen name="Attendance" component={AttendanceScreen} />
+      <Stack.Screen name="Leave" component={LeaveScreen} />
+      <Stack.Screen name="EmployeeList" component={EmployeeListScreen} />
+    </Stack.Navigator>
+  </RoleGuard>
 );
 
-export const TabNavigator = () => (
-  <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.steel950 } }}>
-    <Tab.Screen name="Dashboard" component={DashboardScreen} />
-    <Tab.Screen name="Production" component={ProductionStack} />
-    <Tab.Screen name="Inventory" component={InventoryStack} />
-    <Tab.Screen name="HR" component={HRStack} options={{ tabBarLabel: "HR" }} />
-    <Tab.Screen name="More" component={EmptyMore} />
-  </Tab.Navigator>
-);
+export const TabNavigator = () => {
+  const { canAccessArea } = usePermissions();
+
+  return (
+    <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.steel950 } }}>
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      {canAccessArea("production") ? <Tab.Screen name="Production" component={ProductionStack} /> : null}
+      {canAccessArea("inventory") ? <Tab.Screen name="Inventory" component={InventoryStack} /> : null}
+      {canAccessArea("hr") ? <Tab.Screen name="HR" component={HRStack} options={{ tabBarLabel: "HR" }} /> : null}
+      <Tab.Screen name="More" component={EmptyMore} />
+    </Tab.Navigator>
+  );
+};

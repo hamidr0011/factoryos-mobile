@@ -1,6 +1,8 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStackNavigator, CardStyleInterpolators } from "@react-navigation/stack";
+import { RoleGuard } from "../components/auth/RoleGuard";
 import { CustomDrawer } from "../components/layout/Drawer";
+import { usePermissions } from "../hooks/usePermissions";
 import { TabNavigator } from "./TabNavigator";
 import { QualityCheckListScreen } from "../screens/quality/QualityCheckListScreen";
 import { InspectionFormScreen } from "../screens/quality/InspectionFormScreen";
@@ -26,44 +28,54 @@ const screenOptions = {
 };
 
 const QualityStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
-    <Stack.Screen name="QualityList" component={QualityCheckListScreen} />
-    <Stack.Screen name="InspectionForm" component={InspectionFormScreen} />
-    <Stack.Screen name="DefectReport" component={DefectReportScreen} />
-  </Stack.Navigator>
+  <RoleGuard area="quality">
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen name="QualityList" component={QualityCheckListScreen} />
+      <Stack.Screen name="InspectionForm" component={InspectionFormScreen} />
+      <Stack.Screen name="DefectReport" component={DefectReportScreen} />
+    </Stack.Navigator>
+  </RoleGuard>
 );
 
 const MaintenanceStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
-    <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} />
-    <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
-    <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
-  </Stack.Navigator>
+  <RoleGuard area="maintenance">
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen name="MaintenanceList" component={MaintenanceListScreen} />
+      <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
+      <Stack.Screen name="CreateTask" component={CreateTaskScreen} />
+    </Stack.Navigator>
+  </RoleGuard>
 );
 
 const FinanceStack = () => (
-  <Stack.Navigator screenOptions={screenOptions}>
-    <Stack.Screen name="FinanceDashboard" component={FinanceDashboardScreen} />
-    <Stack.Screen name="ExpenseList" component={ExpenseListScreen} />
-    <Stack.Screen name="Budget" component={BudgetScreen} />
-  </Stack.Navigator>
+  <RoleGuard area="finance">
+    <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Screen name="FinanceDashboard" component={FinanceDashboardScreen} />
+      <Stack.Screen name="ExpenseList" component={ExpenseListScreen} />
+      <Stack.Screen name="Budget" component={BudgetScreen} />
+    </Stack.Navigator>
+  </RoleGuard>
 );
 
-export const DrawerNavigator = () => (
-  <Drawer.Navigator
-    drawerContent={(props) => <CustomDrawer {...props} />}
-    screenOptions={{
-      headerShown: false,
-      drawerStyle: { backgroundColor: colors.steel950, width: 310 },
-      sceneStyle: { backgroundColor: colors.steel950 },
-    }}
-  >
-    <Drawer.Screen name="MainTabs" component={TabNavigator} />
-    <Drawer.Screen name="Quality" component={QualityStack} />
-    <Drawer.Screen name="Maintenance" component={MaintenanceStack} />
-    <Drawer.Screen name="Finance" component={FinanceStack} />
-    <Drawer.Screen name="Notifications" component={NotificationsScreen} />
-    <Drawer.Screen name="Profile" component={ProfileScreen} />
-    <Drawer.Screen name="Settings" component={SettingsScreen} />
-  </Drawer.Navigator>
-);
+export const DrawerNavigator = () => {
+  const { canAccessArea } = usePermissions();
+
+  return (
+    <Drawer.Navigator
+      drawerContent={(props) => <CustomDrawer {...props} />}
+      screenOptions={{
+        headerShown: false,
+        drawerStyle: { backgroundColor: colors.steel950, width: 310 },
+        sceneStyle: { backgroundColor: colors.steel950 },
+      }}
+    >
+      <Drawer.Screen name="MainTabs" component={TabNavigator} />
+      {canAccessArea("quality") ? <Drawer.Screen name="Quality" component={QualityStack} /> : null}
+      {canAccessArea("maintenance") ? <Drawer.Screen name="Maintenance" component={MaintenanceStack} /> : null}
+      {canAccessArea("finance") ? <Drawer.Screen name="Finance" component={FinanceStack} /> : null}
+      {canAccessArea("notifications") ? <Drawer.Screen name="Notifications" component={NotificationsScreen} /> : null}
+      <Drawer.Screen name="Profile" component={ProfileScreen} />
+      {canAccessArea("settings") ? <Drawer.Screen name="Settings" component={SettingsScreen} /> : null}
+    </Drawer.Navigator>
+  );
+};

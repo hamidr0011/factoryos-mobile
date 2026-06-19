@@ -2,6 +2,7 @@ import { Bell, Database, Shield, UserPlus } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { Card } from "../../components/ui/Card";
 import { colors, spacing, typography } from "../../utils/constants";
+import { roleDescriptions, roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
 const rows = [
@@ -10,13 +11,7 @@ const rows = [
   { title: "Role Permissions", subtitle: "Admin, manager, supervisor, operator, viewer", icon: Shield },
 ];
 
-const roleMatrix = [
-  { role: "admin", access: "Create accounts, assign all roles, budgets, and system controls" },
-  { role: "manager", access: "Department oversight, approvals, reports, and production control" },
-  { role: "supervisor", access: "Floor execution, inspections, maintenance, and attendance review" },
-  { role: "operator", access: "Assigned orders, stock movement, clock-in, and task completion" },
-  { role: "viewer", access: "Read-only dashboards and operational visibility" },
-];
+const roleMatrix = (Object.keys(roleLabels) as Array<keyof typeof roleLabels>).map((role) => ({ role, access: roleDescriptions[role] }));
 
 export const SettingsScreen = () => {
   return (
@@ -48,7 +43,7 @@ export const SettingsScreen = () => {
         </View>
         {roleMatrix.map((item) => (
           <View key={item.role} style={styles.roleRow}>
-            <Text style={styles.roleName}>{item.role}</Text>
+            <Text style={styles.roleName}>{roleLabels[item.role]}</Text>
             <Text style={styles.roleAccess}>{item.access}</Text>
           </View>
         ))}

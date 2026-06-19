@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "@react-navigation/native";
-import { Play, Wrench } from "lucide-react-native";
+import { Pause, Play, Wrench } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -14,7 +14,7 @@ import type { MaintenanceTask } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const TaskDetailScreen = () => {
   const queryClient = useQueryClient();
@@ -25,6 +25,44 @@ export const TaskDetailScreen = () => {
   const [actualHours, setActualHours] = useState(task?.estimated_hours ? task.estimated_hours.toString() : "");
   const [workNotes, setWorkNotes] = useState("");
   const [followUp, setFollowUp] = useState("");
+  
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (timerRunning) {
+      interval = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (interval) clearInterval(interval);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerRunning]);
+
+  const formatTimer = (totalSeconds: number) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return [
+      hrs.toString().padStart(2, "0"),
+      mins.toString().padStart(2, "0"),
+      secs.toString().padStart(2, "0"),
+    ].join(":");
+  };
+
+  const openCompletionSheet = () => {
+    setTimerRunning(false);
+    if (elapsedSeconds > 0) {
+      const hrs = Math.max(0.01, Number((elapsedSeconds / 3600).toFixed(2)));
+      setActualHours(hrs.toString());
+    }
+    setComplete(true);
+  };
+
   const completeMutation = useMutation({
     mutationFn: () => {
       if (!task) throw new Error("No maintenance task selected.");
@@ -93,8 +131,18 @@ export const TaskDetailScreen = () => {
       </Card>
 
       <View style={styles.actions}>
-        <Button title="Start Timer" icon={<Play color={colors.steel950} size={18} />} />
-        <Button title="Mark Complete" variant="secondary" icon={<Wrench color={colors.steel100} size={18} />} onPress={() => setComplete(true)} />
+        <Button
+          title={timerRunning ? `Pause Timer (${formatTimer(elapsedSeconds)})` : "Start Timer"}
+          variant={timerRunning ? "danger" : "primary"}
+          icon={timerRunning ? <Pause color={colors.steel950} size={18} /> : <Play color={colors.steel950} size={18} />}
+          onPress={() => setTimerRunning(!timerRunning)}
+        />
+        <Button
+          title="Mark Complete"
+          variant="secondary"
+          icon={<Wrench color={colors.steel100} size={18} />}
+          onPress={openCompletionSheet}
+        />
       </View>
 
       <BottomSheet visible={complete} onClose={() => setComplete(false)}>

@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react";
-import type { Profile } from "../types";
 import { authService } from "../services/auth.service";
 import { isSupabaseConfigured, supabase } from "../services/supabase";
 import { useAuthStore } from "../store/authStore";
@@ -22,15 +21,19 @@ export const useAuth = () => {
 
       const userId = data.session?.user.id;
       if (userId) {
-        const { data: found } = await supabase.from("profiles").select("*").eq("id", userId).single<Profile>();
-        if (mounted) setProfile(found || null);
+        const found = await authService.getProfile(userId);
+        if (mounted) setProfile(found);
+      } else {
+        setProfile(null);
       }
       if (mounted) setHydrated(true);
     };
 
     hydrate();
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession);
+      const userId = nextSession?.user.id;
+      setProfile(userId ? await authService.getProfile(userId) : null);
     });
 
     return () => {

@@ -39,11 +39,6 @@ export const ProductionListScreen = () => {
       subtitle="Plan, run, and close work orders"
       navigationMode="drawer"
       scroll={false}
-      action={
-        <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("OrderDetail")}>
-          <Plus color={colors.steel950} size={22} />
-        </Pressable>
-      }
     >
       <SearchField value={search} onChangeText={setSearch} placeholder="Search order or product" />
       <ChipRow items={filters} active={filter} onChange={setFilter} />

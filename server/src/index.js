@@ -26,6 +26,38 @@ app.use(
 );
 
 const roles = ["admin", "manager", "supervisor", "operator", "viewer"];
+const appAreas = ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"];
+const roleAreaAccess = {
+  admin: appAreas,
+  manager: appAreas,
+  supervisor: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"],
+  operator: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
+  viewer: ["dashboard", "production", "inventory", "quality", "maintenance", "finance", "notifications"],
+};
+const roleWriteAccess = {
+  admin: appAreas,
+  manager: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
+  supervisor: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
+  operator: ["production", "inventory", "quality", "hr", "maintenance", "finance"],
+  viewer: [],
+};
+const roleApprovalAccess = {
+  admin: appAreas,
+  manager: ["hr", "finance", "production", "quality", "maintenance"],
+  supervisor: ["hr", "finance", "quality", "maintenance"],
+  operator: [],
+  viewer: [],
+};
+const roleAccessMatrix = roles.flatMap((role) =>
+  appAreas.map((area) => ({
+    role,
+    area,
+    canRead: roleAreaAccess[role].includes(area),
+    canWrite: roleWriteAccess[role].includes(area),
+    canApprove: roleApprovalAccess[role].includes(area),
+    canAdmin: role === "admin",
+  })),
+);
 const uuid = z.string().uuid();
 const optionalText = z.string().trim().min(1).optional();
 
@@ -74,7 +106,11 @@ const requireAuth = asyncRoute(async (req, res, next) => {
 const requireRoles = (allowedRoles) => (req, res, next) => {
   const role = req.profile?.role || "viewer";
   if (!allowedRoles.includes(role)) {
-    res.status(403).json({ error: `Requires one of: ${allowedRoles.join(", ")}.` });
+    res.status(403).json({
+      error: `Requires one of: ${allowedRoles.join(", ")}.`,
+      currentRole: role,
+      requiredRoles: allowedRoles,
+    });
     return;
   }
   next();
@@ -97,6 +133,14 @@ const accountSchema = z.object({
 
 const createUserSchema = accountSchema.extend({
   role: z.enum(roles),
+});
+
+const updateUserProfileSchema = z.object({
+  fullName: z.string().trim().min(2).optional(),
+  role: z.enum(roles).optional(),
+  department: z.string().trim().min(2).optional(),
+  employeeId: z.string().trim().min(2).optional(),
+  avatarUrl: z.string().trim().url().optional().nullable(),
 });
 
 const getAdminCount = async () => {
@@ -218,6 +262,17 @@ app.get("/api/me", (req, res) => {
   });
 });
 
+app.get("/api/role-access", (req, res) => {
+  const role = req.profile?.role || "viewer";
+  res.json({
+    data: {
+      role,
+      matrix: roleAccessMatrix,
+      currentRoleAccess: roleAccessMatrix.filter((row) => row.role === role),
+    },
+  });
+});
+
 app.post(
   "/api/admin/users",
   requireRoles(["admin"]),
@@ -228,6 +283,47 @@ app.post(
     res.status(201).json({
       data: result,
     });
+  }),
+);
+
+app.patch(
+  "/api/admin/users/:userId/profile",
+  requireRoles(["admin"]),
+  asyncRoute(async (req, res) => {
+    const params = z.object({ userId: uuid }).parse(req.params);
+    const input = body(updateUserProfileSchema, req);
+    const profilePatch = {
+      ...(input.fullName ? { full_name: input.fullName } : {}),
+      ...(input.role ? { role: input.role } : {}),
+      ...(input.department ? { department: input.department } : {}),
+      ...(input.employeeId ? { employee_id: input.employeeId } : {}),
+      ...(input.avatarUrl !== undefined ? { avatar_url: input.avatarUrl } : {}),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: profile, error } = await adminSupabase
+      .from("profiles")
+      .update(profilePatch)
+      .eq("id", params.userId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    const appMetadata = {
+      ...(input.role ? { role: input.role } : {}),
+      ...(input.department ? { department: input.department } : {}),
+      ...(input.employeeId ? { employee_id: input.employeeId } : {}),
+    };
+
+    if (Object.keys(appMetadata).length > 0) {
+      const { error: authError } = await adminSupabase.auth.admin.updateUserById(params.userId, {
+        app_metadata: appMetadata,
+      });
+      if (authError) throw authError;
+    }
+
+    res.json({ data: profile });
   }),
 );
 

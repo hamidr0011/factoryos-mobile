@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
-import { Badge } from "../../components/ui/Badge";
 import { hrService } from "../../services/hr.service";
 import { inventoryService } from "../../services/inventory.service";
 import { maintenanceService } from "../../services/maintenance.service";
@@ -19,30 +18,57 @@ export const CreateTaskScreen = () => {
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const showToast = useAppStore((state) => state.showToast);
+  
   const [type, setType] = useState("Preventive");
   const [priority, setPriority] = useState("High");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [estimatedHours, setEstimatedHours] = useState("");
+  
+  const [selectedMachineId, setSelectedMachineId] = useState("");
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState("");
+  const [selectedPartIds, setSelectedPartIds] = useState<string[]>([]);
+
   const { data: machineData = [] } = useQuery({ queryKey: ["machines"], queryFn: productionService.getMachines });
   const { data: employeeData = [] } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
   const { data: inventoryData = [] } = useQuery({ queryKey: ["inventory_items"], queryFn: inventoryService.getItems });
-  const machine = (machineData as Machine[])[0];
-  const technician = (employeeData as Profile[]).find((employee) => employee.role === "operator" || employee.role === "supervisor");
-  const parts = (inventoryData as InventoryItem[]).slice(0, 2);
+
+  const machines = (machineData || []) as Machine[];
+  const technicians = useMemo(
+    () => ((employeeData || []) as Profile[]).filter((e) => e.role === "operator" || e.role === "supervisor" || e.role === "manager"),
+    [employeeData],
+  );
+  const spareParts = (inventoryData || []) as InventoryItem[];
+
+  useEffect(() => {
+    if (machines.length && !selectedMachineId) {
+      setSelectedMachineId(machines[0].id);
+    }
+  }, [machines, selectedMachineId]);
+
+  useEffect(() => {
+    if (technicians.length && !selectedTechnicianId) {
+      setSelectedTechnicianId(technicians[0].id);
+    }
+  }, [technicians, selectedTechnicianId]);
+
+  const selectedMachine = machines.find((m) => m.id === selectedMachineId) || machines[0];
+  const selectedTechnician = technicians.find((t) => t.id === selectedTechnicianId) || technicians[0];
+  const selectedParts = spareParts.filter((p) => selectedPartIds.includes(p.id));
+
   const taskMutation = useMutation({
     mutationFn: () =>
       maintenanceService.createTask({
-        machineId: machine!.id,
+        machineId: selectedMachine!.id,
         type: type.toLowerCase() as "preventive" | "corrective" | "emergency" | "inspection",
         priority: priority.toLowerCase() as "low" | "medium" | "high" | "critical",
         title,
         description,
-        assignedTo: technician!.id,
+        assignedTo: selectedTechnician!.id,
         scheduledDate,
         estimatedHours: Number(estimatedHours),
-        partsUsed: parts.map((item) => ({ sku: item.sku, quantity: 1, unit_cost: item.unit_cost })),
+        partsUsed: selectedParts.map((item) => ({ sku: item.sku, quantity: 1, unit_cost: item.unit_cost })),
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["maintenance_tasks"] });
@@ -56,12 +82,12 @@ export const CreateTaskScreen = () => {
 
   const submitTask = () => {
     const hours = Number(estimatedHours);
-    if (!machine) {
-      showToast("warning", "Add a machine before creating maintenance tasks.");
+    if (!selectedMachine) {
+      showToast("warning", "Select a machine before creating maintenance tasks.");
       return;
     }
-    if (!technician) {
-      showToast("warning", "Create an operator or supervisor account before assigning tasks.");
+    if (!selectedTechnician) {
+      showToast("warning", "Assign a technician before creating tasks.");
       return;
     }
     if (!title.trim() || !Number.isFinite(hours) || hours <= 0) {
@@ -73,12 +99,23 @@ export const CreateTaskScreen = () => {
 
   return (
     <ScreenContainer title="Create Task" subtitle="Schedule maintenance work">
-      <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Machine</Text>
-        <DetailRow label="Selected" value={machine?.name || "No machine available"} />
-        <DetailRow label="Current status" value={machine?.status || "Unavailable"} />
-        <DetailRow label="Location" value={machine?.location || "Unavailable"} />
-      </Card>
+      {machines.length ? (
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Select Machine</Text>
+          <ChipRow
+            items={machines.map((m) => m.name)}
+            active={selectedMachine?.name || ""}
+            onChange={(name) => {
+              const found = machines.find((m) => m.name === name);
+              if (found) setSelectedMachineId(found.id);
+            }}
+          />
+          <DetailRow label="Selected Machine Code" value={selectedMachine?.machine_code || "N/A"} />
+          <DetailRow label="Current Status" value={selectedMachine?.status || "Unavailable"} />
+          <DetailRow label="Location" value={selectedMachine?.location || "Unavailable"} />
+        </Card>
+      ) : null}
+
       <Card style={styles.form}>
         <Text style={styles.label}>Task type</Text>
         <ChipRow items={["Preventive", "Corrective", "Emergency", "Inspection"]} active={type} onChange={setType} />
@@ -86,18 +123,53 @@ export const CreateTaskScreen = () => {
         <ChipRow items={["Low", "Medium", "High", "Critical"]} active={priority} onChange={setPriority} />
         <Input label="Title" value={title} onChangeText={setTitle} />
         <Input label="Description" placeholder="Task details" value={description} onChangeText={setDescription} />
-        <Input label="Schedule" value={scheduledDate} onChangeText={setScheduledDate} />
+        <Input label="Schedule" placeholder="YYYY-MM-DD HH:MM" value={scheduledDate} onChangeText={setScheduledDate} />
         <Input label="Estimated hours" keyboardType="numeric" value={estimatedHours} onChangeText={setEstimatedHours} />
       </Card>
+
+      {technicians.length ? (
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Technician Assignment</Text>
+          <ChipRow
+            items={technicians.map((t) => t.full_name)}
+            active={selectedTechnician?.full_name || ""}
+            onChange={(name) => {
+              const found = technicians.find((t) => t.full_name === name);
+              if (found) setSelectedTechnicianId(found.id);
+            }}
+          />
+          <DetailRow label="Technician Role" value={selectedTechnician?.role || "N/A"} />
+        </Card>
+      ) : null}
+
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Assignment</Text>
-        <DetailRow label="Technician" value={technician?.full_name || "No operator or supervisor available"} />
-        <View style={styles.parts}>
-          {parts.length ? parts.map((item) => (
-            <Badge key={item.id} label={item.sku} color={colors.inventory} />
-          )) : <Text style={styles.meta}>No linked inventory parts available.</Text>}
+        <Text style={styles.sectionTitle}>Spare Parts Linked</Text>
+        <View style={styles.partsGrid}>
+          {spareParts.length ? (
+            spareParts.map((item) => {
+              const isSelected = selectedPartIds.includes(item.id);
+              return (
+                <Pressable
+                  key={item.id}
+                  style={[styles.partChip, isSelected && styles.partChipActive]}
+                  onPress={() => {
+                    setSelectedPartIds((prev) =>
+                      isSelected ? prev.filter((id) => id !== item.id) : [...prev, item.id]
+                    );
+                  }}
+                >
+                  <Text style={[styles.partText, isSelected && styles.partTextActive]}>
+                    {item.sku} ({item.name})
+                  </Text>
+                </Pressable>
+              );
+            })
+          ) : (
+            <Text style={styles.meta}>No linked inventory parts available.</Text>
+          )}
         </View>
       </Card>
+      
       <Button title="Create Maintenance Task" loading={taskMutation.isPending} onPress={submitTask} />
     </ScreenContainer>
   );
@@ -129,5 +201,33 @@ const styles = StyleSheet.create({
     color: colors.steel500,
     fontFamily: typography.body,
     fontSize: 13,
+  },
+  partsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  partChip: {
+    alignItems: "center",
+    backgroundColor: colors.steel800,
+    borderColor: colors.steel700,
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 36,
+    justifyContent: "center",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+  },
+  partChipActive: {
+    backgroundColor: `${colors.inventory}22`,
+    borderColor: colors.inventory,
+  },
+  partText: {
+    color: colors.steel500,
+    fontFamily: typography.bodyMedium,
+    fontSize: 11,
+  },
+  partTextActive: {
+    color: colors.inventory,
   },
 });

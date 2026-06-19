@@ -1,18 +1,23 @@
 import { PropsWithChildren, ReactNode } from "react";
-import type { Role } from "../../types";
 import { usePermissions } from "../../hooks/usePermissions";
+import { AccessDeniedScreen } from "../../screens/settings/AccessDeniedScreen";
+import type { Role } from "../../types";
 import type { AccessLevel, AppArea } from "../../utils/permissions";
 
-interface PermissionGateProps extends PropsWithChildren {
+interface RoleGuardProps extends PropsWithChildren {
   roles?: Role[];
   area?: AppArea;
   level?: AccessLevel;
   fallback?: ReactNode;
 }
 
-export const PermissionGate = ({ roles, area, level = "read", fallback = null, children }: PermissionGateProps) => {
+export const RoleGuard = ({ roles, area, level = "read", fallback, children }: RoleGuardProps) => {
   const { can, canAccessArea } = usePermissions();
   const allowed = roles ? can(roles) : area ? canAccessArea(area, level) : true;
-  if (!allowed) return <>{fallback}</>;
+
+  if (!allowed) {
+    return <>{fallback || <AccessDeniedScreen area={area} level={level} />}</>;
+  }
+
   return <>{children}</>;
 };

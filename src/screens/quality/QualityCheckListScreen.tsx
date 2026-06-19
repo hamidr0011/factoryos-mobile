@@ -3,6 +3,7 @@ import { Plus } from "lucide-react-native";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { PermissionGate } from "../../components/ui/PermissionGate";
 import { qualityService } from "../../services/quality.service";
 import type { QualityCheck } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
@@ -20,9 +21,11 @@ export const QualityCheckListScreen = () => {
       navigationMode="drawer"
       scroll={false}
       action={
-        <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("InspectionForm")}>
-          <Plus color={colors.steel950} size={22} />
-        </Pressable>
+        <PermissionGate area="quality" level="write">
+          <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("InspectionForm")}>
+            <Plus color={colors.steel950} size={22} />
+          </Pressable>
+        </PermissionGate>
       }
     >
       <View style={styles.metrics}>
@@ -34,13 +37,21 @@ export const QualityCheckListScreen = () => {
         data={checks}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="quality" title="No inspections today" subtitle="Start an inspection" cta="New inspection" onPress={() => navigation.navigate("InspectionForm")} />}
+        ListEmptyComponent={
+          <PermissionGate
+            area="quality"
+            level="write"
+            fallback={<EmptyState variant="quality" title="No inspections today" subtitle="Inspections will appear here when submitted by the floor team." />}
+          >
+            <EmptyState variant="quality" title="No inspections today" subtitle="Start an inspection" cta="New inspection" onPress={() => navigation.navigate("InspectionForm")} />
+          </PermissionGate>
+        }
         renderItem={({ item }) => {
           const passRate = item.total_inspected ? (item.passed / item.total_inspected) * 100 : 0;
           return (
             <WorkCard
               title={`Batch ${item.batch_number}`}
-              eyebrow={item.order?.order_number ? `Order ${item.order.order_number}` : `Order ${item.order_id.slice(0, 8)}...`}
+              eyebrow={item.order?.order_number ? `Order ${item.order.order_number}` : `Order ${(item.order_id || "").slice(0, 8)}...`}
               status={item.status}
               accentColor={item.status === "fail" ? colors.maintenance : item.status === "conditional" ? colors.amber400 : colors.inventory}
             >

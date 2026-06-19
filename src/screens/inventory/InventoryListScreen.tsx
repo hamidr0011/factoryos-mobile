@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { PermissionGate } from "../../components/ui/PermissionGate";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { inventoryService } from "../../services/inventory.service";
 import type { InventoryItem } from "../../types";
@@ -38,9 +39,11 @@ export const InventoryListScreen = () => {
       navigationMode="drawer"
       scroll={false}
       action={
-        <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("StockTransaction")}>
-          <Plus color={colors.steel950} size={22} />
-        </Pressable>
+        <PermissionGate area="inventory" level="write">
+          <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("StockTransaction")}>
+            <Plus color={colors.steel950} size={22} />
+          </Pressable>
+        </PermissionGate>
       }
     >
       <View style={styles.metrics}>
@@ -55,7 +58,7 @@ export const InventoryListScreen = () => {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="inventory" title="Inventory is empty" subtitle="Add your first item" cta="Add item" />}
+        ListEmptyComponent={<EmptyState variant="inventory" title="Inventory is empty" subtitle="Add your first item" />}
         renderItem={({ item }) => {
           const stockRatio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 0;
           const danger = item.quantity_on_hand <= 0;

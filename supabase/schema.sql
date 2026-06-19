@@ -1167,3 +1167,90 @@ revoke execute on function public.notify_roles(text[], text, text, text, text) f
 revoke execute on function public.apply_expense_budget() from authenticated;
 revoke execute on function public.apply_inventory_transaction() from authenticated;
 revoke execute on function public.handle_new_user() from authenticated;
+
+-- ROLE-BASED ACCESS MVP
+alter table profiles add column if not exists updated_at timestamptz default now();
+
+create table if not exists role_access_matrix (
+  id uuid primary key default gen_random_uuid(),
+  role text not null check (role in ('admin','manager','supervisor','operator','viewer')),
+  area text not null check (area in ('dashboard','production','inventory','quality','hr','maintenance','finance','notifications','settings')),
+  can_read boolean not null default false,
+  can_write boolean not null default false,
+  can_approve boolean not null default false,
+  can_admin boolean not null default false,
+  created_at timestamptz not null default now(),
+  unique(role, area)
+);
+
+alter table role_access_matrix enable row level security;
+
+grant select on role_access_matrix to authenticated;
+grant all on role_access_matrix to service_role;
+
+drop policy if exists "role matrix own role read" on role_access_matrix;
+create policy "role matrix own role read"
+on role_access_matrix for select
+using (role = public.current_profile_role() or public.current_profile_role() = 'admin');
+
+drop policy if exists "role matrix admin manage" on role_access_matrix;
+create policy "role matrix admin manage"
+on role_access_matrix for all
+using (public.current_profile_role() = 'admin')
+with check (public.current_profile_role() = 'admin');
+
+insert into role_access_matrix(role, area, can_read, can_write, can_approve, can_admin)
+values
+  ('admin','dashboard',true,true,true,true),
+  ('admin','production',true,true,true,true),
+  ('admin','inventory',true,true,true,true),
+  ('admin','quality',true,true,true,true),
+  ('admin','hr',true,true,true,true),
+  ('admin','maintenance',true,true,true,true),
+  ('admin','finance',true,true,true,true),
+  ('admin','notifications',true,true,true,true),
+  ('admin','settings',true,true,true,true),
+  ('manager','dashboard',true,false,false,false),
+  ('manager','production',true,true,true,false),
+  ('manager','inventory',true,true,false,false),
+  ('manager','quality',true,true,true,false),
+  ('manager','hr',true,true,true,false),
+  ('manager','maintenance',true,true,true,false),
+  ('manager','finance',true,true,true,false),
+  ('manager','notifications',true,true,false,false),
+  ('manager','settings',true,false,false,false),
+  ('supervisor','dashboard',true,false,false,false),
+  ('supervisor','production',true,true,false,false),
+  ('supervisor','inventory',true,true,false,false),
+  ('supervisor','quality',true,true,true,false),
+  ('supervisor','hr',true,true,true,false),
+  ('supervisor','maintenance',true,true,true,false),
+  ('supervisor','finance',true,true,true,false),
+  ('supervisor','notifications',true,true,false,false),
+  ('supervisor','settings',true,false,false,false),
+  ('operator','dashboard',true,false,false,false),
+  ('operator','production',true,true,false,false),
+  ('operator','inventory',true,true,false,false),
+  ('operator','quality',true,true,false,false),
+  ('operator','hr',true,true,false,false),
+  ('operator','maintenance',true,true,false,false),
+  ('operator','finance',true,true,false,false),
+  ('operator','notifications',true,false,false,false),
+  ('operator','settings',false,false,false,false),
+  ('viewer','dashboard',true,false,false,false),
+  ('viewer','production',true,false,false,false),
+  ('viewer','inventory',true,false,false,false),
+  ('viewer','quality',true,false,false,false),
+  ('viewer','hr',false,false,false,false),
+  ('viewer','maintenance',true,false,false,false),
+  ('viewer','finance',true,false,false,false),
+  ('viewer','notifications',true,false,false,false),
+  ('viewer','settings',false,false,false,false)
+on conflict (role, area) do update
+set can_read = excluded.can_read,
+    can_write = excluded.can_write,
+    can_approve = excluded.can_approve,
+    can_admin = excluded.can_admin;
+
+grant execute on function public.current_profile_role() to authenticated;
+grant execute on function public.current_profile_department() to authenticated;

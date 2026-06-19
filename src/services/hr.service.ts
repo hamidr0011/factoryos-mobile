@@ -25,6 +25,17 @@ export const hrService = {
     });
   },
 
+  async updateAccount(userId: string, input: { fullName?: string; role?: Role; department?: string; employeeId?: string; avatarUrl?: string | null }) {
+    if (!isApiConfigured) {
+      throw new Error("Render API is required to update account access securely.");
+    }
+
+    return apiRequest(`/api/admin/users/${userId}/profile`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
+  },
+
   async clockIn(shiftId?: string) {
     return apiRequest("/api/hr/clock-in", {
       method: "POST",

@@ -90,9 +90,11 @@ export const ExpenseListScreen = () => {
       subtitle="Approvals and receipts"
       scroll={false}
       action={
-        <Pressable style={styles.fabSmall} onPress={() => setCreateOpen(true)}>
-          <Plus color={colors.steel950} size={22} />
-        </Pressable>
+        <PermissionGate area="finance" level="write">
+          <Pressable style={styles.fabSmall} onPress={() => setCreateOpen(true)}>
+            <Plus color={colors.steel950} size={22} />
+          </Pressable>
+        </PermissionGate>
       }
     >
       <SearchField value={search} onChangeText={setSearch} placeholder="Search expenses" />
@@ -101,7 +103,7 @@ export const ExpenseListScreen = () => {
         data={expenses}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="finance" title="No expenses recorded" subtitle="Log your first expense" cta="New expense" />}
+        ListEmptyComponent={<EmptyState variant="finance" title="No expenses recorded" subtitle="Finance activity will appear here after expenses are submitted." />}
         renderItem={({ item }) => (
           <WorkCard title={item.description} eyebrow={`${item.category} · ${formatDate(item.date)}`} status={item.status} accentColor={item.status === "pending" ? colors.amber400 : item.status === "rejected" ? colors.maintenance : colors.finance}>
             <View style={styles.row}>
@@ -109,7 +111,7 @@ export const ExpenseListScreen = () => {
               <Text style={styles.meta}>{item.department}</Text>
             </View>
             {item.status === "pending" ? (
-              <PermissionGate roles={["admin", "manager", "supervisor"]}>
+              <PermissionGate area="finance" level="approve">
                 <View style={styles.reviewRow}>
                   <Button title="Approve" variant="secondary" style={styles.reviewButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "approved" })} />
                   <Button title="Reject" variant="ghost" style={styles.reviewButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "rejected" })} />
@@ -117,7 +119,7 @@ export const ExpenseListScreen = () => {
               </PermissionGate>
             ) : null}
             {item.status === "approved" ? (
-              <PermissionGate roles={["admin", "manager", "supervisor"]}>
+              <PermissionGate area="finance" level="approve">
                 <Button title="Mark Paid" variant="secondary" loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "paid" })} />
               </PermissionGate>
             ) : null}

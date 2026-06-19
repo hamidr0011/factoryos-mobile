@@ -6,6 +6,7 @@ import { LoginScreen } from "../screens/auth/LoginScreen";
 import { DrawerNavigator } from "./DrawerNavigator";
 import { useAuth } from "../hooks/useAuth";
 import { colors } from "../utils/constants";
+import { ParticleLoader } from "../components/3d/ParticleLoader";
 
 const Stack = createStackNavigator();
 
@@ -22,7 +23,11 @@ const theme = {
 };
 
 export const AppNavigator = () => {
-  const { isAuthenticated } = useAuth();
+  const { hydrated, isAuthenticated } = useAuth();
+
+  if (!hydrated) {
+    return <ParticleLoader visible message="Loading secure workspace" />;
+  }
 
   return (
     <NavigationContainer theme={theme}>

@@ -3,13 +3,17 @@ import { LogOut, Settings } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../hooks/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 import { colors, modules, spacing, typography } from "../../utils/constants";
+import { roleLabels } from "../../utils/permissions";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
 export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
   const insets = useSafeAreaInsets();
   const { profile, logout } = useAuth();
+  const { canAccessArea, userRole } = usePermissions();
   const tabModules = new Set(["Production", "Inventory", "HR"]);
+  const visibleModules = modules.filter((module) => canAccessArea(module.id));
 
   const openModule = (screen: string) => {
     if (tabModules.has(screen)) {
@@ -29,13 +33,13 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
         <View>
           <Text style={styles.name}>{profile?.full_name || "FactoryOS User"}</Text>
           <Text style={styles.meta}>
-            {profile?.role || "viewer"} · {profile?.department || "Operations"}
+            {roleLabels[profile?.role || userRole]} · {profile?.department || "Operations"}
           </Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        {modules.map((module) => (
+        {visibleModules.map((module) => (
           <Pressable key={module.id} style={styles.item} onPress={() => openModule(module.screen)}>
             <View style={[styles.moduleIcon, { backgroundColor: `${module.color}12`, borderColor: `${module.color}30` }]}>
               <ModuleIconMark id={module.id} color={module.color} size={28} />
@@ -47,10 +51,12 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
       </View>
 
       <View style={styles.footer}>
-        <Pressable style={styles.footerItem} onPress={() => navigation.navigate("Settings")}>
-          <Settings color={colors.steel300} size={19} />
-          <Text style={styles.footerText}>Settings</Text>
-        </Pressable>
+        {canAccessArea("settings") ? (
+          <Pressable style={styles.footerItem} onPress={() => navigation.navigate("Settings")}>
+            <Settings color={colors.steel300} size={19} />
+            <Text style={styles.footerText}>Settings</Text>
+          </Pressable>
+        ) : null}
         <Pressable style={styles.footerItem} onPress={logout}>
           <LogOut color={colors.amber400} size={19} />
           <Text style={[styles.footerText, { color: colors.amber400 }]}>Logout</Text>

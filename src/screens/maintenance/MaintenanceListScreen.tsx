@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { PermissionGate } from "../../components/ui/PermissionGate";
 import { maintenanceService } from "../../services/maintenance.service";
 import type { MaintenanceTask } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
@@ -38,9 +39,11 @@ export const MaintenanceListScreen = () => {
           <Pressable style={styles.iconButton} onPress={() => setCalendar((value) => !value)}>
             {calendar ? <List color={colors.steel100} size={20} /> : <CalendarDays color={colors.steel100} size={20} />}
           </Pressable>
-          <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("CreateTask")}>
-            <Plus color={colors.steel950} size={22} />
-          </Pressable>
+          <PermissionGate area="maintenance" level="write">
+            <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("CreateTask")}>
+              <Plus color={colors.steel950} size={22} />
+            </Pressable>
+          </PermissionGate>
         </View>
       }
     >
@@ -59,7 +62,7 @@ export const MaintenanceListScreen = () => {
           data={tasks}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<EmptyState variant="maintenance" title="All machines running" subtitle="Schedule preventive maintenance" cta="Create task" />}
+          ListEmptyComponent={<EmptyState variant="maintenance" title="All machines running" subtitle="Schedule preventive maintenance" />}
           renderItem={({ item }) => (
             <WorkCard
               title={item.title}

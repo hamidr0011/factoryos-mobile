@@ -13,6 +13,7 @@ import { Header } from "../../components/layout/Header";
 import { SectionHeader } from "../../components/layout/SectionHeader";
 import { ModuleIconMark } from "../../components/visuals/ModuleArtwork";
 import { useRealtime } from "../../hooks/useRealtime";
+import { usePermissions } from "../../hooks/usePermissions";
 import { financeService } from "../../services/finance.service";
 import { hrService } from "../../services/hr.service";
 import { inventoryService } from "../../services/inventory.service";
@@ -23,6 +24,7 @@ import { qualityService } from "../../services/quality.service";
 import { useAppStore } from "../../store/appStore";
 import type { AttendanceRecord, Budget, FactoryNotification, InventoryItem, Machine, MaintenanceTask, ProductionOrder, QualityCheck } from "../../types";
 import { colors, modules, spacing, typography } from "../../utils/constants";
+import { moduleDeniedMessage } from "../../utils/permissions";
 import { ProgressBar } from "../shared/ScreenScaffold";
 
 const CountUpValue = ({ value }: { value: string }) => {
@@ -36,6 +38,7 @@ const percent = (value: number, total: number) => (total > 0 ? Math.round((value
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
+  const { canAccessArea, userRole } = usePermissions();
   const notifications = useAppStore((state) => state.notifications);
   const setNotifications = useAppStore((state) => state.setNotifications);
   const addNotification = useAppStore((state) => state.addNotification);
@@ -57,6 +60,9 @@ export const DashboardScreen = () => {
   const budgetData = (budgetQuery.data || []) as Budget[];
 
   const openModule = (screen: string) => {
+    const target = modules.find((module) => module.screen === screen);
+    if (target && !canAccessArea(target.id)) return;
+
     if (tabModules.has(screen)) {
       navigation.navigate(screen);
       return;
@@ -173,19 +179,20 @@ export const DashboardScreen = () => {
           <View style={styles.moduleGrid}>
             {modules.map((module) => {
               const stats = moduleStats[module.id];
+              const locked = !canAccessArea(module.id);
               return (
-                <Pressable key={module.id} style={styles.modulePressable} onPress={() => openModule(module.screen)}>
-                  <Animated.View entering={FadeIn.duration(260)} style={[styles.moduleCard, { borderLeftColor: module.color }]}>
+                <Pressable key={module.id} style={styles.modulePressable} onPress={() => openModule(module.screen)} disabled={locked}>
+                  <Animated.View entering={FadeIn.duration(260)} style={[styles.moduleCard, locked && styles.moduleCardLocked, { borderLeftColor: locked ? colors.steel700 : module.color }]}>
                     <View style={styles.moduleTop}>
                       <View style={[styles.moduleIcon, { backgroundColor: `${module.color}16`, borderColor: `${module.color}40` }]}>
-                        <ModuleIconMark id={module.id} color={module.color} size={38} />
+                        <ModuleIconMark id={module.id} color={locked ? colors.steel500 : module.color} size={38} />
                       </View>
-                      <Text style={[styles.moduleStat, { color: module.color }]}>{stats.stat}</Text>
+                      <Text style={[styles.moduleStat, { color: locked ? colors.steel500 : module.color }]}>{locked ? "Locked" : stats.stat}</Text>
                     </View>
                     <Text style={styles.moduleLabel}>{module.label}</Text>
-                    <Text style={styles.moduleDelta}>{stats.delta}</Text>
+                    <Text style={styles.moduleDelta}>{locked ? moduleDeniedMessage(userRole, module.id) : stats.delta}</Text>
                     <View style={[styles.moduleRail, { backgroundColor: `${module.color}33` }]}>
-                      <View style={[styles.moduleRailFill, { backgroundColor: module.color, width: `${Math.min(Math.max(stats.fill, 0), 100)}%` }]} />
+                      <View style={[styles.moduleRailFill, { backgroundColor: locked ? colors.steel500 : module.color, width: locked ? "0%" : `${Math.min(Math.max(stats.fill, 0), 100)}%` }]} />
                     </View>
                   </Animated.View>
                 </Pressable>
@@ -300,6 +307,9 @@ const styles = StyleSheet.create({
     minHeight: 154,
     padding: spacing.md,
     width: "100%",
+  },
+  moduleCardLocked: {
+    opacity: 0.62,
   },
   moduleTop: {
     alignItems: "center",
