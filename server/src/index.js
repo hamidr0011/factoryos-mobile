@@ -262,16 +262,36 @@ app.get("/api/me", (req, res) => {
   });
 });
 
-app.get("/api/role-access", (req, res) => {
-  const role = req.profile?.role || "viewer";
-  res.json({
-    data: {
-      role,
-      matrix: roleAccessMatrix,
-      currentRoleAccess: roleAccessMatrix.filter((row) => row.role === role),
-    },
-  });
-});
+app.get(
+  "/api/role-access",
+  asyncRoute(async (req, res) => {
+    const role = req.profile?.role || "viewer";
+    const { data, error } = await adminSupabase
+      .from("role_access_matrix")
+      .select("role,area,can_read,can_write,can_approve,can_admin")
+      .order("role")
+      .order("area");
+    const matrix = error || !data?.length
+      ? roleAccessMatrix
+      : data.map((row) => ({
+          role: row.role,
+          area: row.area,
+          canRead: row.can_read,
+          canWrite: row.can_write,
+          canApprove: row.can_approve,
+          canAdmin: row.can_admin,
+        }));
+
+    res.json({
+      data: {
+        role,
+        source: error ? "api-fallback" : "database",
+        matrix,
+        currentRoleAccess: matrix.filter((row) => row.role === role),
+      },
+    });
+  }),
+);
 
 app.post(
   "/api/admin/users",

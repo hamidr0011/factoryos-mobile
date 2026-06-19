@@ -67,7 +67,9 @@ export const LoginScreen = () => {
   };
 
   const handleLogin = async () => {
-    if (!isEmail(email)) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!isEmail(normalizedEmail)) {
       setError("Enter a valid email address.");
       triggerErrorMotion();
       return;
@@ -76,7 +78,7 @@ export const LoginScreen = () => {
     setError("");
     spin.value = withRepeat(withTiming(360, { duration: 900, easing: Easing.linear }), -1, false);
     try {
-      await signIn(email, password);
+      await signIn(normalizedEmail, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed. Check credentials.");
       triggerErrorMotion();

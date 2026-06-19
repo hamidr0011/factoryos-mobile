@@ -15,6 +15,7 @@ import { HRDashboardScreen } from "../screens/hr/HRDashboardScreen";
 import { AttendanceScreen } from "../screens/hr/AttendanceScreen";
 import { LeaveScreen } from "../screens/hr/LeaveScreen";
 import { EmployeeListScreen } from "../screens/hr/EmployeeListScreen";
+import { CreateStaffAccountScreen } from "../screens/hr/CreateStaffAccountScreen";
 import { colors } from "../utils/constants";
 
 const Tab = createBottomTabNavigator();
@@ -55,6 +56,7 @@ export const HRStack = () => (
       <Stack.Screen name="Attendance" component={AttendanceScreen} />
       <Stack.Screen name="Leave" component={LeaveScreen} />
       <Stack.Screen name="EmployeeList" component={EmployeeListScreen} />
+      <Stack.Screen name="CreateStaffAccount" component={CreateStaffAccountScreen} />
     </Stack.Navigator>
   </RoleGuard>
 );

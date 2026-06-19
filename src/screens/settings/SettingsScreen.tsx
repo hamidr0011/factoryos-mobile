@@ -1,6 +1,9 @@
 import { Bell, Database, Shield, UserPlus } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Card } from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { PermissionGate } from "../../components/ui/PermissionGate";
 import { colors, spacing, typography } from "../../utils/constants";
 import { roleDescriptions, roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
@@ -14,6 +17,8 @@ const rows = [
 const roleMatrix = (Object.keys(roleLabels) as Array<keyof typeof roleLabels>).map((role) => ({ role, access: roleDescriptions[role] }));
 
 export const SettingsScreen = () => {
+  const navigation = useNavigation<any>();
+
   return (
     <ScreenContainer title="Settings" subtitle="App controls and operational preferences" navigationMode="drawer">
       {rows.map((row) => {
@@ -41,6 +46,13 @@ export const SettingsScreen = () => {
             <Text style={styles.subtitle}>Open HR Employees, then tap + to create a user and assign a role.</Text>
           </View>
         </View>
+        <PermissionGate roles={["admin"]}>
+          <Button
+            title="Open Access Management"
+            icon={<UserPlus color={colors.steel950} size={18} />}
+            onPress={() => navigation.navigate("MainTabs", { screen: "HR", params: { screen: "EmployeeList" } })}
+          />
+        </PermissionGate>
         {roleMatrix.map((item) => (
           <View key={item.role} style={styles.roleRow}>
             <Text style={styles.roleName}>{roleLabels[item.role]}</Text>

@@ -70,7 +70,7 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {content}
         </ScrollView>
       ) : (

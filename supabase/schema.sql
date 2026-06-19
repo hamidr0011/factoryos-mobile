@@ -1152,6 +1152,29 @@ revoke execute on function public.notify_roles(text[], text, text, text, text) f
 
 grant execute on function public.current_profile_role() to authenticated;
 grant execute on function public.current_profile_department() to authenticated;
+
+create or replace function public.can_access_area(p_area text, p_level text default 'read')
+returns boolean
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.role_access_matrix ram
+    where ram.role = public.current_profile_role()
+      and ram.area = p_area
+      and case p_level
+        when 'admin' then ram.can_admin
+        when 'approve' then ram.can_approve or ram.can_admin
+        when 'write' then ram.can_write or ram.can_admin
+        else ram.can_read
+      end
+  );
+$$;
+
+grant execute on function public.can_access_area(text, text) to authenticated;
 grant execute on function public.create_audit_event(text, text, text, uuid, jsonb) to authenticated;
 grant execute on function public.create_notification(uuid, text, text, text, text) to authenticated;
 grant execute on function public.notify_roles(text[], text, text, text, text) to authenticated;
