@@ -18,32 +18,32 @@ export const BudgetScreen = () => {
   const spendData = budgetData.map((budget) => ({ label: (budget.department || "").slice(0, 8), value: Number(budget.spent || 0) }));
 
   return (
-    <ScreenContainer title="Budgets" subtitle="Department utilization and comparison">
+    <ScreenContainer title="Budgets">
       {budgetData.length ? budgetData.map((budget) => {
         const pct = budget.allocated > 0 ? (budget.spent / budget.allocated) * 100 : 0;
         const danger = pct > 100;
         return (
-          <Card key={budget.id} accentColor={danger ? colors.maintenance : colors.finance} style={styles.budgetCard}>
+          <Card key={budget.id} accentColor={danger ? colors.red : colors.blue} style={styles.budgetCard}>
             <View style={styles.budgetHead}>
               <View>
                 <Text style={styles.title}>{budget.department}</Text>
-                <Text style={styles.meta}>{formatCurrency(budget.spent)} spent · {formatCurrency(budget.allocated - budget.spent)} remaining</Text>
+                <Text numberOfLines={1} style={styles.meta}>{formatCurrency(budget.spent)} spent · {formatCurrency(budget.allocated - budget.spent)} remaining</Text>
               </View>
               <DonutChart
                 data={[
-                  { label: "Spent", value: budget.spent, color: danger ? colors.maintenance : colors.finance },
+                  { label: "Spent", value: budget.spent, color: danger ? colors.red : colors.blue },
                   { label: "Remaining", value: Math.max(0, budget.allocated - budget.spent), color: colors.steel700 },
                 ]}
               />
             </View>
-            <ProgressBar value={pct} color={danger ? colors.maintenance : colors.finance} />
+            <ProgressBar value={pct} color={danger ? colors.red : colors.blue} />
           </Card>
         );
-      }) : <EmptyState variant="finance" title="No budgets configured" subtitle="Admin-created department budgets will appear here." />}
+      }) : <EmptyState variant="finance" title="No budgets configured" />}
       {spendData.length ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Current Budget Spend</Text>
-          <BarChart data={spendData} color={colors.finance} />
+          <BarChart data={spendData} color={colors.blue} />
         </Card>
       ) : null}
     </ScreenContainer>

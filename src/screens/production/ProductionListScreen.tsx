@@ -36,7 +36,6 @@ export const ProductionListScreen = () => {
   return (
     <ScreenContainer
       title="Production Orders"
-      subtitle="Plan, run, and close work orders"
       navigationMode="drawer"
       scroll={false}
     >
@@ -48,17 +47,17 @@ export const ProductionListScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.amber400} />}
-        ListEmptyComponent={<EmptyState variant="production" title="No orders yet" subtitle="Create your first production order" cta="Create order" />}
+        ListEmptyComponent={<EmptyState variant="production" title="No orders yet" cta="Create order" />}
         renderItem={({ item }) => {
           const progress = (item.quantity_produced / item.quantity_planned) * 100;
           return (
-            <WorkCard title={item.product_name} eyebrow={item.order_number} status={item.status} accentColor={item.priority === "critical" ? colors.maintenance : colors.production} onPress={() => navigation.navigate("OrderDetail", { order: item })}>
+            <WorkCard title={item.product_name} eyebrow={item.order_number} status={item.status} accentColor={item.priority === "critical" ? colors.red : colors.blue} onPress={() => navigation.navigate("OrderDetail", { order: item })}>
               <View style={styles.orderMeta}>
                 <StatusBadge status={item.priority} />
                 <Text style={styles.qty}>{item.quantity_produced.toLocaleString()} / {item.quantity_planned.toLocaleString()}</Text>
               </View>
-              <ProgressBar value={progress} color={item.priority === "critical" ? colors.maintenance : colors.production} />
-              <Text style={styles.footerText}>
+              <ProgressBar value={progress} color={item.priority === "critical" ? colors.red : colors.blue} />
+              <Text numberOfLines={1} style={styles.footerText}>
                 {item.machine?.name || "Unassigned"} · {item.operator?.full_name || "No operator"} · Due {formatDate(item.end_date, "dd MMM")}
               </Text>
             </WorkCard>
@@ -71,7 +70,7 @@ export const ProductionListScreen = () => {
 
 const styles = StyleSheet.create({
   list: {
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: 180,
   },
   fabSmall: {

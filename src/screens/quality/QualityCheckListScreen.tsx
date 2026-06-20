@@ -17,7 +17,6 @@ export const QualityCheckListScreen = () => {
   return (
     <ScreenContainer
       title="Quality Control"
-      subtitle="Inspections, defects, and batch release"
       navigationMode="drawer"
       scroll={false}
       action={
@@ -29,9 +28,9 @@ export const QualityCheckListScreen = () => {
       }
     >
       <View style={styles.metrics}>
-        <MetricPill label="Passed" value={checks.filter((check) => check.status === "pass").length.toString()} color={colors.inventory} />
-        <MetricPill label="Failed" value={checks.filter((check) => check.status === "fail").length.toString()} color={colors.maintenance} />
-        <MetricPill label="Pending" value={checks.filter((check) => check.status === "conditional").length.toString()} color={colors.amber400} />
+        <MetricPill label="Passed" value={checks.filter((check) => check.status === "pass").length.toString()} color={colors.emerald} />
+        <MetricPill label="Failed" value={checks.filter((check) => check.status === "fail").length.toString()} color={colors.red} />
+        <MetricPill label="Pending" value={checks.filter((check) => check.status === "conditional").length.toString()} color={colors.orange} />
       </View>
       <FlatList
         data={checks}
@@ -41,9 +40,9 @@ export const QualityCheckListScreen = () => {
           <PermissionGate
             area="quality"
             level="write"
-            fallback={<EmptyState variant="quality" title="No inspections today" subtitle="Inspections will appear here when submitted by the floor team." />}
+            fallback={<EmptyState variant="quality" title="No inspections today" />}
           >
-            <EmptyState variant="quality" title="No inspections today" subtitle="Start an inspection" cta="New inspection" onPress={() => navigation.navigate("InspectionForm")} />
+            <EmptyState variant="quality" title="No inspections today" cta="New inspection" onPress={() => navigation.navigate("InspectionForm")} />
           </PermissionGate>
         }
         renderItem={({ item }) => {
@@ -53,14 +52,14 @@ export const QualityCheckListScreen = () => {
               title={`Batch ${item.batch_number}`}
               eyebrow={item.order?.order_number ? `Order ${item.order.order_number}` : `Order ${(item.order_id || "").slice(0, 8)}...`}
               status={item.status}
-              accentColor={item.status === "fail" ? colors.maintenance : item.status === "conditional" ? colors.amber400 : colors.inventory}
+              accentColor={item.status === "fail" ? colors.red : item.status === "conditional" ? colors.orange : colors.emerald}
             >
               <View style={styles.row}>
                 <Text style={styles.ratio}>{item.passed}/{item.total_inspected} pass</Text>
                 <Text style={styles.ratio}>{item.failed} failed</Text>
               </View>
-              <ProgressBar value={passRate} color={passRate > 95 ? colors.inventory : passRate > 85 ? colors.amber400 : colors.maintenance} />
-              <Text style={styles.meta}>{item.inspector?.full_name || "Inspector"} · {item.defect_type.join(", ") || "No defects"}</Text>
+              <ProgressBar value={passRate} color={passRate > 95 ? colors.emerald : passRate > 85 ? colors.orange : colors.red} />
+              <Text numberOfLines={1} style={styles.meta}>{item.inspector?.full_name || "Inspector"} · {item.defect_type.join(", ") || "No defects"}</Text>
             </WorkCard>
           );
         }}
@@ -83,7 +82,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   list: {
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: 180,
   },
   row: {

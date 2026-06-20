@@ -50,7 +50,7 @@ export const BottomSheet = ({ visible, onClose, children, snapPoint = screenHeig
 
 const styles = StyleSheet.create({
   backdrop: {
-    backgroundColor: "rgba(24,34,29,0.26)",
+    backgroundColor: "rgba(0,0,0,0.35)",
     bottom: 0,
     left: 0,
     position: "absolute",

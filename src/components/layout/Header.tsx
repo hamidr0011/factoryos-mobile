@@ -14,25 +14,30 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.row}>
+      {/* Top action row */}
+      <View style={styles.topActions}>
         <Pressable style={styles.iconButton} onPress={onMenu}>
           <Menu color={colors.steel100} size={22} />
         </Pressable>
-        <View style={styles.copy}>
-          <Text style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "Supervisor"}`}</Text>
-          <Text style={styles.subtitle}>{subtitle || defaultSubtitle}</Text>
+        <View style={styles.rightActions}>
+          <View style={styles.bellWrap}>
+            <Bell color={colors.steel100} size={21} />
+            {unreadCount ? (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount}</Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{profile?.full_name?.slice(0, 1) || "F"}</Text>
+          </View>
         </View>
-        <View style={styles.bellWrap}>
-          <Bell color={colors.steel100} size={21} />
-          {unreadCount ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadCount}</Text>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{profile?.full_name?.slice(0, 1) || "F"}</Text>
-        </View>
+      </View>
+
+      {/* Large One UI Title Area */}
+      <View style={styles.oneUiTitleArea}>
+        <Text style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "Supervisor"}`}</Text>
+        <Text style={styles.subtitle}>{subtitle || defaultSubtitle}</Text>
       </View>
     </View>
   );
@@ -41,77 +46,73 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: colors.steel950,
-    borderBottomColor: colors.steel700,
-    borderBottomWidth: 1,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.lg,
     paddingHorizontal: spacing.md,
   },
-  row: {
+  topActions: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.sm,
+    justifyContent: "space-between",
+  },
+  rightActions: {
+    flexDirection: "row",
+    gap: spacing.xs,
   },
   iconButton: {
     alignItems: "center",
-    backgroundColor: colors.steel800,
-    borderColor: colors.steel700,
-    borderRadius: 8,
-    borderWidth: 1,
-    height: 44,
+    height: 40,
     justifyContent: "center",
-    width: 44,
+    width: 40,
   },
-  copy: {
-    flex: 1,
+  oneUiTitleArea: {
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.xs,
   },
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 28,
+    fontWeight: "700",
   },
   subtitle: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 13,
+    marginTop: spacing.xxs,
   },
   bellWrap: {
     alignItems: "center",
-    backgroundColor: colors.steel800,
-    borderColor: colors.steel700,
-    borderRadius: 8,
-    borderWidth: 1,
-    height: 44,
+    height: 40,
     justifyContent: "center",
-    width: 44,
+    width: 40,
   },
   badge: {
     alignItems: "center",
-    backgroundColor: colors.amber400,
+    backgroundColor: colors.red, // One UI Red for system notification badges
     borderRadius: 8,
     height: 16,
     justifyContent: "center",
     position: "absolute",
-    right: 5,
-    top: 5,
+    right: 4,
+    top: 4,
     minWidth: 16,
   },
   badgeText: {
-    color: colors.steel950,
+    color: "#FFFFFF", // High legibility white text
     fontFamily: typography.display,
     fontSize: 9,
   },
   avatar: {
     alignItems: "center",
-    backgroundColor: colors.amber400,
-    borderRadius: 8,
-    height: 44,
+    backgroundColor: colors.amber400, // Samsung Blue
+    borderRadius: 20, // Circular profile avatar
+    height: 40,
     justifyContent: "center",
-    width: 44,
+    width: 40,
   },
   avatarText: {
-    color: colors.steel950,
+    color: "#FFFFFF", // White avatar text
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 16,
   },
 });

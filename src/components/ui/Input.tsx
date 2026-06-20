@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   inputShell: {
-    minHeight: 52,
-    borderRadius: radii.card,
+    minHeight: 50,
+    borderRadius: 22,
     backgroundColor: colors.steel900,
     flexDirection: "row",
     alignItems: "center",
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.body,
     fontSize: 15,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   eye: {
     alignItems: "center",
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   error: {
-    color: colors.maintenance,
+    color: colors.red,
     fontFamily: typography.body,
     fontSize: 12,
   },

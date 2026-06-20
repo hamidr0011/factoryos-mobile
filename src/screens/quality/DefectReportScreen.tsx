@@ -9,7 +9,7 @@ import type { QualityCheck } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
-const palette = [colors.production, colors.amber400, colors.maintenance, colors.quality, colors.inventory];
+const palette = [colors.blue, colors.orange, colors.red, colors.violet, colors.emerald, colors.cyan];
 
 export const DefectReportScreen = () => {
   const { data = [] } = useQuery({ queryKey: ["quality_checks"], queryFn: qualityService.getChecks });
@@ -24,16 +24,16 @@ export const DefectReportScreen = () => {
   ).sort((a, b) => b.value - a.value);
 
   return (
-    <ScreenContainer title="Defect Report" subtitle="Pareto and severity breakdown">
+    <ScreenContainer title="Defect Report">
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Defects by Frequency</Text>
-        {defects.length ? <BarChart data={defects} color={colors.quality} /> : <EmptyState variant="quality" title="No defects recorded" subtitle="Submitted quality checks will build this report." />}
+        {defects.length ? <BarChart data={defects} color={colors.blue} /> : <EmptyState variant="quality" title="No defects recorded" />}
       </Card>
       {defects.map((defect) => (
         <Card key={defect.label} accentColor={defect.color} style={styles.defectCard}>
           <View>
             <Text style={styles.defectTitle}>{defect.label}</Text>
-            <Text style={styles.defectMeta}>{defect.value} observations this period</Text>
+            <Text style={styles.defectMeta}>{defect.value} observations</Text>
           </View>
           <Badge label="recorded" color={defect.color} />
         </Card>

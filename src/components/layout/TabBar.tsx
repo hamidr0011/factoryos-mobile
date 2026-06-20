@@ -67,11 +67,11 @@ export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarPro
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: colors.steel950,
+    backgroundColor: colors.steel900,
     borderTopColor: colors.steel700,
     borderTopWidth: 1,
     flexDirection: "row",
-    minHeight: 74,
+    minHeight: 76,
     paddingBottom: spacing.xs,
     paddingTop: spacing.xs,
   },
@@ -83,17 +83,11 @@ const styles = StyleSheet.create({
   },
   iconWrap: {
     alignItems: "center",
-    borderColor: "transparent",
-    borderRadius: 8,
-    borderWidth: 1,
     height: 28,
     justifyContent: "center",
     width: 36,
   },
-  iconWrapActive: {
-    backgroundColor: `${colors.amber400}1A`,
-    borderColor: `${colors.amber400}40`,
-  },
+  iconWrapActive: {},
   label: {
     fontFamily: typography.bodyMedium,
     fontSize: 11,
@@ -101,9 +95,9 @@ const styles = StyleSheet.create({
   },
   underline: {
     backgroundColor: colors.amber400,
-    borderRadius: 1,
-    height: 2,
-    marginTop: 5,
-    width: 24,
+    borderRadius: 2,
+    height: 3,
+    marginTop: 4,
+    width: 16,
   },
 });

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
-import { colors, modules, spacing, typography } from "../../utils/constants";
+import { colors, modules, radii, spacing, typography } from "../../utils/constants";
 import { roleLabels } from "../../utils/permissions";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
     borderBottomColor: colors.steel700,
-    borderRadius: 12,
+    borderRadius: radii.card, // Squircle card matching One UI
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
@@ -86,13 +86,13 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 12,
+    borderRadius: 28, // Perfect circle avatar
     height: 56,
     justifyContent: "center",
     width: 56,
   },
   avatarText: {
-    color: colors.steel950,
+    color: "#FFFFFF", // High contrast white text
     fontFamily: typography.display,
     fontSize: 24,
   },
@@ -116,16 +116,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 16, // Clean One UI card list rounding
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
-    minHeight: 48,
+    minHeight: 52,
     paddingHorizontal: spacing.sm,
   },
   moduleIcon: {
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 18, // Circular icon badge matching Samsung Quick Settings
     borderWidth: 1,
     height: 36,
     justifyContent: "center",
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 12, // More rounded footer options
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,

@@ -41,12 +41,12 @@ export const MachineStatusScreen = () => {
   });
 
   return (
-    <ScreenContainer title="Machine Status" subtitle="Realtime equipment health" scroll={false}>
+    <ScreenContainer title="Machine Status" scroll={false}>
       <FlatList
         data={data as Machine[]}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="maintenance" title="No machines connected" subtitle="Machine records from Supabase will appear here." />}
+        ListEmptyComponent={<EmptyState variant="maintenance" title="No machines connected" />}
         renderItem={({ item }) => {
           const palette = statusPalette(item.status);
           return (
@@ -54,8 +54,8 @@ export const MachineStatusScreen = () => {
               <View style={styles.gaugeWrap}>
                 <GaugeChart value={item.efficiency_percent} color={palette.color} label="efficiency" />
               </View>
-              <Text style={styles.meta}>{item.location}</Text>
-              <Text style={styles.meta}>Last PM {formatDate(item.last_maintenance, "dd MMM")}</Text>
+              <Text numberOfLines={1} style={styles.meta}>{item.location}</Text>
+              <Text numberOfLines={1} style={styles.meta}>Last PM {formatDate(item.last_maintenance, "dd MMM")}</Text>
               <Button
                 title="Log Sample"
                 variant="secondary"

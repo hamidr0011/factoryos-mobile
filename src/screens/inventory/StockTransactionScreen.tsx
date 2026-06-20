@@ -69,7 +69,7 @@ export const StockTransactionScreen = () => {
   };
 
   return (
-    <ScreenContainer title="Stock Transaction" subtitle="Scan, verify, and post movement">
+    <ScreenContainer title="Stock Transaction">
       <Card style={styles.scanner}>
         {permission?.granted ? (
           <CameraView
@@ -80,7 +80,7 @@ export const StockTransactionScreen = () => {
         ) : (
           <View style={styles.permission}>
             <ScanLine color={colors.amber400} size={48} />
-            <Text style={styles.permissionText}>Camera access enables SKU barcode scanning.</Text>
+            <Text style={styles.permissionText}>Scanner unavailable</Text>
             <Button title="Enable Scanner" onPress={async () => { await requestPermission(); }} />
           </View>
         )}
@@ -94,8 +94,8 @@ export const StockTransactionScreen = () => {
       </Card>
       <ChipRow items={types} active={type} onChange={(next) => setType(next as TransactionType)} />
       <Input label="Quantity" keyboardType="numeric" placeholder="0" value={quantity} onChangeText={setQuantity} />
-      <Input label="Reference" placeholder="PO, supplier invoice, transfer note" value={reference} onChangeText={setReference} />
-      <Input label="Notes" placeholder="Optional movement notes" value={notes} onChangeText={setNotes} />
+      <Input label="Reference" value={reference} onChangeText={setReference} />
+      <Input label="Notes" value={notes} onChangeText={setNotes} />
       <Button title="Submit Transaction" loading={transactionMutation.isPending} onPress={submitTransaction} />
     </ScreenContainer>
   );

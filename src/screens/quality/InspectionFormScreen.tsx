@@ -18,9 +18,9 @@ import { ChipRow, ProgressBar, ScreenContainer } from "../shared/ScreenScaffold"
 
 const steps = ["Batch", "Results", "Evidence"];
 const severityColors: Record<NonNullable<DefectType["severity"]>, string> = {
-  minor: colors.production,
-  major: colors.amber400,
-  critical: colors.maintenance,
+  minor: colors.blue,
+  major: colors.orange,
+  critical: colors.red,
 };
 
 export const InspectionFormScreen = () => {
@@ -101,7 +101,7 @@ export const InspectionFormScreen = () => {
   };
 
   return (
-    <ScreenContainer title="New Inspection" subtitle="Three-step QC capture">
+    <ScreenContainer title="New Inspection">
       <Card style={styles.progressCard}>
         <View style={styles.stepRow}>
           {steps.map((name, index) => (
@@ -110,7 +110,7 @@ export const InspectionFormScreen = () => {
             </Pressable>
           ))}
         </View>
-        <ProgressBar value={((step + 1) / steps.length) * 100} color={colors.quality} />
+        <ProgressBar value={((step + 1) / steps.length) * 100} color={colors.blue} />
       </Card>
 
       {step === 0 ? (
@@ -123,7 +123,7 @@ export const InspectionFormScreen = () => {
               <Button title="Continue" onPress={() => setStep(1)} />
             </>
           ) : (
-            <EmptyState variant="quality" title="No production orders" subtitle="Create a production order before starting an inspection." />
+            <EmptyState variant="quality" title="No production orders" />
           )}
         </Card>
       ) : null}
@@ -132,8 +132,8 @@ export const InspectionFormScreen = () => {
         <Card style={styles.form}>
           <Text style={styles.sectionTitle}>Results</Text>
           <View style={styles.counterRow}>
-            <Counter label="Passed" value={passed} color={colors.inventory} onMinus={() => setPassed(Math.max(0, passed - 1))} onPlus={() => setPassed(passed + 1)} />
-            <Counter label="Failed" value={failed} color={colors.maintenance} onMinus={() => setFailed(Math.max(0, failed - 1))} onPlus={() => setFailed(failed + 1)} />
+            <Counter label="Passed" value={passed} color={colors.emerald} onMinus={() => setPassed(Math.max(0, passed - 1))} onPlus={() => setPassed(passed + 1)} />
+            <Counter label="Failed" value={failed} color={colors.red} onMinus={() => setFailed(Math.max(0, failed - 1))} onPlus={() => setFailed(failed + 1)} />
           </View>
           <Text style={styles.label}>Defect Types</Text>
           <View style={styles.defects}>
@@ -151,7 +151,7 @@ export const InspectionFormScreen = () => {
                 </Pressable>
               );
             }) : (
-              <Text style={styles.meta}>No defect types returned by the API.</Text>
+              <Text style={styles.meta}>No defect types</Text>
             )}
           </View>
           <Input label="Notes" placeholder="Inspection notes" value={notes} onChangeText={setNotes} />
@@ -165,7 +165,6 @@ export const InspectionFormScreen = () => {
           <Pressable style={styles.photoBox} onPress={pickImage}>
             {image ? <Image source={{ uri: image }} style={styles.photo} /> : <Camera color={colors.amber400} size={48} />}
           </Pressable>
-          <Text style={styles.meta}>Photos upload to the `quality-evidence` bucket when Supabase is active.</Text>
           <Button title="Submit Inspection" loading={submitMutation.isPending} onPress={submitInspection} />
         </Card>
       ) : null}
@@ -201,8 +200,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   stepActive: {
-    borderColor: colors.quality,
-    backgroundColor: `${colors.quality}22`,
+    borderColor: colors.blue,
+    backgroundColor: `${colors.blue}22`,
   },
   stepText: {
     color: colors.steel500,
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   stepTextActive: {
-    color: colors.quality,
+    color: colors.blue,
   },
   form: {
     gap: spacing.md,

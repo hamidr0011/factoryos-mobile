@@ -9,7 +9,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { isApiConfigured } from "../../services/api";
 import { setupService } from "../../services/setup.service";
 import { isSupabaseConfigured } from "../../services/supabase";
-import { colors, spacing, typography } from "../../utils/constants";
+import { colors, radii, spacing, typography } from "../../utils/constants";
 import { isEmail } from "../../utils/validators";
 
 type SetupState = "checking" | "ready" | "needed" | "unavailable";
@@ -253,9 +253,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   card: {
-    backgroundColor: "rgba(255,252,245,0.92)",
+    backgroundColor: "rgba(255, 255, 255, 0.90)",
     borderColor: colors.steel700,
-    borderRadius: 16,
+    borderRadius: radii.card,
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
@@ -283,11 +283,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   warning: {
-    backgroundColor: `${colors.maintenance}16`,
-    borderColor: `${colors.maintenance}44`,
+    backgroundColor: `${colors.red}16`,
+    borderColor: `${colors.red}44`,
     borderRadius: 8,
     borderWidth: 1,
-    color: colors.maintenance,
+    color: colors.red,
     fontFamily: typography.bodyMedium,
     fontSize: 12,
     lineHeight: 17,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   error: {
-    color: colors.maintenance,
+    color: colors.red,
     fontFamily: typography.bodyMedium,
     fontSize: 13,
   },

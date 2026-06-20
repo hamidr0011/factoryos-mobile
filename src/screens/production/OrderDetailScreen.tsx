@@ -80,24 +80,24 @@ export const OrderDetailScreen = () => {
 
   if (!order) {
     return (
-      <ScreenContainer title="Order Detail" subtitle="Production order">
-        <EmptyState variant="production" title="No order selected" subtitle="Open a production order from the live order list." />
+      <ScreenContainer title="Order Detail">
+        <EmptyState variant="production" title="No order selected" />
       </ScreenContainer>
     );
   }
 
   return (
     <ScreenContainer title={order.order_number} subtitle={order.product_name}>
-      <Card style={styles.hero} accentColor={order.priority === "critical" ? colors.maintenance : colors.production}>
+      <Card style={styles.hero} accentColor={order.priority === "critical" ? colors.red : colors.blue}>
         <View style={styles.heroHead}>
           <StatusBadge status={order.status} />
           <StatusBadge status={order.priority} />
         </View>
         <View style={styles.progressRow}>
-          <GaugeChart value={progress} color={colors.production} label="complete" />
+          <GaugeChart value={progress} color={colors.blue} label="complete" />
           <View style={styles.progressCopy}>
             <Text style={styles.big}>{order.quantity_produced.toLocaleString()}</Text>
-            <Text style={styles.muted}>of {order.quantity_planned.toLocaleString()} units produced</Text>
+            <Text numberOfLines={1} style={styles.muted}>of {order.quantity_planned.toLocaleString()} units</Text>
           </View>
         </View>
       </Card>
@@ -124,12 +124,12 @@ export const OrderDetailScreen = () => {
                   {formatDate(log.created_at, "dd MMM HH:mm")}
                   {log.entered_by?.full_name ? ` · ${log.entered_by.full_name}` : ""}
                 </Text>
-                {log.notes ? <Text style={styles.timelineNotes}>{log.notes}</Text> : null}
+                {log.notes ? <Text numberOfLines={2} style={styles.timelineNotes}>{log.notes}</Text> : null}
               </View>
             </View>
           ))
         ) : (
-          <EmptyState variant="production" title="No progress logs" subtitle="Progress updates will appear here after they are submitted through the API." />
+          <EmptyState variant="production" title="No progress logs" />
         )}
       </Card>
 

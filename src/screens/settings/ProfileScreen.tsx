@@ -8,7 +8,7 @@ import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
 export const ProfileScreen = () => {
   const { profile } = useAuth();
   return (
-    <ScreenContainer title="Profile" subtitle="FactoryOS identity" navigationMode="drawer">
+    <ScreenContainer title="Profile" navigationMode="drawer">
       <Card style={styles.card} accentColor={colors.amber400}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{profile?.full_name?.slice(0, 1) || "F"}</Text>

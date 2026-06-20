@@ -62,7 +62,7 @@ export const AccessMatrixEditor = ({
   value,
   onChange,
   title = "Personal Access Matrix",
-  subtitle = "Grant or revoke exactly what this person can do in each module.",
+  subtitle,
 }: {
   value: AccessDraft[];
   onChange: (next: AccessDraft[]) => void;
@@ -71,7 +71,7 @@ export const AccessMatrixEditor = ({
 }) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
-    <Text style={styles.sectionMeta}>{subtitle}</Text>
+    {subtitle ? <Text style={styles.sectionMeta}>{subtitle}</Text> : null}
     <View style={styles.grid}>
       {value.map((row) => {
         const enabledCount = actions.filter((action) => row[action.key]).length;

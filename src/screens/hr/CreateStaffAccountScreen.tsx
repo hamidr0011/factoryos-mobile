@@ -14,7 +14,7 @@ import { useAppStore } from "../../store/appStore";
 import type { Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { isEmail } from "../../utils/validators";
-import { roleDescriptions, roleLabels } from "../../utils/permissions";
+import { roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
 const roles: Role[] = ["manager", "supervisor", "operator", "viewer", "admin"];
@@ -52,20 +52,20 @@ export const CreateStaffAccountScreen = () => {
   }, [accessInitialized, role, roleMatrix]);
 
   const normalizedEmail = email.trim().toLowerCase();
-  const formErrors = useMemo(
-    () => ({
-      fullName: fullName.trim().length >= 2 ? "" : "Enter the staff member's full name.",
-      email: isEmail(normalizedEmail) ? "" : "Enter a valid work email address.",
-      password: password.length >= 8 ? "" : "Password must be at least 8 characters.",
-      employeeId: employeeId.trim().length >= 2 ? "" : "Enter an employee ID.",
-      department: department.trim().length >= 2 ? "" : "Enter a department.",
-    }),
+	  const formErrors = useMemo(
+	    () => ({
+	      fullName: fullName.trim().length >= 2 ? "" : "Full name",
+	      email: isEmail(normalizedEmail) ? "" : "Work email",
+	      password: password.length >= 8 ? "" : "Password",
+	      employeeId: employeeId.trim().length >= 2 ? "" : "Employee ID",
+	      department: department.trim().length >= 2 ? "" : "Department",
+	    }),
     [department, employeeId, fullName, normalizedEmail, password],
   );
   const missingItems = useMemo(() => {
-    const items = Object.values(formErrors).filter(Boolean);
-    if (!roleMatrix.length) items.push("Role access matrix must load from the API.");
-    return items;
+	    const items = Object.values(formErrors).filter(Boolean);
+	    if (!roleMatrix.length) items.push("Access matrix");
+	    return items;
   }, [formErrors, roleMatrix.length]);
   const isFormReady = missingItems.length === 0;
 
@@ -91,11 +91,11 @@ export const CreateStaffAccountScreen = () => {
   });
 
   const submit = () => {
-    setAttemptedSubmit(true);
-    if (!isFormReady) {
-      showToast("warning", "Complete the highlighted account fields first.");
-      return;
-    }
+	    setAttemptedSubmit(true);
+	    if (!isFormReady) {
+	      showToast("warning", "Complete required fields.");
+	      return;
+	    }
 
     createMutation.mutate();
   };
@@ -110,33 +110,27 @@ export const CreateStaffAccountScreen = () => {
     <PermissionGate
       roles={["admin"]}
       fallback={
-        <ScreenContainer title="Create Staff Account" subtitle="Admin access required" navigationMode="back">
-          <EmptyState variant="hr" title="Admin access required" subtitle="Only admins can create staff accounts and assign role permissions." />
+        <ScreenContainer title="Create Staff Account" navigationMode="back">
+          <EmptyState variant="hr" title="Admin access required" />
         </ScreenContainer>
       }
     >
-      <ScreenContainer title="Create Staff Account" subtitle="Email, password, role, and access permissions" navigationMode="back">
+      <ScreenContainer title="Create Staff Account" navigationMode="back">
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
             <UserPlus color={colors.steel950} size={26} />
           </View>
           <View style={styles.heroCopy}>
-            <Text style={styles.heroTitle}>Provision a role-based account</Text>
-            <Text style={styles.heroText}>Create login credentials and assign exactly what this staff member can see or change.</Text>
+            <Text style={styles.heroTitle}>Staff Account</Text>
           </View>
         </View>
 
         <View style={[styles.validationPanel, isFormReady && styles.validationPanelReady]}>
-          <View style={styles.validationTop}>
-            <View style={[styles.validationDot, { backgroundColor: isFormReady ? colors.inventory : colors.amber400 }]} />
-            <Text style={styles.validationTitle}>{isFormReady ? "Ready to create account" : "Account setup incomplete"}</Text>
-          </View>
-          <Text style={styles.validationText}>
-            {isFormReady
-              ? `${roleLabels[role]} login credentials and access permissions are complete.`
-              : "Fill the required credentials before creating the staff login."}
-          </Text>
-          {!isFormReady ? (
+	          <View style={styles.validationTop}>
+	            <View style={[styles.validationDot, { backgroundColor: isFormReady ? colors.inventory : colors.amber400 }]} />
+	            <Text style={styles.validationTitle}>{isFormReady ? "Ready" : "Required fields"}</Text>
+	          </View>
+	          {!isFormReady ? (
             <View style={styles.missingList}>
               {missingItems.map((item) => (
                 <Text key={item} style={styles.missingItem}>{item}</Text>
@@ -179,7 +173,6 @@ export const CreateStaffAccountScreen = () => {
                   </View>
                   <View style={styles.roleCopy}>
                     <Text style={[styles.roleName, active && { color: roleColors[item] }]}>{roleLabels[item]}</Text>
-                    <Text style={styles.roleDescription}>{roleDescriptions[item]}</Text>
                   </View>
                 </Pressable>
               );
@@ -190,8 +183,7 @@ export const CreateStaffAccountScreen = () => {
         <AccessMatrixEditor
           value={access}
           onChange={setAccess}
-          title="Personal Grants & Revokes"
-          subtitle="Start from the selected role, then grant or revoke module permissions for this person."
+          title="Access Overrides"
         />
 
         <View style={styles.reviewPanel}>
@@ -234,13 +226,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.display,
     fontSize: 18,
   },
-  heroText: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-  },
   section: {
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
@@ -276,21 +261,23 @@ const styles = StyleSheet.create({
     fontFamily: typography.display,
     fontSize: 14,
   },
-  validationText: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
-  },
   missingList: {
-    gap: 3,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
     marginTop: spacing.xs,
   },
   missingItem: {
+    backgroundColor: colors.steel800,
+    borderColor: colors.steel700,
+    borderRadius: 999,
+    borderWidth: 1,
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 12,
+    overflow: "hidden",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
   },
   sectionHead: {
     alignItems: "center",
@@ -350,13 +337,6 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: 14,
-  },
-  roleDescription: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 3,
   },
   reviewPanel: {
     backgroundColor: colors.steel900,

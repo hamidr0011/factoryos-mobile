@@ -40,14 +40,14 @@ export const AttendanceScreen = () => {
   });
 
   return (
-    <ScreenContainer title="Attendance" subtitle="Month grid and daily roster">
+    <ScreenContainer title="Attendance">
       <Card style={styles.calendar}>
         <Text style={styles.month}>{monthName}</Text>
         <View style={styles.grid}>
           {days.map((day) => {
             const dayRecords = records.filter((record) => record.date === toDateKey(day));
             const status = dayRecords.find((record) => record.status === "absent")?.status || dayRecords.find((record) => record.status === "late")?.status || dayRecords[0]?.status;
-            const color = status === "present" ? colors.inventory : status === "late" ? colors.amber400 : status === "absent" ? colors.maintenance : colors.steel700;
+            const color = status === "present" ? colors.emerald : status === "late" ? colors.orange : status === "absent" ? colors.red : colors.steel700;
             return (
               <Pressable key={day} style={[styles.day, selectedDay === day && styles.selectedDay]} onPress={() => setSelectedDay(day)}>
                 <Text style={styles.dayText}>{day}</Text>
@@ -60,12 +60,12 @@ export const AttendanceScreen = () => {
 
       {records.length ? (
         records.map((record) => (
-          <WorkCard key={record.id} title={record.employee?.full_name || "Unknown employee"} eyebrow={record.employee?.employee_id || "No employee ID"} status={record.status} accentColor={record.status === "late" ? colors.amber400 : colors.inventory}>
-            <Text style={styles.meta}>Check in {record.check_in ? new Date(record.check_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Not clocked"}</Text>
+          <WorkCard key={record.id} title={record.employee?.full_name || "Unknown employee"} eyebrow={record.employee?.employee_id || "No employee ID"} status={record.status} accentColor={record.status === "late" ? colors.orange : record.status === "absent" ? colors.red : colors.emerald}>
+            <Text numberOfLines={1} style={styles.meta}>Check in {record.check_in ? new Date(record.check_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Not clocked"}</Text>
           </WorkCard>
         ))
       ) : (
-        <EmptyState variant="hr" title="No attendance yet" subtitle="Clock-ins and supervisor attendance records will appear here." />
+        <EmptyState variant="hr" title="No attendance yet" />
       )}
 
       <Button title={openShift ? "Clock Out" : "Clock In"} icon={<Clock color={colors.steel950} size={18} />} loading={clockMutation.isPending} onPress={() => clockMutation.mutate()} />
@@ -81,7 +81,7 @@ export const AttendanceScreen = () => {
               </View>
             ))
           ) : (
-            <Text style={styles.meta}>No attendance records for this day.</Text>
+            <Text style={styles.meta}>No records</Text>
           )}
         </View>
       </BottomSheet>

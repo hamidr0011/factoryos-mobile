@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
 import { StatusBadge } from "../../components/ui/StatusBadge";
-import { colors, spacing, typography } from "../../utils/constants";
+import { colors, radii, spacing, typography } from "../../utils/constants";
 
 interface ScreenContainerProps extends PropsWithChildren {
   title?: string;
@@ -57,8 +57,8 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
             </Pressable>
           ) : null}
           <View style={styles.titleCopy}>
-            <Text style={styles.title}>{title}</Text>
-            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            <Text numberOfLines={1} style={styles.title}>{title}</Text>
+            {subtitle ? <Text numberOfLines={1} style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
           {action}
         </View>
@@ -132,8 +132,8 @@ export const WorkCard = ({
   <Card accentColor={accentColor} onPress={onPress} style={styles.workCard}>
     <View style={styles.cardHead}>
       <View style={styles.cardCopy}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-        <Text style={styles.cardTitle}>{title}</Text>
+        {eyebrow ? <Text numberOfLines={1} style={styles.eyebrow}>{eyebrow}</Text> : null}
+        <Text numberOfLines={2} style={styles.cardTitle}>{title}</Text>
       </View>
       {status ? <StatusBadge status={status} /> : badge ? <Badge label={badge} color={accentColor} /> : null}
     </View>
@@ -147,58 +147,60 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    paddingBottom: 110,
+    paddingBottom: 112,
   },
   content: {
-    gap: spacing.md,
-    padding: spacing.md,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
   },
   titleRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.md,
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+    minHeight: 56,
+    paddingBottom: spacing.xs,
   },
   navButton: {
     alignItems: "center",
-    backgroundColor: colors.steel800,
-    borderColor: colors.steel700,
-    borderRadius: 8,
-    borderWidth: 1,
     height: 44,
     justifyContent: "center",
     width: 44,
   },
   titleCopy: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 25,
+    fontSize: 26,
+    lineHeight: 31,
   },
   subtitle: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
-    marginTop: 3,
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 1,
   },
   progressTrack: {
     backgroundColor: colors.steel800,
-    borderRadius: 4,
+    borderRadius: 8,
     height: 8,
     overflow: "hidden",
   },
   progressFill: {
-    borderRadius: 4,
+    borderRadius: 8,
     height: "100%",
   },
   metric: {
     backgroundColor: colors.steel900,
-    borderRadius: 8,
+    borderRadius: radii.card,
     borderWidth: 1,
     flex: 1,
-    minHeight: 72,
+    minHeight: 68,
     padding: spacing.sm,
   },
   metricValue: {
@@ -215,11 +217,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel800,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.xs,
-    minHeight: 48,
+    minHeight: 46,
     paddingHorizontal: spacing.md,
   },
   searchInput: {
@@ -234,14 +236,14 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 18,
     borderWidth: 1,
-    minHeight: 36,
+    minHeight: 34,
     justifyContent: "center",
     paddingHorizontal: spacing.md,
   },
   chipActive: {
-    backgroundColor: `${colors.amber400}1F`,
+    backgroundColor: `${colors.amber400}12`,
     borderColor: colors.amber400,
   },
   chipText: {
@@ -294,5 +296,6 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: 16,
+    lineHeight: 20,
   },
 });

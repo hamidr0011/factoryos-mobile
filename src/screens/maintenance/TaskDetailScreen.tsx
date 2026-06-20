@@ -97,20 +97,20 @@ export const TaskDetailScreen = () => {
 
   if (!task) {
     return (
-      <ScreenContainer title="Task Detail" subtitle="Maintenance task">
-        <EmptyState variant="maintenance" title="No task selected" subtitle="Open a task from the live maintenance queue." />
+      <ScreenContainer title="Task Detail">
+        <EmptyState variant="maintenance" title="No task selected" />
       </ScreenContainer>
     );
   }
 
   return (
     <ScreenContainer title={task.title} subtitle={`${task.machine.name} · ${task.type}`}>
-      <Card style={styles.section} accentColor={task.priority === "critical" ? colors.maintenance : colors.amber400}>
+      <Card style={styles.section} accentColor={task.priority === "critical" ? colors.red : task.priority === "high" ? colors.orange : colors.blue}>
         <View style={styles.badges}>
           <StatusBadge status={task.priority} />
           <StatusBadge status={task.status} />
         </View>
-        <Text style={styles.description}>{task.description}</Text>
+        {task.description ? <Text numberOfLines={3} style={styles.description}>{task.description}</Text> : null}
       </Card>
 
       <Card style={styles.section}>

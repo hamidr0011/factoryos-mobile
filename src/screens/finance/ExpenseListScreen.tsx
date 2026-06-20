@@ -87,7 +87,6 @@ export const ExpenseListScreen = () => {
   return (
     <ScreenContainer
       title="Expenses"
-      subtitle="Approvals and receipts"
       scroll={false}
       action={
         <PermissionGate area="finance" level="write">
@@ -103,12 +102,12 @@ export const ExpenseListScreen = () => {
         data={expenses}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="finance" title="No expenses recorded" subtitle="Finance activity will appear here after expenses are submitted." />}
+        ListEmptyComponent={<EmptyState variant="finance" title="No expenses recorded" />}
         renderItem={({ item }) => (
-          <WorkCard title={item.description} eyebrow={`${item.category} · ${formatDate(item.date)}`} status={item.status} accentColor={item.status === "pending" ? colors.amber400 : item.status === "rejected" ? colors.maintenance : colors.finance}>
+          <WorkCard title={item.description} eyebrow={`${item.category} · ${formatDate(item.date)}`} status={item.status} accentColor={item.status === "pending" ? colors.orange : item.status === "rejected" ? colors.red : colors.blue}>
             <View style={styles.row}>
               <Text style={styles.amount}>{formatCurrency(item.amount, item.currency)}</Text>
-              <Text style={styles.meta}>{item.department}</Text>
+              <Text numberOfLines={1} style={styles.meta}>{item.department}</Text>
             </View>
             {item.status === "pending" ? (
               <PermissionGate area="finance" level="approve">

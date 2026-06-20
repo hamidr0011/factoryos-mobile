@@ -40,49 +40,49 @@ export const FinanceDashboardScreen = () => {
   ).slice(-7);
 
   return (
-    <ScreenContainer title="Finance" subtitle="Expenses, approvals, and budgets" navigationMode="drawer">
+    <ScreenContainer title="Finance" navigationMode="drawer">
       <ChipRow items={["This Week", "This Month", "This Quarter"]} active={period} onChange={setPeriod} />
       <View style={styles.metrics}>
-        <MetricPill label="Expenses" value={formatCurrency(total)} color={colors.finance} />
-        <MetricPill label="Pending" value={expenseData.filter((expense) => expense.status === "pending").length.toString()} color={colors.amber400} />
+        <MetricPill label="Expenses" value={formatCurrency(total)} color={colors.blue} />
+        <MetricPill label="Pending" value={expenseData.filter((expense) => expense.status === "pending").length.toString()} color={colors.orange} />
       </View>
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Budget Utilization</Text>
         <View style={styles.gaugeRow}>
-          <GaugeChart value={utilization} color={colors.finance} label="used" />
+          <GaugeChart value={utilization} color={colors.blue} label="used" />
           <View style={styles.gaugeCopy}>
             <Text style={styles.big}>{formatCurrency(spent)}</Text>
-            <Text style={styles.meta}>spent of {formatCurrency(allocated)} allocated</Text>
+            <Text numberOfLines={1} style={styles.meta}>{formatCurrency(allocated)} allocated</Text>
           </View>
         </View>
       </Card>
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Expenses by Category</Text>
-        {categoryData.length ? <BarChart data={categoryData} color={colors.finance} /> : <EmptyState variant="finance" title="No expense categories" subtitle="Submitted expenses will build this chart." />}
+        {categoryData.length ? <BarChart data={categoryData} color={colors.blue} /> : <EmptyState variant="finance" title="No categories" />}
       </Card>
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Daily Expense Trend</Text>
-        {trendData.length ? <LineChart data={trendData} color={colors.amber400} /> : <EmptyState variant="finance" title="No expense trend" subtitle="Daily totals appear after expenses are recorded." />}
+        {trendData.length ? <LineChart data={trendData} color={colors.blue} /> : <EmptyState variant="finance" title="No trend" />}
       </Card>
 
       {budgetData.length ? (
         budgetData.map((budget) => {
           const budgetPct = budget.allocated > 0 ? (budget.spent / budget.allocated) * 100 : 0;
           return (
-            <Card key={budget.id} accentColor={budget.spent > budget.allocated ? colors.maintenance : colors.finance} style={styles.budget}>
+            <Card key={budget.id} accentColor={budget.spent > budget.allocated ? colors.red : colors.blue} style={styles.budget}>
               <View style={styles.budgetHead}>
                 <Text style={styles.budgetTitle}>{budget.department}</Text>
                 <Text style={styles.meta}>{Math.round(budgetPct)}%</Text>
               </View>
-              <ProgressBar value={budgetPct} color={budget.spent > budget.allocated ? colors.maintenance : colors.finance} />
+              <ProgressBar value={budgetPct} color={budget.spent > budget.allocated ? colors.red : colors.blue} />
             </Card>
           );
         })
       ) : (
-        <EmptyState variant="finance" title="No budgets configured" subtitle="Department budgets from Supabase will appear here." />
+        <EmptyState variant="finance" title="No budgets configured" />
       )}
     </ScreenContainer>
   );

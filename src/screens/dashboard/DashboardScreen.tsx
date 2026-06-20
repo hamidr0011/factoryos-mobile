@@ -1,11 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react-native";
+import { AlertTriangle, Activity, Package, Wrench, CheckCircle2, ChevronRight } from "lucide-react-native";
 import { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import { Card3D } from "../../components/3d/Card3D";
-import { GlowBorder } from "../../components/3d/GlowBorder";
 import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { StatusBadge, statusPalette } from "../../components/ui/StatusBadge";
@@ -23,16 +21,8 @@ import { productionService } from "../../services/production.service";
 import { qualityService } from "../../services/quality.service";
 import { useAppStore } from "../../store/appStore";
 import type { AttendanceRecord, Budget, FactoryNotification, InventoryItem, Machine, MaintenanceTask, ProductionOrder, QualityCheck } from "../../types";
-import { colors, modules, spacing, typography } from "../../utils/constants";
-import { moduleDeniedMessage } from "../../utils/permissions";
+import { colors, modules, radii, spacing, typography } from "../../utils/constants";
 import { ProgressBar } from "../shared/ScreenScaffold";
-
-const CountUpValue = ({ value }: { value: string }) => {
-  const progress = useSharedValue(0);
-  progress.value = withTiming(1, { duration: 800 });
-  const style = useAnimatedStyle(() => ({ opacity: progress.value }));
-  return <Animated.Text style={[styles.kpiValue, style]}>{value}</Animated.Text>;
-};
 
 const percent = (value: number, total: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
 
@@ -84,21 +74,67 @@ export const DashboardScreen = () => {
     }
   }, [notificationQuery.data, setNotifications]);
 
-  const kpiCards = useMemo(() => {
-    const averageEfficiency = machineData.length
+  const averageEfficiency = useMemo(() => {
+    return machineData.length
       ? machineData.reduce((sum, machine) => sum + Number(machine.efficiency_percent || 0), 0) / machineData.length
       : 0;
-    const lowStock = inventoryData.filter((item) => Number(item.reorder_level) > 0 && Number(item.quantity_on_hand) <= Number(item.reorder_level)).length;
-    const runningMachines = machineData.filter((machine) => machine.status === "running").length;
-    const totalOutput = orderData.reduce((sum, order) => sum + Number(order.quantity_produced || 0), 0);
+  }, [machineData]);
 
+  const runningMachines = useMemo(() => {
+    return machineData.filter((machine) => machine.status === "running").length;
+  }, [machineData]);
+
+  const lowStock = useMemo(() => {
+    return inventoryData.filter((item) => Number(item.reorder_level) > 0 && Number(item.quantity_on_hand) <= Number(item.reorder_level)).length;
+  }, [inventoryData]);
+
+  const totalOutput = useMemo(() => {
+    return orderData.reduce((sum, order) => sum + Number(order.quantity_produced || 0), 0);
+  }, [orderData]);
+
+  const healthScore = useMemo(() => {
+    if (!machineData.length) return null;
+    let base = Math.round(averageEfficiency);
+    const stopped = machineData.length - runningMachines;
+    base -= stopped * 4;
+    base -= lowStock * 2;
+    return Math.min(100, Math.max(0, base));
+  }, [averageEfficiency, lowStock, machineData.length, runningMachines]);
+
+  const healthColor = healthScore === null ? colors.steel700 : healthScore >= 90 ? colors.emerald : healthScore >= 70 ? colors.orange : colors.red;
+
+  const kpiItems = useMemo(() => {
     return [
-      { label: "Production Rate", value: `${averageEfficiency.toFixed(1)}%`, delta: machineData.length ? "average machine efficiency" : "no machine telemetry", color: colors.production },
-      { label: "Inventory Items", value: inventoryData.length.toLocaleString(), delta: lowStock ? `${lowStock} low stock` : "no low stock flags", color: colors.inventory },
-      { label: "Active Machines", value: `${runningMachines}/${machineData.length}`, delta: machineData.length ? `${machineData.length - runningMachines} not running` : "no machines connected", color: colors.maintenance },
-      { label: "Total Output", value: totalOutput.toLocaleString(), delta: "units reported by orders", color: colors.quality },
+      {
+        label: "Production Rate",
+        value: `${averageEfficiency.toFixed(1)}%`,
+        icon: <Activity size={18} color={colors.amber400} />,
+        bgColor: colors.steel800,
+        onPress: () => navigation.navigate("Production"),
+      },
+      {
+        label: "Inventory Items",
+        value: inventoryData.length.toLocaleString(),
+        icon: <Package size={18} color={colors.amber400} />,
+        bgColor: colors.steel800,
+        onPress: () => navigation.navigate("Inventory"),
+      },
+      {
+        label: "Active Machines",
+        value: `${runningMachines}/${machineData.length}`,
+        icon: <Wrench size={18} color={colors.amber400} />,
+        bgColor: colors.steel800,
+        onPress: () => navigation.navigate("MachineStatus"),
+      },
+      {
+        label: "Total Output",
+        value: totalOutput.toLocaleString(),
+        icon: <CheckCircle2 size={18} color={colors.amber400} />,
+        bgColor: colors.steel800,
+        onPress: () => navigation.navigate("Production"),
+      },
     ];
-  }, [inventoryData, machineData, orderData]);
+  }, [averageEfficiency, inventoryData.length, machineData.length, runningMachines, totalOutput, navigation]);
 
   const moduleStats = useMemo(() => {
     const activeOrders = orderData.filter((order) => ["pending", "in_progress", "on_hold"].includes(order.status)).length;
@@ -109,7 +145,6 @@ export const DashboardScreen = () => {
     const openTasks = maintenanceData.filter((task) => ["open", "in_progress"].includes(task.status)).length;
     const allocated = budgetData.reduce((sum, budget) => sum + Number(budget.allocated || 0), 0);
     const spent = budgetData.reduce((sum, budget) => sum + Number(budget.spent || 0), 0);
-    const lowStock = inventoryData.filter((item) => Number(item.reorder_level) > 0 && Number(item.quantity_on_hand) <= Number(item.reorder_level)).length;
 
     return {
       production: { stat: `${activeOrders} active`, delta: `${completedOrders} completed`, fill: percent(completedOrders, orderData.length) },
@@ -138,20 +173,62 @@ export const DashboardScreen = () => {
     <View style={styles.screen}>
       <Header onMenu={() => navigation.getParent()?.openDrawer()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.kpis}>
-          {kpiCards.map((card) => (
-            <GlowBorder key={card.label} color={card.color} style={styles.kpiGlow}>
-              <Card3D accentColor={card.color} style={styles.kpiCard}>
-                <Text style={styles.kpiLabel}>{card.label}</Text>
-                <CountUpValue value={card.value} />
-                <Text style={[styles.kpiDelta, { color: card.color }]}>{card.delta}</Text>
-              </Card3D>
-            </GlowBorder>
-          ))}
-        </ScrollView>
+        <View style={styles.careSection}>
+          <Card style={styles.careCard}>
+            <View style={styles.careHeader}>
+              <View style={styles.gaugeContainer}>
+                <View style={[
+                  styles.gaugeCircle,
+                  { borderColor: healthColor }
+                ]}>
+                  <Text style={styles.gaugeScore}>{healthScore ?? "--"}</Text>
+                  <Text style={styles.gaugeMax}>/100</Text>
+                </View>
+              </View>
+              <View style={styles.careSummary}>
+                <Text style={styles.careStatusText}>
+                  Factory Health
+                </Text>
+                <Text numberOfLines={2} style={styles.careSubstatusText}>
+                  {machineData.length
+                    ? `${runningMachines} of ${machineData.length} machines running · ${lowStock} low stock`
+                    : "No telemetry"}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.careDivider} />
+
+            <View style={styles.careList}>
+              {kpiItems.map((item, index) => (
+                <View key={item.label}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.careRow,
+                      pressed && styles.careRowPressed,
+                    ]}
+                    onPress={item.onPress}
+                  >
+                    <View style={[styles.careIconWrapper, { backgroundColor: item.bgColor }]}>
+                      {item.icon}
+                    </View>
+	                    <View style={styles.careInfo}>
+	                      <Text style={styles.careLabel}>{item.label}</Text>
+	                    </View>
+                    <View style={styles.careValueWrapper}>
+                      <Text style={styles.careValue}>{item.value}</Text>
+                      <ChevronRight size={14} color={colors.steel500} style={{ marginLeft: 4 }} />
+                    </View>
+                  </Pressable>
+                  {index < kpiItems.length - 1 && <View style={styles.careRowDivider} />}
+                </View>
+              ))}
+            </View>
+          </Card>
+        </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Machine Status" meta="Live · realtime" />
+          <SectionHeader title="Machine Status" />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.machineRow}>
             {machineData.length ? machineData.map((machine) => {
               const palette = statusPalette(machine.status);
@@ -168,31 +245,31 @@ export const DashboardScreen = () => {
               );
             }) : (
               <View style={styles.emptySlot}>
-                <EmptyState variant="maintenance" title="No machine telemetry" subtitle="Machines will appear here after records are added to Supabase." />
+                <EmptyState variant="maintenance" title="No machine telemetry" />
               </View>
             )}
           </ScrollView>
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Modules" meta="2 × 3 command grid" />
+          <SectionHeader title="Modules" />
           <View style={styles.moduleGrid}>
             {modules.map((module) => {
               const stats = moduleStats[module.id];
               const locked = !canAccessArea(module.id);
               return (
                 <Pressable key={module.id} style={styles.modulePressable} onPress={() => openModule(module.screen)} disabled={locked}>
-                  <Animated.View entering={FadeIn.duration(260)} style={[styles.moduleCard, locked && styles.moduleCardLocked, { borderLeftColor: locked ? colors.steel700 : module.color }]}>
+                  <Animated.View entering={FadeIn.duration(260)} style={[styles.moduleCard, locked && styles.moduleCardLocked]}>
                     <View style={styles.moduleTop}>
-                      <View style={[styles.moduleIcon, { backgroundColor: `${module.color}16`, borderColor: `${module.color}40` }]}>
-                        <ModuleIconMark id={module.id} color={locked ? colors.steel500 : module.color} size={38} />
+                      <View style={styles.moduleIcon}>
+                        <ModuleIconMark id={module.id} color={locked ? colors.steel500 : colors.amber400} size={24} />
                       </View>
-                      <Text style={[styles.moduleStat, { color: locked ? colors.steel500 : module.color }]}>{locked ? "Locked" : stats.stat}</Text>
+                      <Text style={[styles.moduleStat, { color: locked ? colors.steel500 : colors.amber400 }]}>{locked ? "Locked" : stats.stat}</Text>
                     </View>
                     <Text style={styles.moduleLabel}>{module.label}</Text>
-                    <Text style={styles.moduleDelta}>{locked ? moduleDeniedMessage(userRole, module.id) : stats.delta}</Text>
-                    <View style={[styles.moduleRail, { backgroundColor: `${module.color}33` }]}>
-                      <View style={[styles.moduleRailFill, { backgroundColor: locked ? colors.steel500 : module.color, width: locked ? "0%" : `${Math.min(Math.max(stats.fill, 0), 100)}%` }]} />
+                    <Text numberOfLines={1} style={styles.moduleDelta}>{locked ? "Locked" : stats.delta}</Text>
+                    <View style={styles.moduleRail}>
+                      <View style={[styles.moduleRailFill, { backgroundColor: locked ? colors.steel500 : colors.amber400, width: locked ? "0%" : `${Math.min(Math.max(stats.fill, 0), 100)}%` }]} />
                     </View>
                   </Animated.View>
                 </Pressable>
@@ -202,11 +279,11 @@ export const DashboardScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Today's Alerts" meta="Critical first" />
+          <SectionHeader title="Today's Alerts" />
           {alerts.length ? (
             alerts.map((alert) => (
-              <Card key={alert.id} accentColor={alert.module === "maintenance" ? colors.maintenance : colors.amber400} style={styles.alertCard} onPress={() => navigation.getParent()?.navigate(alert.action_url || "Notifications")}>
-                <AlertTriangle color={alert.module === "maintenance" ? colors.maintenance : colors.amber400} size={18} />
+              <Card key={alert.id} accentColor={alert.module === "maintenance" ? colors.red : colors.orange} style={styles.alertCard} onPress={() => navigation.getParent()?.navigate(alert.action_url || "Notifications")}>
+                <AlertTriangle color={alert.module === "maintenance" ? colors.red : colors.orange} size={18} />
                 <View style={styles.alertCopy}>
                   <Text style={styles.alertTitle}>{alert.title}</Text>
                   <Text numberOfLines={2} style={styles.alertBody}>{alert.body}</Text>
@@ -214,7 +291,7 @@ export const DashboardScreen = () => {
               </Card>
             ))
           ) : (
-            <EmptyState variant="quality" title="No unread alerts" subtitle="Realtime alerts from Supabase will appear here." />
+            <EmptyState variant="quality" title="No unread alerts" />
           )}
         </View>
       </ScrollView>
@@ -230,31 +307,107 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: 110,
   },
-  kpis: {
-    gap: spacing.md,
+  careSection: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
   },
-  kpiGlow: {
-    width: 210,
+  careCard: {
+    padding: spacing.md,
   },
-  kpiCard: {
-    height: 138,
-    justifyContent: "space-between",
+  careHeader: {
+    flexDirection: "row",
+    gap: spacing.md,
+    alignItems: "center",
   },
-  kpiLabel: {
-    color: colors.steel500,
-    fontFamily: typography.bodyMedium,
-    fontSize: 12,
+  gaugeContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
-  kpiValue: {
+  gaugeCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gaugeScore: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 34,
+    fontSize: 26,
+    fontWeight: "700",
   },
-  kpiDelta: {
+  gaugeMax: {
+    color: colors.steel500,
+    fontFamily: typography.body,
+    fontSize: 9,
+    marginTop: -2,
+  },
+  careSummary: {
+    flex: 1,
+  },
+  careStatusText: {
+    color: colors.steel100,
+    fontFamily: typography.display,
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  careSubstatusText: {
+    color: colors.steel500,
+    fontFamily: typography.body,
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  careDivider: {
+    height: 1,
+    backgroundColor: colors.steel700,
+    marginVertical: spacing.md,
+  },
+  careList: {
+    gap: spacing.sm,
+  },
+  careRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+  },
+  careRowPressed: {
+    backgroundColor: `${colors.steel800}50`,
+  },
+  careIconWrapper: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.sm,
+  },
+  careInfo: {
+    flex: 1,
+  },
+  careLabel: {
+    color: colors.steel100,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  careValueWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  careValue: {
+    color: colors.steel100,
+    fontFamily: typography.display,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  careRowDivider: {
+    height: 1,
+    backgroundColor: colors.steel700,
+    opacity: 0.5,
+    marginLeft: 50,
   },
   section: {
     gap: spacing.sm,
@@ -301,8 +454,7 @@ const styles = StyleSheet.create({
   moduleCard: {
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderLeftWidth: 3,
-    borderRadius: 8,
+    borderRadius: radii.card, // Squircle corners matching One UI
     borderWidth: 1,
     minHeight: 154,
     padding: spacing.md,
@@ -319,11 +471,13 @@ const styles = StyleSheet.create({
   },
   moduleIcon: {
     alignItems: "center",
-    borderRadius: 8,
+    backgroundColor: colors.steel950,
+    borderColor: colors.steel700,
+    borderRadius: 24, // Rounded circle matching One UI
     borderWidth: 1,
-    height: 52,
+    height: 48,
     justifyContent: "center",
-    width: 52,
+    width: 48,
   },
   moduleStat: {
     fontFamily: typography.mono,
@@ -341,6 +495,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   moduleRail: {
+    backgroundColor: colors.steel800, // Light neutral rail track background
     borderRadius: 2,
     height: 3,
     marginTop: "auto",
