@@ -7,13 +7,11 @@ export const GaugeChart = ({ value, color = colors.amber400, label }: { value: n
   const normalized = clamp(value) / 100;
   if (Platform.OS === "web") {
     return (
-      <View style={styles.wrap}>
+      <View style={styles.webWrap}>
+        <Text style={styles.value}>{Math.round(value)}%</Text>
+        {label ? <Text style={styles.label}>{label}</Text> : null}
         <View style={styles.webGaugeTrack}>
           <View style={[styles.webGaugeFill, { width: `${normalized * 100}%`, backgroundColor: color }]} />
-        </View>
-        <View style={styles.center}>
-          <Text style={styles.value}>{Math.round(value)}%</Text>
-          {label ? <Text style={styles.label}>{label}</Text> : null}
         </View>
       </View>
     );
@@ -44,6 +42,12 @@ const styles = StyleSheet.create({
     height: 140,
     width: 140,
   },
+  webWrap: {
+    alignItems: "center",
+    height: 104,
+    justifyContent: "center",
+    width: 124,
+  },
   center: {
     alignItems: "center",
     position: "absolute",
@@ -51,10 +55,11 @@ const styles = StyleSheet.create({
   },
   webGaugeTrack: {
     backgroundColor: colors.steel700,
-    borderRadius: 8,
-    height: 16,
+    borderRadius: 6,
+    height: 12,
+    marginTop: 8,
     overflow: "hidden",
-    width: 118,
+    width: 112,
   },
   webGaugeFill: {
     height: "100%",

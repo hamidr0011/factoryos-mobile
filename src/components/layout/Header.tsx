@@ -10,7 +10,7 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
   const insets = useSafeAreaInsets();
   const unreadCount = useAppStore((state) => state.unreadCount);
   const profile = useAuthStore((state) => state.profile);
-  const defaultSubtitle = `${format(new Date(), "EEEE, d MMMM")} · ${profile?.department || "Factory Floor A"}`;
+  const defaultSubtitle = `${format(new Date(), "EEEE, d MMMM")} · ${profile?.department || "Operations"}`;
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + spacing.sm }]}>
@@ -34,7 +34,7 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
       </View>
 
       <View style={styles.oneUiTitleArea}>
-        <Text numberOfLines={2} style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "FactoryOS"}`}</Text>
+        <Text adjustsFontSizeToFit minimumFontScale={0.9} numberOfLines={2} style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "FactoryOS"}`}</Text>
         <Text numberOfLines={1} style={styles.subtitle}>{subtitle || defaultSubtitle}</Text>
       </View>
     </View>
@@ -58,6 +58,10 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     alignItems: "center",
+    backgroundColor: colors.steel900,
+    borderColor: colors.steel700,
+    borderRadius: 14,
+    borderWidth: 1,
     height: 40,
     justifyContent: "center",
     width: 40,
@@ -81,13 +85,17 @@ const styles = StyleSheet.create({
   },
   bellWrap: {
     alignItems: "center",
+    backgroundColor: colors.steel900,
+    borderColor: colors.steel700,
+    borderRadius: 14,
+    borderWidth: 1,
     height: 40,
     justifyContent: "center",
     width: 40,
   },
   badge: {
     alignItems: "center",
-    backgroundColor: colors.red, // One UI Red for system notification badges
+    backgroundColor: colors.red,
     borderRadius: 8,
     height: 16,
     justifyContent: "center",
@@ -97,20 +105,20 @@ const styles = StyleSheet.create({
     minWidth: 16,
   },
   badgeText: {
-    color: "#FFFFFF", // High legibility white text
+    color: "#FFFFFF",
     fontFamily: typography.display,
     fontSize: 9,
   },
   avatar: {
     alignItems: "center",
-    backgroundColor: colors.amber400, // Samsung Blue
-    borderRadius: 20, // Circular profile avatar
+    backgroundColor: colors.amber400,
+    borderRadius: 20,
     height: 40,
     justifyContent: "center",
     width: 40,
   },
   avatarText: {
-    color: "#FFFFFF", // White avatar text
+    color: "#FFFFFF",
     fontFamily: typography.display,
     fontSize: 16,
   },

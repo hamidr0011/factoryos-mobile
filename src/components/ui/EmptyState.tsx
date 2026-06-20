@@ -36,15 +36,15 @@ const moduleColors: Record<ModuleId, string> = {
 const styles = StyleSheet.create({
   wrap: {
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.lg,
   },
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 23,
     textAlign: "center",
   },
   subtitle: {

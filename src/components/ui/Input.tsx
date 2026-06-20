@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
   },
   inputShell: {
     minHeight: 50,
-    borderRadius: 22,
-    backgroundColor: colors.steel900,
+    borderRadius: 16,
+    backgroundColor: colors.steel800,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: typography.body,
     fontSize: 15,
+    lineHeight: 20,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },

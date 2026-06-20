@@ -2,16 +2,16 @@ import type { ModuleDefinition } from "../types";
 import { readInitialDarkMode } from "./themePreference";
 
 const lightColors = {
-  steel950: "#F3F4F6",
+  steel950: "#F6F7FA",
   steel900: "#FFFFFF",
-  steel800: "#ECEFF3",
-  steel700: "#E0E3E8",
-  steel500: "#747D8C",
-  steel300: "#22242A",
-  steel100: "#000000",
-  amber400: "#0067FF",
-  amber300: "#3385FF",
-  production: "#1A62E8",
+  steel800: "#EEF0F4",
+  steel700: "#DDE1E8",
+  steel500: "#6F7785",
+  steel300: "#303640",
+  steel100: "#111827",
+  amber400: "#1A62E8",
+  amber300: "#4D8AF5",
+  production: "#2B63E5",
   inventory: "#1FA869",
   quality: "#7E57C2",
   hr: "#E65100",
@@ -26,21 +26,21 @@ const lightColors = {
 };
 
 const darkColors: typeof lightColors = {
-  steel950: "#050B14",
-  steel900: "#0F172A",
-  steel800: "#1E293B",
-  steel700: "#334155",
-  steel500: "#94A3B8",
-  steel300: "#CBD5E1",
-  steel100: "#F8FAFC",
-  amber400: "#3B82F6",
-  amber300: "#60A5FA",
-  production: "#3B82F6",
+  steel950: "#080B10",
+  steel900: "#141922",
+  steel800: "#202633",
+  steel700: "#343B49",
+  steel500: "#9AA4B2",
+  steel300: "#D1D6DE",
+  steel100: "#F7F8FA",
+  amber400: "#6EA8FF",
+  amber300: "#93BEFF",
+  production: "#6EA8FF",
   inventory: "#22C55E",
-  quality: "#38BDF8",
-  hr: "#A78BFA",
-  maintenance: "#F97316",
-  finance: "#FACC15",
+  quality: "#A78BFA",
+  hr: "#FDBA74",
+  maintenance: "#F87171",
+  finance: "#22D3EE",
   red: "#F87171",
   emerald: "#34D399",
   cyan: "#22D3EE",
@@ -70,10 +70,20 @@ export const spacing = {
 };
 
 export const radii = {
-  cell: 8,
+  cell: 10,
   card: 24,
-  modal: 26,
+  modal: 28,
   sheet: 32,
+};
+
+export const typeScale = {
+  hero: 26,
+  title: 23,
+  section: 17,
+  body: 15,
+  bodySmall: 13,
+  caption: 12,
+  micro: 11,
 };
 
 export const modules: ModuleDefinition[] = [

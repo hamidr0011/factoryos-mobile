@@ -126,10 +126,10 @@ const styles = StyleSheet.create({
   fabSmall: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 8,
-    height: 44,
+    borderRadius: 16,
+    height: 48,
     justifyContent: "center",
-    width: 44,
+    width: 48,
   },
   list: {
     gap: spacing.sm,

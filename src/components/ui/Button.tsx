@@ -69,18 +69,19 @@ export const Button = ({ title, onPress, variant = "primary", icon, loading, dis
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 46,
+    minHeight: 48,
     minWidth: 48,
-    borderRadius: 23,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   title: {
     fontFamily: typography.bodyMedium,
     fontSize: 15,
+    lineHeight: 19,
   },
 });

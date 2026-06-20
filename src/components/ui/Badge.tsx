@@ -19,13 +19,13 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     borderRadius: radii.cell,
     borderWidth: 1,
-    minHeight: 24,
+    minHeight: 26,
     justifyContent: "center",
     paddingHorizontal: spacing.xs,
   },
   label: {
     fontFamily: typography.display,
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0,
   },
 });

@@ -35,6 +35,13 @@ const seededMachineCodes = new Set(["Q05DLTAx", "QVNNLTA0", "Q1VULTA5", "UEtHLTA
 const seededOrderNumbers = new Set(["UE8tMjYwNjEzLTAwMQ==", "UE8tMjYwNjEzLTAwMg==", "UE8tMjYwNjEzLTAwMw=="].map(decodeSeed));
 const seededSkus = new Set(["Uk0tU1RMLThNTQ==", "U1AtQlJHLTYyMDU=", "UEtHLUNSVC1N", "RkctVkxWLTE4"].map(decodeSeed));
 
+const hasSeedMarker = (row) =>
+  row?.is_seed === true ||
+  row?.source === "seed" ||
+  row?.origin === "seed" ||
+  row?.metadata?.seed === true ||
+  row?.metadata?.source === "seed";
+
 const stripSeedRows = (area, rows) => {
   if (showSeedData || !Array.isArray(rows)) return rows;
   if (area === "machines") return rows.filter((row) => !seededMachineCodes.has(row.machine_code));
@@ -42,7 +49,7 @@ const stripSeedRows = (area, rows) => {
   if (area === "inventory") return rows.filter((row) => !seededSkus.has(row.sku));
   if (area === "quality") return rows.filter((row) => !seededOrderNumbers.has(row.order?.order_number));
   if (area === "maintenance") return rows.filter((row) => !seededMachineCodes.has(row.machine?.machine_code));
-  if (area === "finance") return [];
+  if (area === "finance") return rows.filter((row) => !hasSeedMarker(row));
   return rows;
 };
 

@@ -30,7 +30,7 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{profile?.full_name?.slice(0, 1) || "F"}</Text>
         </View>
-        <View>
+        <View style={styles.profileCopy}>
           <Text style={styles.name}>{profile?.full_name || "FactoryOS User"}</Text>
           <Text style={styles.meta}>
             {roleLabels[profile?.role || userRole]} · {profile?.department || "Operations"}
@@ -45,7 +45,6 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
               <ModuleIconMark id={module.id} color={module.color} size={28} />
             </View>
             <Text style={styles.itemText}>{module.label}</Text>
-            <Text style={styles.itemStat}>Open</Text>
           </Pressable>
         ))}
       </View>
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
     borderBottomColor: colors.steel700,
-    borderRadius: radii.card, // Squircle card matching One UI
+    borderRadius: radii.card,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
@@ -86,20 +85,25 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 28, // Perfect circle avatar
+    borderRadius: 28,
     height: 56,
     justifyContent: "center",
     width: 56,
   },
   avatarText: {
-    color: "#FFFFFF", // High contrast white text
+    color: "#FFFFFF",
     fontFamily: typography.display,
     fontSize: 24,
+  },
+  profileCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   name: {
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: 16,
+    lineHeight: 20,
   },
   meta: {
     color: colors.steel500,
@@ -116,7 +120,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: 16, // Clean One UI card list rounding
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
@@ -125,7 +129,7 @@ const styles = StyleSheet.create({
   },
   moduleIcon: {
     alignItems: "center",
-    borderRadius: 18, // Circular icon badge matching Samsung Quick Settings
+    borderRadius: 18,
     borderWidth: 1,
     height: 36,
     justifyContent: "center",
@@ -136,11 +140,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: typography.bodyMedium,
     fontSize: 14,
-  },
-  itemStat: {
-    color: colors.steel500,
-    fontFamily: typography.mono,
-    fontSize: 11,
+    lineHeight: 18,
   },
   footer: {
     borderTopColor: colors.steel700,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: 12, // More rounded footer options
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,

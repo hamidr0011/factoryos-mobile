@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   moduleCard: {
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: radii.card, // Squircle corners matching One UI
+    borderRadius: radii.card,
     borderWidth: 1,
     minHeight: 154,
     padding: spacing.md,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel950,
     borderColor: colors.steel700,
-    borderRadius: 24, // Rounded circle matching One UI
+    borderRadius: 24,
     borderWidth: 1,
     height: 48,
     justifyContent: "center",
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   moduleRail: {
-    backgroundColor: colors.steel800, // Light neutral rail track background
+    backgroundColor: colors.steel800,
     borderRadius: 2,
     height: 3,
     marginTop: "auto",

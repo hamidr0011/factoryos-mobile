@@ -4,8 +4,6 @@ import { BarChart } from "../../components/charts/BarChart";
 import { DonutChart } from "../../components/charts/DonutChart";
 import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { PermissionGate } from "../../components/ui/PermissionGate";
-import { Button } from "../../components/ui/Button";
 import { financeService } from "../../services/finance.service";
 import type { Budget } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
@@ -18,18 +16,23 @@ export const BudgetScreen = () => {
   const spendData = budgetData.map((budget) => ({ label: (budget.department || "").slice(0, 8), value: Number(budget.spent || 0) }));
 
   return (
-    <ScreenContainer title="Budgets">
+    <ScreenContainer title="Budgets" navigationMode="back">
       {budgetData.length ? budgetData.map((budget) => {
         const pct = budget.allocated > 0 ? (budget.spent / budget.allocated) * 100 : 0;
         const danger = pct > 100;
+        const remaining = budget.allocated - budget.spent;
         return (
           <Card key={budget.id} accentColor={danger ? colors.red : colors.blue} style={styles.budgetCard}>
             <View style={styles.budgetHead}>
-              <View>
+              <View style={styles.budgetCopy}>
                 <Text style={styles.title}>{budget.department}</Text>
-                <Text numberOfLines={1} style={styles.meta}>{formatCurrency(budget.spent)} spent · {formatCurrency(budget.allocated - budget.spent)} remaining</Text>
+                <Text numberOfLines={2} style={styles.meta}>
+                  {formatCurrency(budget.spent)} spent · {danger ? `${formatCurrency(Math.abs(remaining))} over` : `${formatCurrency(remaining)} remaining`}
+                </Text>
               </View>
               <DonutChart
+                compact
+                valueLabel={`${Math.round(pct)}%`}
                 data={[
                   { label: "Spent", value: budget.spent, color: danger ? colors.red : colors.blue },
                   { label: "Remaining", value: Math.max(0, budget.allocated - budget.spent), color: colors.steel700 },
@@ -55,7 +58,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   budgetHead: {
+    alignItems: "center",
+    flexDirection: "row",
     gap: spacing.md,
+  },
+  budgetCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   title: {
     color: colors.steel100,

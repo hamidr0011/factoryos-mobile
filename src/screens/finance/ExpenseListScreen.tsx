@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Button } from "../../components/ui/Button";
@@ -22,12 +22,12 @@ export const ExpenseListScreen = () => {
   const [status, setStatus] = useState("All");
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
-  const [category, setCategory] = useState("Maintenance");
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [department, setDepartment] = useState("Operations");
+  const [department, setDepartment] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const { data = [] } = useQuery({ queryKey: ["expenses"], queryFn: financeService.getExpenses });
+  const { data = [], isRefetching, refetch } = useQuery({ queryKey: ["expenses"], queryFn: financeService.getExpenses });
   const refreshFinance = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["expenses"] }),
@@ -46,8 +46,11 @@ export const ExpenseListScreen = () => {
     onSuccess: async () => {
       await refreshFinance();
       setCreateOpen(false);
+      setCategory("");
       setDescription("");
       setAmount("");
+      setDepartment("");
+      setDate(new Date().toISOString().slice(0, 10));
       showToast("success", "Expense submitted for approval.");
     },
     onError: (error) => {
@@ -87,6 +90,7 @@ export const ExpenseListScreen = () => {
   return (
     <ScreenContainer
       title="Expenses"
+      navigationMode="back"
       scroll={false}
       action={
         <PermissionGate area="finance" level="write">
@@ -102,28 +106,40 @@ export const ExpenseListScreen = () => {
         data={expenses}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="finance" title="No expenses recorded" />}
-        renderItem={({ item }) => (
-          <WorkCard title={item.description} eyebrow={`${item.category} · ${formatDate(item.date)}`} status={item.status} accentColor={item.status === "pending" ? colors.orange : item.status === "rejected" ? colors.red : colors.blue}>
-            <View style={styles.row}>
-              <Text style={styles.amount}>{formatCurrency(item.amount, item.currency)}</Text>
-              <Text numberOfLines={1} style={styles.meta}>{item.department}</Text>
-            </View>
-            {item.status === "pending" ? (
-              <PermissionGate area="finance" level="approve">
-                <View style={styles.reviewRow}>
-                  <Button title="Approve" variant="secondary" style={styles.reviewButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "approved" })} />
-                  <Button title="Reject" variant="ghost" style={styles.reviewButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "rejected" })} />
-                </View>
-              </PermissionGate>
-            ) : null}
-            {item.status === "approved" ? (
-              <PermissionGate area="finance" level="approve">
-                <Button title="Mark Paid" variant="secondary" loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "paid" })} />
-              </PermissionGate>
-            ) : null}
-          </WorkCard>
-        )}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.blue} />}
+        ListEmptyComponent={
+          <PermissionGate
+            area="finance"
+            level="write"
+            fallback={<EmptyState variant="finance" title="No expenses recorded" />}
+          >
+            <EmptyState variant="finance" title="No expenses recorded" cta="Submit expense" onPress={() => setCreateOpen(true)} />
+          </PermissionGate>
+        }
+        renderItem={({ item }) => {
+          const isReviewing = reviewMutation.isPending && reviewMutation.variables?.id === item.id;
+          return (
+            <WorkCard title={item.description} eyebrow={`${item.category} · ${formatDate(item.date)}`} status={item.status} accentColor={item.status === "pending" ? colors.orange : item.status === "rejected" ? colors.red : colors.blue}>
+              <View style={styles.row}>
+                <Text style={styles.amount}>{formatCurrency(item.amount, item.currency)}</Text>
+                <Text numberOfLines={1} style={styles.meta}>{item.department}</Text>
+              </View>
+              {item.status === "pending" ? (
+                <PermissionGate area="finance" level="approve">
+                  <View style={styles.reviewRow}>
+                    <Button title="Approve" variant="secondary" style={styles.reviewButton} loading={isReviewing} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "approved" })} />
+                    <Button title="Reject" variant="ghost" style={styles.reviewButton} loading={isReviewing} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "rejected" })} />
+                  </View>
+                </PermissionGate>
+              ) : null}
+              {item.status === "approved" ? (
+                <PermissionGate area="finance" level="approve">
+                  <Button title="Mark Paid" variant="secondary" loading={isReviewing} onPress={() => reviewMutation.mutate({ id: item.id, nextStatus: "paid" })} />
+                </PermissionGate>
+              ) : null}
+            </WorkCard>
+          );
+        }}
       />
       <BottomSheet visible={createOpen} onClose={() => setCreateOpen(false)}>
         <View style={styles.sheet}>
@@ -144,10 +160,10 @@ const styles = StyleSheet.create({
   fabSmall: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 8,
-    height: 44,
+    borderRadius: 16,
+    height: 48,
     justifyContent: "center",
-    width: 44,
+    width: 48,
   },
   list: {
     gap: spacing.md,

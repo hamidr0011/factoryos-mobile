@@ -29,7 +29,21 @@ type SeedRecord = {
   machine_code?: unknown;
   order_number?: unknown;
   sku?: unknown;
+  is_seed?: unknown;
+  source?: unknown;
+  origin?: unknown;
+  metadata?: {
+    seed?: unknown;
+    source?: unknown;
+  };
 };
+
+const hasSeedMarker = (row: SeedRecord) =>
+  row.is_seed === true ||
+  row.source === "seed" ||
+  row.origin === "seed" ||
+  row.metadata?.seed === true ||
+  row.metadata?.source === "seed";
 
 export const stripSeedData = <T>(area: "machines" | "orders" | "inventory" | "quality" | "maintenance" | "finance", rows: T): T => {
   if (allowSeedData || !Array.isArray(rows)) return rows;
@@ -51,7 +65,7 @@ export const stripSeedData = <T>(area: "machines" | "orders" | "inventory" | "qu
   }
 
   if (area === "finance") {
-    return [] as T;
+    return rows.filter((row: SeedRecord) => !hasSeedMarker(row)) as T;
   }
 
   return rows.filter((row: SeedRecord) => !seededSkus.has(String(row.sku || ""))) as T;

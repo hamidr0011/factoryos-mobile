@@ -3,34 +3,45 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import type { ChartPoint } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 
-export const DonutChart = ({ data }: { data: ChartPoint[] }) => {
+export const DonutChart = ({ data, compact = false, valueLabel }: { data: ChartPoint[]; compact?: boolean; valueLabel?: string }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
+  const percent = Math.round(((data[0]?.value || 0) / total) * 100);
+  const displayValue = valueLabel || `${percent}%`;
+  const chartSize = compact ? 96 : 140;
+  const center = chartSize / 2;
+  const radius = compact ? 34 : 52;
+  const strokeWidth = compact ? 12 : 18;
   let cursor = -90;
   if (Platform.OS === "web") {
     return (
       <View style={styles.wrap}>
-        <View style={styles.webDonut}>
-          <Text style={styles.webDonutText}>{Math.round((data[0]?.value || 0) / total * 100)}%</Text>
+        <View style={[styles.webDonut, compact && styles.webDonutCompact, { borderColor: data[0]?.color || colors.amber400 }]}>
+          <Text style={styles.webDonutText}>{displayValue}</Text>
         </View>
-        <Legend data={data} />
+        {compact ? null : <Legend data={data} />}
       </View>
     );
   }
 
   return (
     <View style={styles.wrap}>
-      <Canvas style={styles.canvas}>
-        <Group>
-          <Circle cx={70} cy={70} r={52} color={colors.steel700} style="stroke" strokeWidth={18} />
-          {data.map((item) => {
-            const sweep = (item.value / total) * 360;
-            const path = describeArc(70, 70, 52, cursor, cursor + sweep);
-            cursor += sweep;
-            return <Path key={item.label} path={path} color={item.color || colors.amber400} style="stroke" strokeWidth={18} />;
-          })}
-        </Group>
-      </Canvas>
-      <Legend data={data} />
+      <View style={{ height: chartSize, width: chartSize }}>
+        <Canvas style={{ height: chartSize, width: chartSize }}>
+          <Group>
+            <Circle cx={center} cy={center} r={radius} color={colors.steel700} style="stroke" strokeWidth={strokeWidth} />
+            {data.map((item) => {
+              const sweep = (item.value / total) * 360;
+              const path = describeArc(center, center, radius, cursor, cursor + sweep);
+              cursor += sweep;
+              return <Path key={item.label} path={path} color={item.color || colors.amber400} style="stroke" strokeWidth={strokeWidth} />;
+            })}
+          </Group>
+        </Canvas>
+        <View style={styles.centerLabel}>
+          <Text style={styles.webDonutText}>{displayValue}</Text>
+        </View>
+      </View>
+      {compact ? null : <Legend data={data} />}
     </View>
   );
 };
@@ -56,13 +67,21 @@ const styles = StyleSheet.create({
     height: 140,
     width: 140,
   },
+  centerLabel: {
+    alignItems: "center",
+    bottom: 0,
+    justifyContent: "center",
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
   legend: {
     flex: 1,
     gap: spacing.xs,
   },
   webDonut: {
     alignItems: "center",
-    borderColor: colors.amber400,
     borderRadius: 52,
     borderWidth: 10,
     height: 104,
@@ -73,6 +92,12 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: 18,
+  },
+  webDonutCompact: {
+    borderRadius: 42,
+    borderWidth: 9,
+    height: 84,
+    width: 84,
   },
   legendItem: {
     alignItems: "center",

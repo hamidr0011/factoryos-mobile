@@ -7,7 +7,7 @@ import { PersistentBottomNav } from "../../components/layout/PersistentBottomNav
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
 import { StatusBadge } from "../../components/ui/StatusBadge";
-import { colors, radii, spacing, typography } from "../../utils/constants";
+import { colors, radii, spacing, typography, typeScale } from "../../utils/constants";
 
 interface ScreenContainerProps extends PropsWithChildren {
   title?: string;
@@ -75,7 +75,7 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
             </Pressable>
           ) : null}
           <View style={styles.titleCopy}>
-            <Text numberOfLines={1} style={styles.title}>{title}</Text>
+            <Text adjustsFontSizeToFit minimumFontScale={0.88} numberOfLines={1} style={styles.title}>{title}</Text>
             {subtitle ? <Text numberOfLines={1} style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
           {action}
@@ -107,7 +107,7 @@ export const ProgressBar = ({ value, color = colors.amber400 }: { value: number;
 
 export const MetricPill = ({ label, value, color = colors.amber400 }: { label: string; value: string; color?: string }) => (
   <View style={[styles.metric, { borderColor: `${color}44` }]}>
-    <Text style={[styles.metricValue, { color }]}>{value}</Text>
+    <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.metricValue, { color }]}>{value}</Text>
     <Text style={styles.metricLabel}>{label}</Text>
   </View>
 );
@@ -182,6 +182,10 @@ const styles = StyleSheet.create({
   },
   navButton: {
     alignItems: "center",
+    backgroundColor: colors.steel900,
+    borderColor: colors.steel700,
+    borderRadius: 14,
+    borderWidth: 1,
     height: 44,
     justifyContent: "center",
     width: 44,
@@ -194,8 +198,8 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 24,
-    lineHeight: 29,
+    fontSize: typeScale.title,
+    lineHeight: 28,
   },
   subtitle: {
     color: colors.steel500,
@@ -216,15 +220,18 @@ const styles = StyleSheet.create({
   },
   metric: {
     backgroundColor: colors.steel900,
+    borderColor: colors.steel700,
     borderRadius: radii.card,
     borderWidth: 1,
     flex: 1,
-    minHeight: 68,
-    padding: spacing.sm,
+    minWidth: 0,
+    minHeight: 72,
+    padding: spacing.md,
   },
   metricValue: {
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 21,
+    lineHeight: 26,
   },
   metricLabel: {
     color: colors.steel500,
@@ -236,11 +243,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel800,
     borderColor: colors.steel700,
-    borderRadius: 22,
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.xs,
-    minHeight: 46,
+    minHeight: 48,
     paddingHorizontal: spacing.md,
   },
   searchInput: {
@@ -255,9 +262,9 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderColor: colors.steel700,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    minHeight: 34,
+    minHeight: 36,
     justifyContent: "center",
     paddingHorizontal: spacing.md,
   },
@@ -269,6 +276,7 @@ const styles = StyleSheet.create({
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
     fontSize: 13,
+    lineHeight: 17,
   },
   chipTextActive: {
     color: colors.amber400,
@@ -283,13 +291,17 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     color: colors.steel500,
+    flex: 1,
     fontFamily: typography.body,
     fontSize: 13,
+    lineHeight: 18,
   },
   detailValue: {
     color: colors.steel100,
+    flex: 1,
     fontFamily: typography.bodyMedium,
     fontSize: 13,
+    lineHeight: 18,
     maxWidth: "58%",
     textAlign: "right",
   },

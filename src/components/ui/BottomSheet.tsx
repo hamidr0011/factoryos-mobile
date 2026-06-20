@@ -1,6 +1,7 @@
 import { PropsWithChildren, useEffect } from "react";
-import { Dimensions, Modal, Pressable, StyleSheet, View } from "react-native";
+import { Dimensions, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { colors, radii, spacing } from "../../utils/constants";
 
@@ -12,7 +13,8 @@ interface BottomSheetProps extends PropsWithChildren {
 
 const screenHeight = Dimensions.get("window").height;
 
-export const BottomSheet = ({ visible, onClose, children, snapPoint = screenHeight * 0.62 }: BottomSheetProps) => {
+export const BottomSheet = ({ visible, onClose, children, snapPoint = screenHeight * 0.74 }: BottomSheetProps) => {
+  const insets = useSafeAreaInsets();
   const translateY = useSharedValue(screenHeight);
 
   useEffect(() => {
@@ -41,7 +43,13 @@ export const BottomSheet = ({ visible, onClose, children, snapPoint = screenHeig
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.sheet, { height: snapPoint }, style]}>
           <View style={styles.handle} />
-          {children}
+          <ScrollView
+            contentContainerStyle={[styles.sheetContent, { paddingBottom: insets.bottom + spacing.lg }]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
         </Animated.View>
       </GestureDetector>
     </Modal>
@@ -63,9 +71,13 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radii.sheet,
     bottom: 0,
     left: 0,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
     position: "absolute",
     right: 0,
+  },
+  sheetContent: {
+    flexGrow: 1,
   },
   handle: {
     alignSelf: "center",

@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.xs,
-    minHeight: 24,
+    minHeight: 26,
     paddingHorizontal: spacing.xs,
   },
   dot: {
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: typography.display,
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0,
   },
 });
