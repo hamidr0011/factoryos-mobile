@@ -1152,29 +1152,6 @@ revoke execute on function public.notify_roles(text[], text, text, text, text) f
 
 grant execute on function public.current_profile_role() to authenticated;
 grant execute on function public.current_profile_department() to authenticated;
-
-create or replace function public.can_access_area(p_area text, p_level text default 'read')
-returns boolean
-language sql
-stable
-security invoker
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.role_access_matrix ram
-    where ram.role = public.current_profile_role()
-      and ram.area = p_area
-      and case p_level
-        when 'admin' then ram.can_admin
-        when 'approve' then ram.can_approve or ram.can_admin
-        when 'write' then ram.can_write or ram.can_admin
-        else ram.can_read
-      end
-  );
-$$;
-
-grant execute on function public.can_access_area(text, text) to authenticated;
 grant execute on function public.create_audit_event(text, text, text, uuid, jsonb) to authenticated;
 grant execute on function public.create_notification(uuid, text, text, text, text) to authenticated;
 grant execute on function public.notify_roles(text[], text, text, text, text) to authenticated;
@@ -1277,3 +1254,67 @@ set can_read = excluded.can_read,
 
 grant execute on function public.current_profile_role() to authenticated;
 grant execute on function public.current_profile_department() to authenticated;
+
+create table if not exists user_access_overrides (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references profiles(id) on delete cascade,
+  area text not null check (area in ('dashboard','production','inventory','quality','hr','maintenance','finance','notifications','settings')),
+  can_read boolean not null default false,
+  can_write boolean not null default false,
+  can_approve boolean not null default false,
+  can_admin boolean not null default false,
+  granted_by uuid references profiles(id),
+  reason text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(profile_id, area)
+);
+
+alter table user_access_overrides enable row level security;
+
+grant select on user_access_overrides to authenticated;
+grant all on user_access_overrides to service_role;
+
+drop policy if exists "own access overrides read" on user_access_overrides;
+create policy "own access overrides read"
+on user_access_overrides for select
+using (profile_id = auth.uid() or public.current_profile_role() = 'admin');
+
+drop policy if exists "access overrides admin manage" on user_access_overrides;
+create policy "access overrides admin manage"
+on user_access_overrides for all
+using (public.current_profile_role() = 'admin')
+with check (public.current_profile_role() = 'admin');
+
+create or replace function public.can_access_area(p_area text, p_level text default 'read')
+returns boolean
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  with my_profile as (
+    select id, role from public.profiles where id = auth.uid()
+  ), effective as (
+    select
+      coalesce(uo.can_read, ram.can_read, false) as can_read,
+      coalesce(uo.can_write, ram.can_write, false) as can_write,
+      coalesce(uo.can_approve, ram.can_approve, false) as can_approve,
+      coalesce(uo.can_admin, ram.can_admin, false) as can_admin
+    from my_profile mp
+    left join public.role_access_matrix ram on ram.role = mp.role and ram.area = p_area
+    left join public.user_access_overrides uo on uo.profile_id = mp.id and uo.area = p_area
+    limit 1
+  )
+  select coalesce((
+    select case p_level
+      when 'admin' then can_admin
+      when 'approve' then can_approve or can_admin
+      when 'write' then can_write or can_admin
+      else can_read
+    end
+    from effective
+  ), false);
+$$;
+
+grant execute on function public.can_access_area(text, text) to authenticated;

@@ -3,6 +3,8 @@ import type { ModuleId, Role } from "../types";
 export type AppArea = ModuleId | "dashboard" | "notifications" | "settings";
 export type AccessLevel = "read" | "write" | "approve" | "admin";
 
+export const appAreas: AppArea[] = ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"];
+
 export const roleLabels: Record<Role, string> = {
   admin: "Admin",
   manager: "Manager",
@@ -19,18 +21,16 @@ export const roleDescriptions: Record<Role, string> = {
   viewer: "Read-only dashboards and operational visibility without create, update, approval, or delete actions.",
 };
 
-const allAreas: AppArea[] = ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"];
-
 export const roleAreaAccess: Record<Role, AppArea[]> = {
-  admin: allAreas,
-  manager: allAreas,
+  admin: appAreas,
+  manager: appAreas,
   supervisor: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"],
   operator: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
   viewer: ["dashboard", "production", "inventory", "quality", "maintenance", "finance", "notifications"],
 };
 
 export const roleWriteAccess: Record<Role, AppArea[]> = {
-  admin: allAreas,
+  admin: appAreas,
   manager: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
   supervisor: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
   operator: ["production", "inventory", "quality", "hr", "maintenance", "finance"],
@@ -38,7 +38,7 @@ export const roleWriteAccess: Record<Role, AppArea[]> = {
 };
 
 export const roleApprovalAccess: Record<Role, AppArea[]> = {
-  admin: allAreas,
+  admin: appAreas,
   manager: ["hr", "finance", "production", "quality", "maintenance"],
   supervisor: ["hr", "finance", "quality", "maintenance"],
   operator: [],
@@ -46,7 +46,7 @@ export const roleApprovalAccess: Record<Role, AppArea[]> = {
 };
 
 export const roleAdminAccess: Record<Role, AppArea[]> = {
-  admin: allAreas,
+  admin: appAreas,
   manager: [],
   supervisor: [],
   operator: [],
@@ -54,7 +54,7 @@ export const roleAdminAccess: Record<Role, AppArea[]> = {
 };
 
 export const roleMatrixRows = (Object.keys(roleAreaAccess) as Role[]).flatMap((role) =>
-  allAreas.map((area) => ({
+  appAreas.map((area) => ({
     role,
     area,
     canRead: roleAreaAccess[role].includes(area),

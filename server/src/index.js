@@ -131,8 +131,17 @@ const accountSchema = z.object({
   employeeId: z.string().trim().min(2),
 });
 
+const accessRowSchema = z.object({
+  area: z.enum(appAreas),
+  canRead: z.boolean(),
+  canWrite: z.boolean(),
+  canApprove: z.boolean(),
+  canAdmin: z.boolean(),
+});
+
 const createUserSchema = accountSchema.extend({
   role: z.enum(roles),
+  access: z.array(accessRowSchema).optional(),
 });
 
 const updateUserProfileSchema = z.object({
@@ -142,6 +151,115 @@ const updateUserProfileSchema = z.object({
   employeeId: z.string().trim().min(2).optional(),
   avatarUrl: z.string().trim().url().optional().nullable(),
 });
+
+const userAccessSchema = z.object({
+  access: z.array(accessRowSchema).min(1),
+  reason: optionalText,
+});
+
+const dbRowToAccess = (row) => ({
+  role: row.role,
+  area: row.area,
+  canRead: row.can_read,
+  canWrite: row.can_write,
+  canApprove: row.can_approve,
+  canAdmin: row.can_admin,
+});
+
+const loadRoleAccessMatrix = async () => {
+  const { data, error } = await adminSupabase
+    .from("role_access_matrix")
+    .select("role,area,can_read,can_write,can_approve,can_admin")
+    .order("role")
+    .order("area");
+
+  if (error || !data?.length) return { source: "api-fallback", matrix: roleAccessMatrix };
+  return { source: "database", matrix: data.map(dbRowToAccess) };
+};
+
+const getEffectiveUserAccess = async (userId) => {
+  const { data: profile, error: profileError } = await adminSupabase
+    .from("profiles")
+    .select("id,role")
+    .eq("id", userId)
+    .single();
+
+  if (profileError) throw profileError;
+
+  const [{ matrix }, overridesResult] = await Promise.all([
+    loadRoleAccessMatrix(),
+    adminSupabase
+      .from("user_access_overrides")
+      .select("area,can_read,can_write,can_approve,can_admin")
+      .eq("profile_id", userId),
+  ]);
+
+  if (overridesResult.error) throw overridesResult.error;
+
+  const overrides = new Map((overridesResult.data || []).map((row) => [row.area, dbRowToAccess({ ...row, role: profile.role })]));
+  const roleRows = matrix.filter((row) => row.role === profile.role);
+
+  return {
+    userId,
+    role: profile.role,
+    access: appAreas.map((area) => {
+      const baseline = roleRows.find((row) => row.area === area) || {
+        canRead: false,
+        canWrite: false,
+        canApprove: false,
+        canAdmin: false,
+      };
+      const override = overrides.get(area) || null;
+      const effective = override || baseline;
+
+      return {
+        area,
+        role: profile.role,
+        baseline: {
+          canRead: baseline.canRead,
+          canWrite: baseline.canWrite,
+          canApprove: baseline.canApprove,
+          canAdmin: baseline.canAdmin,
+        },
+        override: override
+          ? {
+              canRead: override.canRead,
+              canWrite: override.canWrite,
+              canApprove: override.canApprove,
+              canAdmin: override.canAdmin,
+            }
+          : null,
+        effective: {
+          canRead: effective.canRead,
+          canWrite: effective.canWrite,
+          canApprove: effective.canApprove,
+          canAdmin: effective.canAdmin,
+        },
+      };
+    }),
+  };
+};
+
+const saveUserAccessOverrides = async ({ userId, access, grantedBy, reason }) => {
+  const rows = access.map((row) => ({
+    profile_id: userId,
+    area: row.area,
+    can_read: row.canRead,
+    can_write: row.canWrite,
+    can_approve: row.canApprove,
+    can_admin: row.canAdmin,
+    granted_by: grantedBy,
+    reason: reason || null,
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error } = await adminSupabase
+    .from("user_access_overrides")
+    .upsert(rows, { onConflict: "profile_id,area" });
+
+  if (error) throw error;
+  return getEffectiveUserAccess(userId);
+};
 
 const getAdminCount = async () => {
   const { count, error } = await adminSupabase
@@ -266,26 +384,12 @@ app.get(
   "/api/role-access",
   asyncRoute(async (req, res) => {
     const role = req.profile?.role || "viewer";
-    const { data, error } = await adminSupabase
-      .from("role_access_matrix")
-      .select("role,area,can_read,can_write,can_approve,can_admin")
-      .order("role")
-      .order("area");
-    const matrix = error || !data?.length
-      ? roleAccessMatrix
-      : data.map((row) => ({
-          role: row.role,
-          area: row.area,
-          canRead: row.can_read,
-          canWrite: row.can_write,
-          canApprove: row.can_approve,
-          canAdmin: row.can_admin,
-        }));
+    const { source, matrix } = await loadRoleAccessMatrix();
 
     res.json({
       data: {
         role,
-        source: error ? "api-fallback" : "database",
+        source,
         matrix,
         currentRoleAccess: matrix.filter((row) => row.role === role),
       },
@@ -299,9 +403,20 @@ app.post(
   asyncRoute(async (req, res) => {
     const input = body(createUserSchema, req);
     const result = await createFactoryAccount(input);
+    const access = input.access?.length
+      ? await saveUserAccessOverrides({
+          userId: result.profile.id,
+          access: input.access,
+          grantedBy: req.user.id,
+          reason: "Initial account provisioning",
+        })
+      : null;
 
     res.status(201).json({
-      data: result,
+      data: {
+        ...result,
+        access,
+      },
     });
   }),
 );
@@ -344,6 +459,32 @@ app.patch(
     }
 
     res.json({ data: profile });
+  }),
+);
+
+app.get(
+  "/api/admin/users/:userId/access",
+  requireRoles(["admin"]),
+  asyncRoute(async (req, res) => {
+    const params = z.object({ userId: uuid }).parse(req.params);
+    res.json({ data: await getEffectiveUserAccess(params.userId) });
+  }),
+);
+
+app.put(
+  "/api/admin/users/:userId/access",
+  requireRoles(["admin"]),
+  asyncRoute(async (req, res) => {
+    const params = z.object({ userId: uuid }).parse(req.params);
+    const input = body(userAccessSchema, req);
+    res.json({
+      data: await saveUserAccessOverrides({
+        userId: params.userId,
+        access: input.access,
+        grantedBy: req.user.id,
+        reason: input.reason,
+      }),
+    });
   }),
 );
 

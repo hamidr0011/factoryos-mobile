@@ -1,5 +1,29 @@
 import type { Role } from "../types";
+import type { AppArea } from "../utils/permissions";
 import { apiRequest, isApiConfigured } from "./api";
+
+export interface UserAccessRow {
+  area: AppArea;
+  role: Role;
+  baseline: {
+    canRead: boolean;
+    canWrite: boolean;
+    canApprove: boolean;
+    canAdmin: boolean;
+  };
+  override: {
+    canRead: boolean;
+    canWrite: boolean;
+    canApprove: boolean;
+    canAdmin: boolean;
+  } | null;
+  effective: {
+    canRead: boolean;
+    canWrite: boolean;
+    canApprove: boolean;
+    canAdmin: boolean;
+  };
+}
 
 export const hrService = {
   async getEmployees() {
@@ -14,7 +38,7 @@ export const hrService = {
     return apiRequest("/api/hr/leave-requests");
   },
 
-  async createAccount(input: { email: string; password: string; fullName: string; role: Role; department: string; employeeId: string }) {
+  async createAccount(input: { email: string; password: string; fullName: string; role: Role; department: string; employeeId: string; access?: Array<{ area: AppArea; canRead: boolean; canWrite: boolean; canApprove: boolean; canAdmin: boolean }> }) {
     if (!isApiConfigured) {
       throw new Error("Render API is required to create accounts securely.");
     }
@@ -33,6 +57,17 @@ export const hrService = {
     return apiRequest(`/api/admin/users/${userId}/profile`, {
       method: "PATCH",
       body: JSON.stringify(input),
+    });
+  },
+
+  async getUserAccess(userId: string) {
+    return apiRequest<{ userId: string; role: Role; access: UserAccessRow[] }>(`/api/admin/users/${userId}/access`);
+  },
+
+  async updateUserAccess(userId: string, access: Array<{ area: AppArea; canRead: boolean; canWrite: boolean; canApprove: boolean; canAdmin: boolean }>, reason?: string) {
+    return apiRequest<{ userId: string; role: Role; access: UserAccessRow[] }>(`/api/admin/users/${userId}/access`, {
+      method: "PUT",
+      body: JSON.stringify({ access, reason }),
     });
   },
 

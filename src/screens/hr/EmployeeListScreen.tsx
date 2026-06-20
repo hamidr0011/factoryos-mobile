@@ -2,15 +2,12 @@ import { useNavigation } from "@react-navigation/native";
 import { Pencil, ShieldCheck, UserPlus, Users } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "../../components/ui/Badge";
-import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
-import { useAppStore } from "../../store/appStore";
 import type { Profile, Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { roleDescriptions, roleLabels } from "../../utils/permissions";
@@ -27,13 +24,8 @@ const roleColors: Record<Role, string> = {
 
 export const EmployeeListScreen = () => {
   const navigation = useNavigation<any>();
-  const queryClient = useQueryClient();
-  const showToast = useAppStore((state) => state.showToast);
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All");
-  const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
-  const [editRole, setEditRole] = useState<Role>("operator");
-  const [editDepartment, setEditDepartment] = useState("");
   const { data = [] } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
   const employees = data as Profile[];
   const departments = useMemo(() => ["All", ...Array.from(new Set(employees.map((employee) => employee.department).filter(Boolean)))], [employees]);
@@ -55,39 +47,6 @@ export const EmployeeListScreen = () => {
       }),
     [department, employees, search],
   );
-
-  const openEdit = (employee: Profile) => {
-    setSelectedEmployee(employee);
-    setEditRole(employee.role);
-    setEditDepartment(employee.department || "");
-  };
-
-  const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!selectedEmployee) throw new Error("Select an employee first.");
-      return hrService.updateAccount(selectedEmployee.id, {
-        role: editRole,
-        department: editDepartment.trim(),
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["employees"] });
-      showToast("success", "Role access updated.");
-      setSelectedEmployee(null);
-    },
-    onError: (error) => {
-      showToast("error", error instanceof Error ? error.message : "Could not update access.");
-    },
-  });
-
-  const submitRoleUpdate = () => {
-    if (!selectedEmployee || editDepartment.trim().length < 2) {
-      showToast("warning", "Choose a role and enter department.");
-      return;
-    }
-
-    updateMutation.mutate();
-  };
 
   return (
     <ScreenContainer
@@ -145,7 +104,7 @@ export const EmployeeListScreen = () => {
           </PermissionGate>
         }
         renderItem={({ item }) => (
-          <WorkCard title={item.full_name} eyebrow={item.employee_id} accentColor={roleColors[item.role]} onPress={() => openEdit(item)}>
+          <WorkCard title={item.full_name} eyebrow={item.employee_id} accentColor={roleColors[item.role]} onPress={() => navigation.navigate("EditStaffAccess", { employee: item })}>
             <View style={styles.row}>
               <View style={styles.employeeMeta}>
                 <Text style={styles.meta}>{item.department}</Text>
@@ -161,38 +120,6 @@ export const EmployeeListScreen = () => {
           </WorkCard>
         )}
       />
-      <BottomSheet visible={Boolean(selectedEmployee)} onClose={() => setSelectedEmployee(null)}>
-        <View style={styles.sheet}>
-          <View style={styles.sheetHead}>
-            <View style={styles.sheetIconMuted}>
-              <Users color={colors.hr} size={20} />
-            </View>
-            <View style={styles.sheetCopy}>
-              <Text style={styles.sheetTitle}>Edit Access</Text>
-              <Text style={styles.sheetMeta}>{selectedEmployee?.full_name} · {selectedEmployee?.employee_id}</Text>
-            </View>
-          </View>
-          <Input label="Department" value={editDepartment} onChangeText={setEditDepartment} placeholder="Production" />
-          <View style={styles.roleBlock}>
-            <Text style={styles.label}>Role permission</Text>
-            <View style={styles.roleList}>
-              {assignableRoles.map((item) => {
-                const active = item === editRole;
-                return (
-                  <Pressable key={item} style={[styles.roleOption, active && styles.roleOptionActive, { borderColor: active ? roleColors[item] : colors.steel700 }]} onPress={() => setEditRole(item)}>
-                    <View style={[styles.roleDot, { backgroundColor: roleColors[item] }]} />
-                    <View style={styles.roleOptionCopy}>
-                      <Text style={[styles.roleText, active && { color: roleColors[item] }]}>{roleLabels[item]}</Text>
-                      <Text style={styles.roleDescription}>{roleDescriptions[item]}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-          <Button title="Save Role Access" loading={updateMutation.isPending} onPress={submitRoleUpdate} />
-        </View>
-      </BottomSheet>
     </ScreenContainer>
   );
 };
@@ -292,90 +219,5 @@ const styles = StyleSheet.create({
   roleAction: {
     alignItems: "flex-end",
     gap: spacing.xs,
-  },
-  sheet: {
-    gap: spacing.md,
-  },
-  sheetHead: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  sheetIcon: {
-    alignItems: "center",
-    backgroundColor: colors.amber400,
-    borderRadius: 10,
-    height: 44,
-    justifyContent: "center",
-    width: 44,
-  },
-  sheetIconMuted: {
-    alignItems: "center",
-    backgroundColor: `${colors.hr}20`,
-    borderColor: `${colors.hr}55`,
-    borderRadius: 10,
-    borderWidth: 1,
-    height: 44,
-    justifyContent: "center",
-    width: 44,
-  },
-  sheetCopy: {
-    flex: 1,
-  },
-  sheetTitle: {
-    color: colors.steel100,
-    fontFamily: typography.display,
-    fontSize: 22,
-  },
-  sheetMeta: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 2,
-  },
-  roleBlock: {
-    gap: spacing.xs,
-  },
-  label: {
-    color: colors.steel300,
-    fontFamily: typography.bodyMedium,
-    fontSize: 13,
-  },
-  roleList: {
-    gap: spacing.xs,
-  },
-  roleOption: {
-    alignItems: "center",
-    backgroundColor: colors.steel800,
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: spacing.sm,
-    minHeight: 40,
-    padding: spacing.sm,
-  },
-  roleOptionActive: {
-    backgroundColor: colors.steel900,
-  },
-  roleDot: {
-    borderRadius: 5,
-    height: 10,
-    width: 10,
-  },
-  roleOptionCopy: {
-    flex: 1,
-  },
-  roleText: {
-    color: colors.steel100,
-    fontFamily: typography.display,
-    fontSize: 13,
-  },
-  roleDescription: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 11,
-    lineHeight: 15,
-    marginTop: 2,
   },
 });

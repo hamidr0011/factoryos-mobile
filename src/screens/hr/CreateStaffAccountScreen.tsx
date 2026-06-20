@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { AccessMatrixEditor, accessForRole } from "../../components/access/AccessMatrixEditor";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
@@ -11,7 +12,7 @@ import { useAppStore } from "../../store/appStore";
 import type { Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { isEmail } from "../../utils/validators";
-import { roleDescriptions, roleLabels, roleMatrixRows } from "../../utils/permissions";
+import { roleDescriptions, roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
 const roles: Role[] = ["manager", "supervisor", "operator", "viewer", "admin"];
@@ -36,9 +37,9 @@ export const CreateStaffAccountScreen = () => {
   const [employeeId, setEmployeeId] = useState("");
   const [department, setDepartment] = useState("");
   const [role, setRole] = useState<Role>("manager");
+  const [access, setAccess] = useState(accessForRole("manager"));
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
-  const accessRows = useMemo(() => roleMatrixRows.filter((row) => row.role === role && row.canRead), [role]);
   const normalizedEmail = email.trim().toLowerCase();
   const formErrors = useMemo(
     () => ({
@@ -62,6 +63,7 @@ export const CreateStaffAccountScreen = () => {
         role,
         department: department.trim(),
         employeeId: employeeId.trim(),
+        access,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -81,6 +83,11 @@ export const CreateStaffAccountScreen = () => {
     }
 
     createMutation.mutate();
+  };
+
+  const applyRole = (nextRole: Role) => {
+    setRole(nextRole);
+    setAccess(accessForRole(nextRole));
   };
 
   return (
@@ -150,7 +157,7 @@ export const CreateStaffAccountScreen = () => {
             {roles.map((item) => {
               const active = item === role;
               return (
-                <Pressable key={item} style={[styles.roleCard, active && styles.roleCardActive, { borderColor: active ? roleColors[item] : colors.steel700 }]} onPress={() => setRole(item)}>
+                <Pressable key={item} style={[styles.roleCard, active && styles.roleCardActive, { borderColor: active ? roleColors[item] : colors.steel700 }]} onPress={() => applyRole(item)}>
                   <View style={[styles.roleMark, { backgroundColor: roleColors[item] }]}>
                     {active ? <Check color={colors.steel950} size={14} /> : null}
                   </View>
@@ -164,23 +171,12 @@ export const CreateStaffAccountScreen = () => {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Access Preview</Text>
-          <Text style={styles.previewMeta}>{roleLabels[role]} will receive these module permissions.</Text>
-          <View style={styles.permissionGrid}>
-            {accessRows.map((row) => (
-              <View key={row.area} style={styles.permissionCard}>
-                <Text style={styles.permissionArea}>{row.area}</Text>
-                <View style={styles.permissionBadges}>
-                  <Text style={styles.permissionBadge}>Read</Text>
-                  {row.canWrite ? <Text style={styles.permissionBadge}>Write</Text> : null}
-                  {row.canApprove ? <Text style={styles.permissionBadge}>Approve</Text> : null}
-                  {row.canAdmin ? <Text style={styles.permissionBadge}>Admin</Text> : null}
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
+        <AccessMatrixEditor
+          value={access}
+          onChange={setAccess}
+          title="Personal Grants & Revokes"
+          subtitle="Start from the selected role, then grant or revoke module permissions for this person."
+        />
 
         <View style={styles.reviewPanel}>
           <Text style={styles.reviewTitle}>Creation Summary</Text>
@@ -350,46 +346,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     marginTop: 3,
-  },
-  previewMeta: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    marginTop: -spacing.xs,
-  },
-  permissionGrid: {
-    gap: spacing.xs,
-  },
-  permissionCard: {
-    backgroundColor: colors.steel800,
-    borderColor: colors.steel700,
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: spacing.xs,
-    padding: spacing.sm,
-  },
-  permissionArea: {
-    color: colors.steel100,
-    fontFamily: typography.display,
-    fontSize: 13,
-    textTransform: "capitalize",
-  },
-  permissionBadges: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-  },
-  permissionBadge: {
-    backgroundColor: `${colors.amber400}18`,
-    borderColor: `${colors.amber400}44`,
-    borderRadius: 5,
-    borderWidth: 1,
-    color: colors.amber400,
-    fontFamily: typography.bodyMedium,
-    fontSize: 10,
-    overflow: "hidden",
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 3,
   },
   reviewPanel: {
     backgroundColor: colors.steel900,
