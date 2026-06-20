@@ -6,6 +6,10 @@ export const qualityService = {
     return apiRequest("/api/quality/checks");
   },
 
+  async getDefectTypes() {
+    return apiRequest("/api/quality/defect-types");
+  },
+
   async uploadEvidence(uri: string, batchNumber: string) {
     if (!(await shouldUseSupabase())) {
       throw new Error("Supabase session is required to upload quality evidence.");

@@ -19,8 +19,8 @@ export const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [department, setDepartment] = useState("Administration");
-  const [employeeId, setEmployeeId] = useState("FOS-0001");
+  const [department, setDepartment] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -161,14 +161,14 @@ export const LoginScreen = () => {
               {setupMode ? (
                 <>
                   <Input label="Full name" value={fullName} onChangeText={setFullName} placeholder="Owner Name" />
-                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="owner@company.com" />
+                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="Work email" />
                   <Input label="Temporary password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Minimum 8 characters" />
-                  <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="FOS-0001" />
-                  <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Administration" />
+                  <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="Employee ID" />
+                  <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Department" />
                 </>
               ) : (
                 <>
-                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="name@company.com" />
+                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="Work email" />
                   <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Password" />
                   <Pressable style={styles.remember} onPress={() => setRemember((value) => !value)}>
                     <View style={[styles.toggle, remember && styles.toggleOn]}>

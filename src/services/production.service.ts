@@ -6,6 +6,10 @@ export const productionService = {
     return apiRequest(`/api/production/orders${params}`);
   },
 
+  async getOrderLogs(orderId: string) {
+    return apiRequest(`/api/production/orders/${orderId}/logs`);
+  },
+
   async getMachines() {
     return apiRequest("/api/production/machines");
   },

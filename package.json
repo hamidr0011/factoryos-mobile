@@ -51,6 +51,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test:no-mock-data": "node scripts/check-no-mock-data.mjs",
+    "check": "npm run typecheck && npm run test:no-mock-data && npm run server:check",
+    "test": "npm run check",
     "server:check": "npm --prefix server run check",
     "server:start": "npm --prefix server start"
   },

@@ -27,37 +27,6 @@ app.use(
 
 const roles = ["admin", "manager", "supervisor", "operator", "viewer"];
 const appAreas = ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"];
-const roleAreaAccess = {
-  admin: appAreas,
-  manager: appAreas,
-  supervisor: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"],
-  operator: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
-  viewer: ["dashboard", "production", "inventory", "quality", "maintenance", "finance", "notifications"],
-};
-const roleWriteAccess = {
-  admin: appAreas,
-  manager: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
-  supervisor: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
-  operator: ["production", "inventory", "quality", "hr", "maintenance", "finance"],
-  viewer: [],
-};
-const roleApprovalAccess = {
-  admin: appAreas,
-  manager: ["hr", "finance", "production", "quality", "maintenance"],
-  supervisor: ["hr", "finance", "quality", "maintenance"],
-  operator: [],
-  viewer: [],
-};
-const roleAccessMatrix = roles.flatMap((role) =>
-  appAreas.map((area) => ({
-    role,
-    area,
-    canRead: roleAreaAccess[role].includes(area),
-    canWrite: roleWriteAccess[role].includes(area),
-    canApprove: roleApprovalAccess[role].includes(area),
-    canAdmin: role === "admin",
-  })),
-);
 const uuid = z.string().uuid();
 const optionalText = z.string().trim().min(1).optional();
 
@@ -173,8 +142,8 @@ const loadRoleAccessMatrix = async () => {
     .order("role")
     .order("area");
 
-  if (error || !data?.length) return { source: "api-fallback", matrix: roleAccessMatrix };
-  return { source: "database", matrix: data.map(dbRowToAccess) };
+  if (error) throw error;
+  return { source: "database", matrix: (data || []).map(dbRowToAccess) };
 };
 
 const getEffectiveUserAccess = async (userId) => {
@@ -529,6 +498,22 @@ app.get(
 );
 
 app.get(
+  "/api/production/orders/:orderId/logs",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    const params = z.object({ orderId: uuid }).parse(req.params);
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("production_logs")
+        .select("*, entered_by:profiles(*)")
+        .eq("order_id", params.orderId)
+        .order("created_at", { ascending: false }),
+    );
+  }),
+);
+
+app.get(
   "/api/production/machines",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
@@ -657,6 +642,14 @@ app.post(
       }),
       201,
     );
+  }),
+);
+
+app.get(
+  "/api/quality/defect-types",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("defect_types").select("*").order("severity").order("name"));
   }),
 );
 

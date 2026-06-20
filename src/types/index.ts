@@ -58,6 +58,16 @@ export interface ProductionOrder {
   updated_at?: string;
 }
 
+export interface ProductionLog {
+  id: string;
+  order_id: string;
+  quantity_delta: number;
+  quantity_after: number;
+  notes?: string | null;
+  entered_by?: Profile | null;
+  created_at: string;
+}
+
 export interface InventoryItem {
   id: string;
   sku: string;
@@ -92,6 +102,14 @@ export interface QualityCheck {
   inspector?: Profile;
   notes?: string;
   created_at: string;
+}
+
+export interface DefectType {
+  id: string;
+  code?: string | null;
+  name?: string | null;
+  severity?: "minor" | "major" | "critical" | null;
+  description?: string | null;
 }
 
 export interface AttendanceRecord {

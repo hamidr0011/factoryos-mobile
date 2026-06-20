@@ -1,13 +1,14 @@
 import { useNavigation } from "@react-navigation/native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccessMatrixEditor, accessForRole } from "../../components/access/AccessMatrixEditor";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
+import { permissionService } from "../../services/permission.service";
 import { useAppStore } from "../../store/appStore";
 import type { Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
@@ -25,7 +26,6 @@ const roleColors: Record<Role, string> = {
 };
 
 const makePassword = () => `FactoryOS-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`;
-const makeEmployeeId = () => `FOS-${Math.floor(1000 + Math.random() * 9000)}`;
 
 export const CreateStaffAccountScreen = () => {
   const navigation = useNavigation<any>();
@@ -38,7 +38,17 @@ export const CreateStaffAccountScreen = () => {
   const [department, setDepartment] = useState("");
   const [role, setRole] = useState<Role>("manager");
   const [access, setAccess] = useState(accessForRole("manager"));
+  const [accessInitialized, setAccessInitialized] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const roleAccessQuery = useQuery({ queryKey: ["role_access"], queryFn: permissionService.getRoleAccess });
+  const roleMatrix = roleAccessQuery.data?.matrix || [];
+
+  useEffect(() => {
+    if (roleMatrix.length && !accessInitialized) {
+      setAccess(accessForRole(role, roleMatrix));
+      setAccessInitialized(true);
+    }
+  }, [accessInitialized, role, roleMatrix]);
 
   const normalizedEmail = email.trim().toLowerCase();
   const formErrors = useMemo(
@@ -51,7 +61,11 @@ export const CreateStaffAccountScreen = () => {
     }),
     [department, employeeId, fullName, normalizedEmail, password],
   );
-  const missingItems = useMemo(() => Object.values(formErrors).filter(Boolean), [formErrors]);
+  const missingItems = useMemo(() => {
+    const items = Object.values(formErrors).filter(Boolean);
+    if (!roleMatrix.length) items.push("Role access matrix must load from the API.");
+    return items;
+  }, [formErrors, roleMatrix.length]);
   const isFormReady = missingItems.length === 0;
 
   const createMutation = useMutation({
@@ -87,7 +101,8 @@ export const CreateStaffAccountScreen = () => {
 
   const applyRole = (nextRole: Role) => {
     setRole(nextRole);
-    setAccess(accessForRole(nextRole));
+    setAccess(accessForRole(nextRole, roleMatrix));
+    setAccessInitialized(true);
   };
 
   return (
@@ -127,8 +142,8 @@ export const CreateStaffAccountScreen = () => {
             <Mail color={colors.amber400} size={19} />
             <Text style={styles.sectionTitle}>Login Credentials</Text>
           </View>
-          <Input label="Full name" value={fullName} onChangeText={setFullName} placeholder="Aisha Khan" error={attemptedSubmit ? formErrors.fullName : undefined} />
-          <Input label="Work email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="name@company.com" error={attemptedSubmit ? formErrors.email : undefined} />
+          <Input label="Full name" value={fullName} onChangeText={setFullName} placeholder="Full name" error={attemptedSubmit ? formErrors.fullName : undefined} />
+          <Input label="Work email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="Work email" error={attemptedSubmit ? formErrors.email : undefined} />
           <View style={styles.passwordRow}>
             <View style={styles.passwordInput}>
               <Input label="Temporary password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Minimum 8 characters" error={attemptedSubmit ? formErrors.password : undefined} />
@@ -137,15 +152,8 @@ export const CreateStaffAccountScreen = () => {
               <KeyRound color={colors.steel100} size={18} />
             </Pressable>
           </View>
-          <View style={styles.passwordRow}>
-            <View style={styles.passwordInput}>
-              <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="FOS-1204" error={attemptedSubmit ? formErrors.employeeId : undefined} />
-            </View>
-            <Pressable style={styles.generateButton} onPress={() => setEmployeeId(makeEmployeeId())}>
-              <Text style={styles.generateText}>ID</Text>
-            </Pressable>
-          </View>
-          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Production" error={attemptedSubmit ? formErrors.department : undefined} />
+          <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="Employee ID" error={attemptedSubmit ? formErrors.employeeId : undefined} />
+          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Department" error={attemptedSubmit ? formErrors.department : undefined} />
         </View>
 
         <View style={styles.section}>
@@ -303,11 +311,6 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: "center",
     width: 52,
-  },
-  generateText: {
-    color: colors.steel100,
-    fontFamily: typography.display,
-    fontSize: 12,
   },
   roleList: {
     gap: spacing.xs,

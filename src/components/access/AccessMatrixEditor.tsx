@@ -1,8 +1,9 @@
 import { Check, Minus } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Role } from "../../types";
+import type { RoleAccessMatrixRow } from "../../services/permission.service";
 import type { AppArea } from "../../utils/permissions";
-import { appAreas, roleMatrixRows } from "../../utils/permissions";
+import { appAreas } from "../../utils/permissions";
 import { colors, spacing, typography } from "../../utils/constants";
 
 export interface AccessDraft {
@@ -32,9 +33,9 @@ const actions: Array<{ key: keyof Omit<AccessDraft, "area">; label: string }> = 
   { key: "canAdmin", label: "Admin" },
 ];
 
-export const accessForRole = (role: Role): AccessDraft[] =>
+export const accessForRole = (role: Role, matrixRows: RoleAccessMatrixRow[] = []): AccessDraft[] =>
   appAreas.map((area) => {
-    const baseline = roleMatrixRows.find((row) => row.role === role && row.area === area);
+    const baseline = matrixRows.find((row) => row.role === role && row.area === area);
     return {
       area,
       canRead: Boolean(baseline?.canRead),

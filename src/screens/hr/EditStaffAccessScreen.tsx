@@ -8,6 +8,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
+import { permissionService } from "../../services/permission.service";
 import { useAppStore } from "../../store/appStore";
 import type { Profile, Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
@@ -31,7 +32,8 @@ export const EditStaffAccessScreen = () => {
   const employee = route.params?.employee as Profile;
   const [role, setRole] = useState<Role>(employee.role);
   const [department, setDepartment] = useState(employee.department || "");
-  const [access, setAccess] = useState<AccessDraft[]>(accessForRole(employee.role));
+  const [access, setAccess] = useState<AccessDraft[]>([]);
+  const roleAccessQuery = useQuery({ queryKey: ["role_access"], queryFn: permissionService.getRoleAccess });
 
   const accessQuery = useQuery({
     queryKey: ["employee_access", employee.id],
@@ -60,6 +62,7 @@ export const EditStaffAccessScreen = () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["employees"] }),
         queryClient.invalidateQueries({ queryKey: ["employee_access", employee.id] }),
+        queryClient.invalidateQueries({ queryKey: ["role_access"] }),
       ]);
       showToast("success", "Staff access updated.");
       navigation.goBack();
@@ -71,7 +74,7 @@ export const EditStaffAccessScreen = () => {
 
   const applyRoleDefaults = (nextRole: Role) => {
     setRole(nextRole);
-    setAccess(accessForRole(nextRole));
+    setAccess(accessForRole(nextRole, roleAccessQuery.data?.matrix || []));
   };
 
   return (
@@ -92,7 +95,7 @@ export const EditStaffAccessScreen = () => {
             <ShieldCheck color={colors.amber400} size={18} />
             <Text style={styles.sectionTitle}>Role Baseline</Text>
           </View>
-          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Production" />
+          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Department" />
           <View style={styles.roleList}>
             {roles.map((item) => {
               const active = item === role;

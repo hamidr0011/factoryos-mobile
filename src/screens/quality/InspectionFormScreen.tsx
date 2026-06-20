@@ -12,16 +12,16 @@ import { Badge } from "../../components/ui/Badge";
 import { productionService } from "../../services/production.service";
 import { qualityService } from "../../services/quality.service";
 import { useAppStore } from "../../store/appStore";
-import type { ProductionOrder } from "../../types";
+import type { DefectType, ProductionOrder } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { ChipRow, ProgressBar, ScreenContainer } from "../shared/ScreenScaffold";
 
 const steps = ["Batch", "Results", "Evidence"];
-const defectTypes = [
-  { label: "Burr", severity: "minor", color: colors.production },
-  { label: "Surface", severity: "major", color: colors.amber400 },
-  { label: "Dimension", severity: "critical", color: colors.maintenance },
-];
+const severityColors: Record<NonNullable<DefectType["severity"]>, string> = {
+  minor: colors.production,
+  major: colors.amber400,
+  critical: colors.maintenance,
+};
 
 export const InspectionFormScreen = () => {
   const navigation = useNavigation<any>();
@@ -40,7 +40,12 @@ export const InspectionFormScreen = () => {
     queryKey: ["production_orders"],
     queryFn: () => productionService.getOrders(),
   });
+  const { data: defectData = [] } = useQuery({
+    queryKey: ["defect_types"],
+    queryFn: qualityService.getDefectTypes,
+  });
   const typedOrders = orders as ProductionOrder[];
+  const defectTypes = defectData as DefectType[];
   const selectedOrder = typedOrders.find((order) => order.order_number === orderNumber);
 
   useEffect(() => {
@@ -132,17 +137,22 @@ export const InspectionFormScreen = () => {
           </View>
           <Text style={styles.label}>Defect Types</Text>
           <View style={styles.defects}>
-            {defectTypes.map((defect) => {
-              const selected = selectedDefects.includes(defect.label);
+            {defectTypes.length ? defectTypes.map((defect) => {
+              const value = defect.code || defect.name || defect.id;
+              const label = defect.name || defect.code || "Unnamed defect";
+              const severity = defect.severity || "minor";
+              const selected = selectedDefects.includes(value);
               return (
                 <Pressable
-                  key={defect.label}
-                  onPress={() => setSelectedDefects((items) => (selected ? items.filter((item) => item !== defect.label) : [...items, defect.label]))}
+                  key={defect.id}
+                  onPress={() => setSelectedDefects((items) => (selected ? items.filter((item) => item !== value) : [...items, value]))}
                 >
-                  <Badge label={`${defect.label} · ${defect.severity}`} color={defect.color} subtle={!selected} />
+                  <Badge label={`${label} · ${severity}`} color={severityColors[severity]} subtle={!selected} />
                 </Pressable>
               );
-            })}
+            }) : (
+              <Text style={styles.meta}>No defect types returned by the API.</Text>
+            )}
           </View>
           <Input label="Notes" placeholder="Inspection notes" value={notes} onChangeText={setNotes} />
           <Button title="Continue" onPress={() => setStep(2)} />

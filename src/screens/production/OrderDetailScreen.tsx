@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "@react-navigation/native";
 import { CheckCircle2, PauseCircle, Plus, RotateCcw } from "lucide-react-native";
 import { useState } from "react";
@@ -12,7 +12,7 @@ import { Input } from "../../components/ui/Input";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { productionService } from "../../services/production.service";
 import { useAppStore } from "../../store/appStore";
-import type { ProductionOrder } from "../../types";
+import type { ProductionLog, ProductionOrder } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { formatDate } from "../../utils/formatters";
 import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
@@ -26,10 +26,17 @@ export const OrderDetailScreen = () => {
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const progress = order ? (order.quantity_produced / order.quantity_planned) * 100 : 0;
+  const { data: logData = [] } = useQuery({
+    queryKey: ["production_logs", order?.id],
+    queryFn: () => productionService.getOrderLogs(order!.id),
+    enabled: Boolean(order?.id),
+  });
+  const logs = logData as ProductionLog[];
   const refreshProduction = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["production_orders"] }),
       queryClient.invalidateQueries({ queryKey: ["machines"] }),
+      queryClient.invalidateQueries({ queryKey: ["production_logs", order?.id] }),
     ]);
   };
 
@@ -105,15 +112,25 @@ export const OrderDetailScreen = () => {
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Timeline</Text>
-        {["Order released", "Material staged", "Line running", "Quality sample pulled"].map((event, index) => (
-          <View key={event} style={styles.timelineRow}>
-            <View style={[styles.timelineDot, { backgroundColor: index < 3 ? colors.amber400 : colors.steel700 }]} />
-            <View>
-              <Text style={styles.timelineTitle}>{event}</Text>
-              <Text style={styles.timelineMeta}>{formatDate(order.created_at, "dd MMM HH:mm")}</Text>
+        {logs.length ? (
+          logs.map((log) => (
+            <View key={log.id} style={styles.timelineRow}>
+              <View style={[styles.timelineDot, { backgroundColor: colors.amber400 }]} />
+              <View style={styles.timelineCopy}>
+                <Text style={styles.timelineTitle}>
+                  +{Number(log.quantity_delta).toLocaleString()} units logged · {Number(log.quantity_after).toLocaleString()} total
+                </Text>
+                <Text style={styles.timelineMeta}>
+                  {formatDate(log.created_at, "dd MMM HH:mm")}
+                  {log.entered_by?.full_name ? ` · ${log.entered_by.full_name}` : ""}
+                </Text>
+                {log.notes ? <Text style={styles.timelineNotes}>{log.notes}</Text> : null}
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        ) : (
+          <EmptyState variant="production" title="No progress logs" subtitle="Progress updates will appear here after they are submitted through the API." />
+        )}
       </Card>
 
       <View style={styles.actions}>
@@ -179,6 +196,9 @@ const styles = StyleSheet.create({
     height: 12,
     width: 12,
   },
+  timelineCopy: {
+    flex: 1,
+  },
   timelineTitle: {
     color: colors.steel100,
     fontFamily: typography.bodyMedium,
@@ -188,6 +208,12 @@ const styles = StyleSheet.create({
     color: colors.steel500,
     fontFamily: typography.mono,
     fontSize: 11,
+  },
+  timelineNotes: {
+    color: colors.steel300,
+    fontFamily: typography.body,
+    fontSize: 12,
+    marginTop: 3,
   },
   actions: {
     gap: spacing.sm,
