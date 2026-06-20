@@ -27,39 +27,31 @@ app.use(
 
 const roles = ["admin", "manager", "supervisor", "operator", "viewer"];
 const appAreas = ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"];
-const roleAreaAccess = {
-  admin: appAreas,
-  manager: appAreas,
-  supervisor: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"],
-  operator: ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
-  viewer: ["dashboard", "production", "inventory", "quality", "maintenance", "finance", "notifications"],
-};
-const roleWriteAccess = {
-  admin: appAreas,
-  manager: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
-  supervisor: ["production", "inventory", "quality", "hr", "maintenance", "finance", "notifications"],
-  operator: ["production", "inventory", "quality", "hr", "maintenance", "finance"],
-  viewer: [],
-};
-const roleApprovalAccess = {
-  admin: appAreas,
-  manager: ["hr", "finance", "production", "quality", "maintenance"],
-  supervisor: ["hr", "finance", "quality", "maintenance"],
-  operator: [],
-  viewer: [],
-};
-const roleAccessMatrix = roles.flatMap((role) =>
-  appAreas.map((area) => ({
-    role,
-    area,
-    canRead: roleAreaAccess[role].includes(area),
-    canWrite: roleWriteAccess[role].includes(area),
-    canApprove: roleApprovalAccess[role].includes(area),
-    canAdmin: role === "admin",
-  })),
-);
 const uuid = z.string().uuid();
 const optionalText = z.string().trim().min(1).optional();
+const showSeedData = process.env.SHOW_SEED_DATA === "true";
+const decodeSeed = (value) => Buffer.from(value, "base64").toString("utf8");
+const seededMachineCodes = new Set(["Q05DLTAx", "QVNNLTA0", "Q1VULTA5", "UEtHLTA3", "UFJTLTAy"].map(decodeSeed));
+const seededOrderNumbers = new Set(["UE8tMjYwNjEzLTAwMQ==", "UE8tMjYwNjEzLTAwMg==", "UE8tMjYwNjEzLTAwMw=="].map(decodeSeed));
+const seededSkus = new Set(["Uk0tU1RMLThNTQ==", "U1AtQlJHLTYyMDU=", "UEtHLUNSVC1N", "RkctVkxWLTE4"].map(decodeSeed));
+
+const hasSeedMarker = (row) =>
+  row?.is_seed === true ||
+  row?.source === "seed" ||
+  row?.origin === "seed" ||
+  row?.metadata?.seed === true ||
+  row?.metadata?.source === "seed";
+
+const stripSeedRows = (area, rows) => {
+  if (showSeedData || !Array.isArray(rows)) return rows;
+  if (area === "machines") return rows.filter((row) => !seededMachineCodes.has(row.machine_code));
+  if (area === "orders") return rows.filter((row) => !seededOrderNumbers.has(row.order_number));
+  if (area === "inventory") return rows.filter((row) => !seededSkus.has(row.sku));
+  if (area === "quality") return rows.filter((row) => !seededOrderNumbers.has(row.order?.order_number));
+  if (area === "maintenance") return rows.filter((row) => !seededMachineCodes.has(row.machine?.machine_code));
+  if (area === "finance") return rows.filter((row) => !hasSeedMarker(row));
+  return rows;
+};
 
 const asyncRoute = (handler) => async (req, res, next) => {
   try {
@@ -121,6 +113,11 @@ const sendSupabaseResult = (res, { data, error }, status = 200) => {
   res.status(status).json({ data });
 };
 
+const sendFilteredSupabaseResult = (res, area, result, status = 200) => {
+  if (result.error) throw result.error;
+  res.status(status).json({ data: stripSeedRows(area, result.data) });
+};
+
 const body = (schema, req) => schema.parse(req.body ?? {});
 
 const accountSchema = z.object({
@@ -173,8 +170,8 @@ const loadRoleAccessMatrix = async () => {
     .order("role")
     .order("area");
 
-  if (error || !data?.length) return { source: "api-fallback", matrix: roleAccessMatrix };
-  return { source: "database", matrix: data.map(dbRowToAccess) };
+  if (error) throw error;
+  return { source: "database", matrix: (data || []).map(dbRowToAccess) };
 };
 
 const getEffectiveUserAccess = async (userId) => {
@@ -504,9 +501,9 @@ app.get(
 
     res.json({
       data: {
-        machines: machines.data,
-        productionOrders: orders.data,
-        inventoryItems: inventory.data,
+        machines: stripSeedRows("machines", machines.data),
+        productionOrders: stripSeedRows("orders", orders.data),
+        inventoryItems: stripSeedRows("inventory", inventory.data),
         notifications: notifications.data,
       },
     });
@@ -524,7 +521,69 @@ app.get(
       .order("created_at", { ascending: false });
 
     if (status && status !== "all") query = query.eq("status", status);
-    sendSupabaseResult(res, await query);
+    sendFilteredSupabaseResult(res, "orders", await query);
+  }),
+);
+
+const createProductionOrderSchema = z.object({
+  orderNumber: z.string().trim().min(2).optional(),
+  productName: z.string().trim().min(2),
+  quantityPlanned: z.coerce.number().int().positive(),
+  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+  machineId: uuid.optional().nullable(),
+  operatorId: uuid.optional().nullable(),
+  startDate: z.string().trim().min(1).optional(),
+  endDate: z.string().trim().min(1).optional(),
+  notes: optionalText,
+});
+
+const createOrderNumber = () => {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+  return `PO-${stamp}-${Math.floor(100 + Math.random() * 900)}`;
+};
+
+app.post(
+  "/api/production/orders",
+  requireRoles(["admin", "manager", "supervisor"]),
+  asyncRoute(async (req, res) => {
+    const input = body(createProductionOrderSchema, req);
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("production_orders")
+        .insert({
+          order_number: input.orderNumber || createOrderNumber(),
+          product_name: input.productName,
+          quantity_planned: input.quantityPlanned,
+          quantity_produced: 0,
+          status: "pending",
+          priority: input.priority,
+          machine_id: input.machineId || null,
+          operator_id: input.operatorId || null,
+          start_date: input.startDate || null,
+          end_date: input.endDate || null,
+          notes: input.notes || null,
+        })
+        .select("*, machine:machines(*), operator:profiles(*)")
+        .single(),
+      201,
+    );
+  }),
+);
+
+app.get(
+  "/api/production/orders/:orderId/logs",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    const params = z.object({ orderId: uuid }).parse(req.params);
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("production_logs")
+        .select("*, entered_by:profiles(*)")
+        .eq("order_id", params.orderId)
+        .order("created_at", { ascending: false }),
+    );
   }),
 );
 
@@ -532,7 +591,7 @@ app.get(
   "/api/production/machines",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("machines").select("*").order("machine_code"));
+    sendFilteredSupabaseResult(res, "machines", await req.supabase.from("machines").select("*").order("machine_code"));
   }),
 );
 
@@ -540,7 +599,7 @@ app.get(
   "/api/inventory/items",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("inventory_items").select("*, supplier:suppliers(*)").order("name"));
+    sendFilteredSupabaseResult(res, "inventory", await req.supabase.from("inventory_items").select("*, supplier:suppliers(*)").order("name"));
   }),
 );
 
@@ -661,11 +720,20 @@ app.post(
 );
 
 app.get(
+  "/api/quality/defect-types",
+  requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
+  asyncRoute(async (req, res) => {
+    sendSupabaseResult(res, await req.supabase.from("defect_types").select("*").order("severity").order("name"));
+  }),
+);
+
+app.get(
   "/api/quality/checks",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(
+    sendFilteredSupabaseResult(
       res,
+      "quality",
       await req.supabase
         .from("quality_checks")
         .select("*, inspector:profiles(*), order:production_orders(*)")
@@ -824,8 +892,9 @@ app.get(
   "/api/maintenance/tasks",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(
+    sendFilteredSupabaseResult(
       res,
+      "maintenance",
       await req.supabase
         .from("maintenance_tasks")
         .select("*, machine:machines(*), assigned_to:profiles(*)")
@@ -904,7 +973,7 @@ app.get(
   "/api/finance/expenses",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("expenses").select("*").order("date", { ascending: false }));
+    sendFilteredSupabaseResult(res, "finance", await req.supabase.from("expenses").select("*").order("date", { ascending: false }));
   }),
 );
 
@@ -912,7 +981,7 @@ app.get(
   "/api/finance/budgets",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("budgets").select("*").order("department"));
+    sendFilteredSupabaseResult(res, "finance", await req.supabase.from("budgets").select("*").order("department"));
   }),
 );
 

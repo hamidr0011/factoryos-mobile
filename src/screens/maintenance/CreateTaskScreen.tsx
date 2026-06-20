@@ -98,7 +98,7 @@ export const CreateTaskScreen = () => {
   };
 
   return (
-    <ScreenContainer title="Create Task" subtitle="Schedule maintenance work">
+    <ScreenContainer title="Create Task">
       {machines.length ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Select Machine</Text>
@@ -165,7 +165,7 @@ export const CreateTaskScreen = () => {
               );
             })
           ) : (
-            <Text style={styles.meta}>No linked inventory parts available.</Text>
+            <Text style={styles.meta}>No linked parts</Text>
           )}
         </View>
       </Card>
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   label: {
     color: colors.steel300,

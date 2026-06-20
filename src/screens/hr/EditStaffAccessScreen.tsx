@@ -5,13 +5,15 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccessDraft, AccessMatrixEditor, accessForRole } from "../../components/access/AccessMatrixEditor";
 import { Button } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
+import { permissionService } from "../../services/permission.service";
 import { useAppStore } from "../../store/appStore";
 import type { Profile, Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
-import { roleDescriptions, roleLabels } from "../../utils/permissions";
+import { roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
 const roles: Role[] = ["admin", "manager", "supervisor", "operator", "viewer"];
@@ -31,7 +33,8 @@ export const EditStaffAccessScreen = () => {
   const employee = route.params?.employee as Profile;
   const [role, setRole] = useState<Role>(employee.role);
   const [department, setDepartment] = useState(employee.department || "");
-  const [access, setAccess] = useState<AccessDraft[]>(accessForRole(employee.role));
+  const [access, setAccess] = useState<AccessDraft[]>([]);
+  const roleAccessQuery = useQuery({ queryKey: ["role_access"], queryFn: permissionService.getRoleAccess });
 
   const accessQuery = useQuery({
     queryKey: ["employee_access", employee.id],
@@ -60,6 +63,7 @@ export const EditStaffAccessScreen = () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["employees"] }),
         queryClient.invalidateQueries({ queryKey: ["employee_access", employee.id] }),
+        queryClient.invalidateQueries({ queryKey: ["role_access"] }),
       ]);
       showToast("success", "Staff access updated.");
       navigation.goBack();
@@ -71,19 +75,25 @@ export const EditStaffAccessScreen = () => {
 
   const applyRoleDefaults = (nextRole: Role) => {
     setRole(nextRole);
-    setAccess(accessForRole(nextRole));
+    setAccess(accessForRole(nextRole, roleAccessQuery.data?.matrix || []));
   };
 
   return (
-    <PermissionGate roles={["admin"]}>
+    <PermissionGate
+      roles={["admin"]}
+      fallback={
+        <ScreenContainer title="Edit Staff Access" navigationMode="back">
+          <EmptyState variant="hr" title="Admin access required" />
+        </ScreenContainer>
+      }
+    >
       <ScreenContainer title="Edit Staff Access" subtitle={`${employee.full_name} · ${employee.employee_id}`} navigationMode="back">
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
-            <Users color={colors.hr} size={24} />
+            <Users color={colors.blue} size={24} />
           </View>
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>{employee.full_name}</Text>
-            <Text style={styles.heroText}>Role sets the baseline. Personal access below can grant or revoke module permissions for this person only.</Text>
           </View>
         </View>
 
@@ -92,7 +102,7 @@ export const EditStaffAccessScreen = () => {
             <ShieldCheck color={colors.amber400} size={18} />
             <Text style={styles.sectionTitle}>Role Baseline</Text>
           </View>
-          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Production" />
+          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Department" />
           <View style={styles.roleList}>
             {roles.map((item) => {
               const active = item === role;
@@ -101,7 +111,6 @@ export const EditStaffAccessScreen = () => {
                   <View style={[styles.roleDot, { backgroundColor: roleColors[item] }]} />
                   <View style={styles.roleCopy}>
                     <Text style={[styles.roleName, active && { color: roleColors[item] }]}>{roleLabels[item]}</Text>
-                    <Text style={styles.roleDescription}>{roleDescriptions[item]}</Text>
                   </View>
                 </Pressable>
               );
@@ -129,8 +138,8 @@ const styles = StyleSheet.create({
   },
   heroIcon: {
     alignItems: "center",
-    backgroundColor: `${colors.hr}20`,
-    borderColor: `${colors.hr}55`,
+    backgroundColor: `${colors.blue}20`,
+    borderColor: `${colors.blue}55`,
     borderRadius: 12,
     borderWidth: 1,
     height: 56,
@@ -143,14 +152,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
-  },
-  heroText: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
+    fontSize: 16,
   },
   section: {
     backgroundColor: colors.steel900,
@@ -168,7 +170,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   roleList: {
     gap: spacing.xs,
@@ -198,12 +200,5 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: 14,
-  },
-  roleDescription: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 3,
   },
 });

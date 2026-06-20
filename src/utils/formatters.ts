@@ -14,6 +14,14 @@ export const formatCurrency = (amount: number, currency = "PKR") =>
     maximumFractionDigits: 0,
   }).format(amount);
 
+export const formatCompactCurrency = (amount: number, currency = "PKR") =>
+  new Intl.NumberFormat("en-PK", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 1,
+    notation: "compact",
+  }).format(amount);
+
 export const formatPercent = (value: number) => `${Math.round(value * 10) / 10}%`;
 
 export const clamp = (value: number, min = 0, max = 100) => Math.min(Math.max(value, min), max);

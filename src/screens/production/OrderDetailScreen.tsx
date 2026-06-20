@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "@react-navigation/native";
 import { CheckCircle2, PauseCircle, Plus, RotateCcw } from "lucide-react-native";
 import { useState } from "react";
@@ -12,7 +12,7 @@ import { Input } from "../../components/ui/Input";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { productionService } from "../../services/production.service";
 import { useAppStore } from "../../store/appStore";
-import type { ProductionOrder } from "../../types";
+import type { ProductionLog, ProductionOrder } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { formatDate } from "../../utils/formatters";
 import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
@@ -26,10 +26,17 @@ export const OrderDetailScreen = () => {
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const progress = order ? (order.quantity_produced / order.quantity_planned) * 100 : 0;
+  const { data: logData = [] } = useQuery({
+    queryKey: ["production_logs", order?.id],
+    queryFn: () => productionService.getOrderLogs(order!.id),
+    enabled: Boolean(order?.id),
+  });
+  const logs = logData as ProductionLog[];
   const refreshProduction = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["production_orders"] }),
       queryClient.invalidateQueries({ queryKey: ["machines"] }),
+      queryClient.invalidateQueries({ queryKey: ["production_logs", order?.id] }),
     ]);
   };
 
@@ -73,24 +80,24 @@ export const OrderDetailScreen = () => {
 
   if (!order) {
     return (
-      <ScreenContainer title="Order Detail" subtitle="Production order">
-        <EmptyState variant="production" title="No order selected" subtitle="Open a production order from the live order list." />
+      <ScreenContainer title="Order Detail">
+        <EmptyState variant="production" title="No order selected" />
       </ScreenContainer>
     );
   }
 
   return (
     <ScreenContainer title={order.order_number} subtitle={order.product_name}>
-      <Card style={styles.hero} accentColor={order.priority === "critical" ? colors.maintenance : colors.production}>
+      <Card style={styles.hero} accentColor={order.priority === "critical" ? colors.red : colors.blue}>
         <View style={styles.heroHead}>
           <StatusBadge status={order.status} />
           <StatusBadge status={order.priority} />
         </View>
         <View style={styles.progressRow}>
-          <GaugeChart value={progress} color={colors.production} label="complete" />
+          <GaugeChart value={progress} color={colors.blue} label="complete" />
           <View style={styles.progressCopy}>
             <Text style={styles.big}>{order.quantity_produced.toLocaleString()}</Text>
-            <Text style={styles.muted}>of {order.quantity_planned.toLocaleString()} units produced</Text>
+            <Text numberOfLines={1} style={styles.muted}>of {order.quantity_planned.toLocaleString()} units</Text>
           </View>
         </View>
       </Card>
@@ -105,15 +112,25 @@ export const OrderDetailScreen = () => {
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Timeline</Text>
-        {["Order released", "Material staged", "Line running", "Quality sample pulled"].map((event, index) => (
-          <View key={event} style={styles.timelineRow}>
-            <View style={[styles.timelineDot, { backgroundColor: index < 3 ? colors.amber400 : colors.steel700 }]} />
-            <View>
-              <Text style={styles.timelineTitle}>{event}</Text>
-              <Text style={styles.timelineMeta}>{formatDate(order.created_at, "dd MMM HH:mm")}</Text>
+        {logs.length ? (
+          logs.map((log) => (
+            <View key={log.id} style={styles.timelineRow}>
+              <View style={[styles.timelineDot, { backgroundColor: colors.amber400 }]} />
+              <View style={styles.timelineCopy}>
+                <Text style={styles.timelineTitle}>
+                  +{Number(log.quantity_delta).toLocaleString()} units logged · {Number(log.quantity_after).toLocaleString()} total
+                </Text>
+                <Text style={styles.timelineMeta}>
+                  {formatDate(log.created_at, "dd MMM HH:mm")}
+                  {log.entered_by?.full_name ? ` · ${log.entered_by.full_name}` : ""}
+                </Text>
+                {log.notes ? <Text numberOfLines={2} style={styles.timelineNotes}>{log.notes}</Text> : null}
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        ) : (
+          <EmptyState variant="production" title="No progress logs" />
+        )}
       </Card>
 
       <View style={styles.actions}>
@@ -153,12 +170,13 @@ const styles = StyleSheet.create({
   big: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 36,
+    fontSize: 24,
+    lineHeight: 30,
   },
   muted: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
+    fontSize: 12,
   },
   section: {
     gap: spacing.sm,
@@ -166,7 +184,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   timelineRow: {
     alignItems: "center",
@@ -179,15 +197,24 @@ const styles = StyleSheet.create({
     height: 12,
     width: 12,
   },
+  timelineCopy: {
+    flex: 1,
+  },
   timelineTitle: {
     color: colors.steel100,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: 12,
   },
   timelineMeta: {
     color: colors.steel500,
     fontFamily: typography.mono,
     fontSize: 11,
+  },
+  timelineNotes: {
+    color: colors.steel300,
+    fontFamily: typography.body,
+    fontSize: 11,
+    marginTop: 3,
   },
   actions: {
     gap: spacing.sm,
@@ -198,6 +225,6 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 18,
   },
 });

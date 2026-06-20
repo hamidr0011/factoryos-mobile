@@ -164,12 +164,12 @@ const styles = StyleSheet.create({
   logo: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 36,
+    fontSize: 24,
   },
   tagline: {
     color: colors.steel500,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: 12,
     letterSpacing: 2,
   },
   progressTrack: {

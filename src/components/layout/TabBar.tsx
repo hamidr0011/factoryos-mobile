@@ -1,6 +1,7 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Home, MoreHorizontal } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { colors, spacing, typography } from "../../utils/constants";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
@@ -36,74 +37,87 @@ const TabBarItem = ({
           <Icon color={isFocused ? colors.amber400 : colors.steel300} size={22} />
         )}
       </Animated.View>
-      <Text style={[styles.label, { color: isFocused ? colors.amber400 : colors.steel500 }]}>{label}</Text>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.72}
+        numberOfLines={1}
+        style={[styles.label, { color: isFocused ? colors.amber400 : colors.steel500 }]}
+      >
+        {label}
+      </Text>
       <View style={[styles.underline, { opacity: isFocused ? 1 : 0 }]} />
     </Pressable>
   );
 };
 
-export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => (
-  <View style={styles.bar}>
-    {state.routes.map((route, index) => {
-      const label = descriptors[route.key].options.tabBarLabel?.toString() || route.name;
-      return (
-        <TabBarItem
-          key={route.key}
-          routeName={route.name}
-          label={label}
-          isFocused={state.index === index}
-          onPress={() => {
-            if (route.name === "More") {
-              (navigation.getParent() as any)?.openDrawer?.();
-              return;
-            }
-            navigation.navigate(route.name);
-          }}
-        />
-      );
-    })}
-  </View>
-);
+export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, Platform.OS === "android" ? spacing.md : spacing.sm);
+
+  return (
+    <View style={[styles.bar, { paddingBottom: bottomPad }]}>
+      {state.routes.map((route, index) => {
+        const label = descriptors[route.key].options.tabBarLabel?.toString() || route.name;
+        return (
+          <TabBarItem
+            key={route.key}
+            routeName={route.name}
+            label={label}
+            isFocused={state.index === index}
+            onPress={() => {
+              if (route.name === "More") {
+                (navigation.getParent() as any)?.openDrawer?.();
+                return;
+              }
+              navigation.navigate(route.name);
+            }}
+          />
+        );
+      })}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: colors.steel950,
+    backgroundColor: colors.steel900,
     borderTopColor: colors.steel700,
     borderTopWidth: 1,
     flexDirection: "row",
-    minHeight: 74,
-    paddingBottom: spacing.xs,
+    minHeight: 82,
     paddingTop: spacing.xs,
   },
   item: {
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
-    minHeight: 44,
+    minHeight: 52,
+    minWidth: 0,
+    paddingHorizontal: 2,
   },
   iconWrap: {
     alignItems: "center",
-    borderColor: "transparent",
-    borderRadius: 8,
-    borderWidth: 1,
-    height: 28,
+    height: 32,
     justifyContent: "center",
-    width: 36,
+    width: 44,
   },
   iconWrapActive: {
-    backgroundColor: `${colors.amber400}1A`,
-    borderColor: `${colors.amber400}40`,
+    backgroundColor: `${colors.amber400}14`,
+    borderRadius: 18,
   },
   label: {
     fontFamily: typography.bodyMedium,
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 9,
+    lineHeight: 11,
+    marginTop: 3,
+    maxWidth: "100%",
+    textAlign: "center",
   },
   underline: {
     backgroundColor: colors.amber400,
-    borderRadius: 1,
-    height: 2,
-    marginTop: 5,
-    width: 24,
+    borderRadius: 2,
+    height: 3,
+    marginTop: 4,
+    width: 16,
   },
 });

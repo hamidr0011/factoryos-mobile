@@ -16,7 +16,7 @@ export const ToastHost = () => {
 
   if (!toast) return null;
 
-  const color = toast.tone === "success" ? colors.inventory : toast.tone === "warning" ? colors.amber400 : colors.maintenance;
+  const color = toast.tone === "success" ? colors.emerald : toast.tone === "warning" ? colors.orange : colors.red;
   return (
     <View style={[styles.toast, { borderColor: `${color}66` }]}>
       <View style={[styles.dot, { backgroundColor: color }]} />

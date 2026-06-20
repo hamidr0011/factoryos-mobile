@@ -1,18 +1,20 @@
 import { useNavigation } from "@react-navigation/native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, KeyRound, Mail, ShieldCheck, UserPlus } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccessMatrixEditor, accessForRole } from "../../components/access/AccessMatrixEditor";
 import { Button } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
+import { permissionService } from "../../services/permission.service";
 import { useAppStore } from "../../store/appStore";
 import type { Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { isEmail } from "../../utils/validators";
-import { roleDescriptions, roleLabels } from "../../utils/permissions";
+import { roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
 const roles: Role[] = ["manager", "supervisor", "operator", "viewer", "admin"];
@@ -25,7 +27,6 @@ const roleColors: Record<Role, string> = {
 };
 
 const makePassword = () => `FactoryOS-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`;
-const makeEmployeeId = () => `FOS-${Math.floor(1000 + Math.random() * 9000)}`;
 
 export const CreateStaffAccountScreen = () => {
   const navigation = useNavigation<any>();
@@ -38,20 +39,34 @@ export const CreateStaffAccountScreen = () => {
   const [department, setDepartment] = useState("");
   const [role, setRole] = useState<Role>("manager");
   const [access, setAccess] = useState(accessForRole("manager"));
+  const [accessInitialized, setAccessInitialized] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const roleAccessQuery = useQuery({ queryKey: ["role_access"], queryFn: permissionService.getRoleAccess });
+  const roleMatrix = roleAccessQuery.data?.matrix || [];
+
+  useEffect(() => {
+    if (roleMatrix.length && !accessInitialized) {
+      setAccess(accessForRole(role, roleMatrix));
+      setAccessInitialized(true);
+    }
+  }, [accessInitialized, role, roleMatrix]);
 
   const normalizedEmail = email.trim().toLowerCase();
-  const formErrors = useMemo(
-    () => ({
-      fullName: fullName.trim().length >= 2 ? "" : "Enter the staff member's full name.",
-      email: isEmail(normalizedEmail) ? "" : "Enter a valid work email address.",
-      password: password.length >= 8 ? "" : "Password must be at least 8 characters.",
-      employeeId: employeeId.trim().length >= 2 ? "" : "Enter an employee ID.",
-      department: department.trim().length >= 2 ? "" : "Enter a department.",
-    }),
+	  const formErrors = useMemo(
+	    () => ({
+	      fullName: fullName.trim().length >= 2 ? "" : "Full name",
+	      email: isEmail(normalizedEmail) ? "" : "Work email",
+	      password: password.length >= 8 ? "" : "Password",
+	      employeeId: employeeId.trim().length >= 2 ? "" : "Employee ID",
+	      department: department.trim().length >= 2 ? "" : "Department",
+	    }),
     [department, employeeId, fullName, normalizedEmail, password],
   );
-  const missingItems = useMemo(() => Object.values(formErrors).filter(Boolean), [formErrors]);
+  const missingItems = useMemo(() => {
+	    const items = Object.values(formErrors).filter(Boolean);
+	    if (!roleMatrix.length) items.push("Access matrix");
+	    return items;
+  }, [formErrors, roleMatrix.length]);
   const isFormReady = missingItems.length === 0;
 
   const createMutation = useMutation({
@@ -76,44 +91,46 @@ export const CreateStaffAccountScreen = () => {
   });
 
   const submit = () => {
-    setAttemptedSubmit(true);
-    if (!isFormReady) {
-      showToast("warning", "Complete the highlighted account fields first.");
-      return;
-    }
+	    setAttemptedSubmit(true);
+	    if (!isFormReady) {
+	      showToast("warning", "Complete required fields.");
+	      return;
+	    }
 
     createMutation.mutate();
   };
 
   const applyRole = (nextRole: Role) => {
     setRole(nextRole);
-    setAccess(accessForRole(nextRole));
+    setAccess(accessForRole(nextRole, roleMatrix));
+    setAccessInitialized(true);
   };
 
   return (
-    <PermissionGate roles={["admin"]}>
-      <ScreenContainer title="Create Staff Account" subtitle="Email, password, role, and access permissions" navigationMode="back">
+    <PermissionGate
+      roles={["admin"]}
+      fallback={
+        <ScreenContainer title="Create Staff Account" navigationMode="back">
+          <EmptyState variant="hr" title="Admin access required" />
+        </ScreenContainer>
+      }
+    >
+      <ScreenContainer title="Create Staff Account" navigationMode="back">
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
             <UserPlus color={colors.steel950} size={26} />
           </View>
           <View style={styles.heroCopy}>
-            <Text style={styles.heroTitle}>Provision a role-based account</Text>
-            <Text style={styles.heroText}>Create login credentials and assign exactly what this staff member can see or change.</Text>
+            <Text style={styles.heroTitle}>Staff Account</Text>
           </View>
         </View>
 
         <View style={[styles.validationPanel, isFormReady && styles.validationPanelReady]}>
-          <View style={styles.validationTop}>
-            <View style={[styles.validationDot, { backgroundColor: isFormReady ? colors.inventory : colors.amber400 }]} />
-            <Text style={styles.validationTitle}>{isFormReady ? "Ready to create account" : "Account setup incomplete"}</Text>
-          </View>
-          <Text style={styles.validationText}>
-            {isFormReady
-              ? `${roleLabels[role]} login credentials and access permissions are complete.`
-              : "Fill the required credentials before creating the staff login."}
-          </Text>
-          {!isFormReady ? (
+	          <View style={styles.validationTop}>
+	            <View style={[styles.validationDot, { backgroundColor: isFormReady ? colors.inventory : colors.amber400 }]} />
+	            <Text style={styles.validationTitle}>{isFormReady ? "Ready" : "Required fields"}</Text>
+	          </View>
+	          {!isFormReady ? (
             <View style={styles.missingList}>
               {missingItems.map((item) => (
                 <Text key={item} style={styles.missingItem}>{item}</Text>
@@ -127,8 +144,8 @@ export const CreateStaffAccountScreen = () => {
             <Mail color={colors.amber400} size={19} />
             <Text style={styles.sectionTitle}>Login Credentials</Text>
           </View>
-          <Input label="Full name" value={fullName} onChangeText={setFullName} placeholder="Aisha Khan" error={attemptedSubmit ? formErrors.fullName : undefined} />
-          <Input label="Work email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="name@company.com" error={attemptedSubmit ? formErrors.email : undefined} />
+          <Input label="Full name" value={fullName} onChangeText={setFullName} placeholder="Full name" error={attemptedSubmit ? formErrors.fullName : undefined} />
+          <Input label="Work email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="Work email" error={attemptedSubmit ? formErrors.email : undefined} />
           <View style={styles.passwordRow}>
             <View style={styles.passwordInput}>
               <Input label="Temporary password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Minimum 8 characters" error={attemptedSubmit ? formErrors.password : undefined} />
@@ -137,15 +154,8 @@ export const CreateStaffAccountScreen = () => {
               <KeyRound color={colors.steel100} size={18} />
             </Pressable>
           </View>
-          <View style={styles.passwordRow}>
-            <View style={styles.passwordInput}>
-              <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="FOS-1204" error={attemptedSubmit ? formErrors.employeeId : undefined} />
-            </View>
-            <Pressable style={styles.generateButton} onPress={() => setEmployeeId(makeEmployeeId())}>
-              <Text style={styles.generateText}>ID</Text>
-            </Pressable>
-          </View>
-          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Production" error={attemptedSubmit ? formErrors.department : undefined} />
+          <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="Employee ID" error={attemptedSubmit ? formErrors.employeeId : undefined} />
+          <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Department" error={attemptedSubmit ? formErrors.department : undefined} />
         </View>
 
         <View style={styles.section}>
@@ -163,7 +173,6 @@ export const CreateStaffAccountScreen = () => {
                   </View>
                   <View style={styles.roleCopy}>
                     <Text style={[styles.roleName, active && { color: roleColors[item] }]}>{roleLabels[item]}</Text>
-                    <Text style={styles.roleDescription}>{roleDescriptions[item]}</Text>
                   </View>
                 </Pressable>
               );
@@ -174,8 +183,7 @@ export const CreateStaffAccountScreen = () => {
         <AccessMatrixEditor
           value={access}
           onChange={setAccess}
-          title="Personal Grants & Revokes"
-          subtitle="Start from the selected role, then grant or revoke module permissions for this person."
+          title="Access Overrides"
         />
 
         <View style={styles.reviewPanel}>
@@ -216,14 +224,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
-  },
-  heroText: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
+    fontSize: 16,
   },
   section: {
     backgroundColor: colors.steel900,
@@ -260,21 +261,23 @@ const styles = StyleSheet.create({
     fontFamily: typography.display,
     fontSize: 14,
   },
-  validationText: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
-  },
   missingList: {
-    gap: 3,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
     marginTop: spacing.xs,
   },
   missingItem: {
+    backgroundColor: colors.steel800,
+    borderColor: colors.steel700,
+    borderRadius: 999,
+    borderWidth: 1,
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 12,
+    overflow: "hidden",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
   },
   sectionHead: {
     alignItems: "center",
@@ -284,7 +287,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   passwordRow: {
     alignItems: "flex-end",
@@ -298,16 +301,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel800,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     height: 52,
     justifyContent: "center",
     width: 52,
-  },
-  generateText: {
-    color: colors.steel100,
-    fontFamily: typography.display,
-    fontSize: 12,
   },
   roleList: {
     gap: spacing.xs,
@@ -339,13 +337,6 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: 14,
-  },
-  roleDescription: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 3,
   },
   reviewPanel: {
     backgroundColor: colors.steel900,

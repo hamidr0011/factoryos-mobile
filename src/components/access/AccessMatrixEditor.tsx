@@ -1,8 +1,9 @@
 import { Check, Minus } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Role } from "../../types";
+import type { RoleAccessMatrixRow } from "../../services/permission.service";
 import type { AppArea } from "../../utils/permissions";
-import { appAreas, roleMatrixRows } from "../../utils/permissions";
+import { appAreas } from "../../utils/permissions";
 import { colors, spacing, typography } from "../../utils/constants";
 
 export interface AccessDraft {
@@ -32,9 +33,9 @@ const actions: Array<{ key: keyof Omit<AccessDraft, "area">; label: string }> = 
   { key: "canAdmin", label: "Admin" },
 ];
 
-export const accessForRole = (role: Role): AccessDraft[] =>
+export const accessForRole = (role: Role, matrixRows: RoleAccessMatrixRow[] = []): AccessDraft[] =>
   appAreas.map((area) => {
-    const baseline = roleMatrixRows.find((row) => row.role === role && row.area === area);
+    const baseline = matrixRows.find((row) => row.role === role && row.area === area);
     return {
       area,
       canRead: Boolean(baseline?.canRead),
@@ -61,7 +62,7 @@ export const AccessMatrixEditor = ({
   value,
   onChange,
   title = "Personal Access Matrix",
-  subtitle = "Grant or revoke exactly what this person can do in each module.",
+  subtitle,
 }: {
   value: AccessDraft[];
   onChange: (next: AccessDraft[]) => void;
@@ -70,7 +71,7 @@ export const AccessMatrixEditor = ({
 }) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
-    <Text style={styles.sectionMeta}>{subtitle}</Text>
+    {subtitle ? <Text style={styles.sectionMeta}>{subtitle}</Text> : null}
     <View style={styles.grid}>
       {value.map((row) => {
         const enabledCount = actions.filter((action) => row[action.key]).length;
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   sectionMeta: {
     color: colors.steel500,

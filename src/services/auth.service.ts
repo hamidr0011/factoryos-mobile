@@ -1,12 +1,12 @@
 import type { Profile } from "../types";
+import { apiRequest } from "./api";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 export const authService = {
   async getProfile(userId: string) {
-    if (!isSupabaseConfigured) return null;
-    const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", userId).single<Profile>();
-    if (error) return null;
-    return profile || null;
+    if (!isSupabaseConfigured || !userId) return null;
+    const data = await apiRequest<{ profile: Profile | null }>("/api/me");
+    return data.profile || null;
   },
 
   async signIn(email: string, password: string) {

@@ -17,10 +17,10 @@ interface ButtonProps {
 }
 
 const variantStyles: Record<ButtonVariant, { backgroundColor: string; borderColor: string; color: string }> = {
-  primary: { backgroundColor: colors.amber400, borderColor: colors.amber400, color: colors.steel950 },
+  primary: { backgroundColor: colors.amber400, borderColor: colors.amber400, color: "#FFFFFF" },
   secondary: { backgroundColor: colors.steel800, borderColor: colors.steel700, color: colors.steel100 },
-  ghost: { backgroundColor: "transparent", borderColor: "transparent", color: colors.steel300 },
-  danger: { backgroundColor: colors.maintenance, borderColor: colors.maintenance, color: colors.steel100 },
+  ghost: { backgroundColor: "transparent", borderColor: "transparent", color: colors.amber400 },
+  danger: { backgroundColor: colors.red, borderColor: colors.red, color: "#FFFFFF" },
 };
 
 export const Button = ({ title, onPress, variant = "primary", icon, loading, disabled, style }: ButtonProps) => {
@@ -61,7 +61,7 @@ export const Button = ({ title, onPress, variant = "primary", icon, loading, dis
         ]}
       >
         {loading ? <ActivityIndicator color={palette.color} /> : icon}
-        <Text style={[styles.title, { color: disabled ? colors.steel500 : palette.color }]}>{title}</Text>
+        <Text numberOfLines={1} style={[styles.title, { color: disabled ? colors.steel500 : palette.color }]}>{title}</Text>
       </Animated.View>
     </Pressable>
   );
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   button: {
     minHeight: 48,
     minWidth: 48,
-    borderRadius: 6,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: typography.bodyMedium,
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 18,
   },
 });

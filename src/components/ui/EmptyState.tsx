@@ -7,7 +7,7 @@ import { Button } from "./Button";
 
 interface EmptyStateProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   cta?: string;
   onPress?: () => void;
   variant?: ModuleId;
@@ -17,8 +17,8 @@ interface EmptyStateProps {
 export const EmptyState = ({ title, subtitle, cta, onPress, variant = "production", children }: EmptyStateProps) => (
   <View style={styles.wrap}>
     <ModuleIllustration id={variant} color={moduleColors[variant]} />
-    <Text style={styles.title}>{title}</Text>
-    <Text style={styles.subtitle}>{subtitle}</Text>
+    <Text numberOfLines={2} style={styles.title}>{title}</Text>
+    {subtitle ? <Text numberOfLines={2} style={styles.subtitle}>{subtitle}</Text> : null}
     {children}
     {cta ? <Button title={cta} onPress={onPress} style={styles.cta} /> : null}
   </View>
@@ -36,19 +36,22 @@ const moduleColors: Record<ModuleId, string> = {
 const styles = StyleSheet.create({
   wrap: {
     alignItems: "center",
-    gap: spacing.sm,
-    padding: spacing.xl,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
   },
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 15,
+    lineHeight: 20,
     textAlign: "center",
   },
   subtitle: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
+    fontSize: 12,
+    lineHeight: 17,
     textAlign: "center",
   },
   cta: {

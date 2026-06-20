@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
-import { colors, modules, spacing, typography } from "../../utils/constants";
+import { colors, modules, radii, spacing, typography } from "../../utils/constants";
 import { roleLabels } from "../../utils/permissions";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
@@ -30,7 +30,7 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{profile?.full_name?.slice(0, 1) || "F"}</Text>
         </View>
-        <View>
+        <View style={styles.profileCopy}>
           <Text style={styles.name}>{profile?.full_name || "FactoryOS User"}</Text>
           <Text style={styles.meta}>
             {roleLabels[profile?.role || userRole]} · {profile?.department || "Operations"}
@@ -45,7 +45,6 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
               <ModuleIconMark id={module.id} color={module.color} size={28} />
             </View>
             <Text style={styles.itemText}>{module.label}</Text>
-            <Text style={styles.itemStat}>Open</Text>
           </Pressable>
         ))}
       </View>
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
     borderBottomColor: colors.steel700,
-    borderRadius: 12,
+    borderRadius: radii.card,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
@@ -86,25 +85,30 @@ const styles = StyleSheet.create({
   avatar: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 12,
+    borderRadius: 28,
     height: 56,
     justifyContent: "center",
     width: 56,
   },
   avatarText: {
-    color: colors.steel950,
+    color: "#FFFFFF",
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 22,
+  },
+  profileCopy: {
+    flex: 1,
+    minWidth: 0,
   },
   name: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 14,
+    lineHeight: 18,
   },
   meta: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 2,
     textTransform: "capitalize",
   },
@@ -116,16 +120,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
-    minHeight: 48,
+    minHeight: 52,
     paddingHorizontal: spacing.sm,
   },
   moduleIcon: {
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 18,
     borderWidth: 1,
     height: 36,
     justifyContent: "center",
@@ -135,12 +139,8 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     flex: 1,
     fontFamily: typography.bodyMedium,
-    fontSize: 14,
-  },
-  itemStat: {
-    color: colors.steel500,
-    fontFamily: typography.mono,
-    fontSize: 11,
+    fontSize: 13,
+    lineHeight: 17,
   },
   footer: {
     borderTopColor: colors.steel700,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.sm,
@@ -164,6 +164,6 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
-    fontSize: 14,
+    fontSize: 13,
   },
 });

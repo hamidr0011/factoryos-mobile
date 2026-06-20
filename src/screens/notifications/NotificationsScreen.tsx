@@ -116,7 +116,6 @@ export const NotificationsScreen = () => {
   return (
     <ScreenContainer
       title="Notifications"
-      subtitle="Realtime cross-module alerts"
       navigationMode="drawer"
       action={
         <Pressable style={styles.markAll} onPress={() => markAllMutation.mutate()}>
@@ -130,7 +129,7 @@ export const NotificationsScreen = () => {
           <NotificationCard key={item.id} item={item} onRead={(id) => markReadMutation.mutate(id)} onDelete={(id) => removeMutation.mutate(id)} />
         ))
       ) : (
-        <EmptyState variant="quality" title="No notifications" subtitle="Realtime module alerts will appear here after Supabase emits records." />
+        <EmptyState variant="quality" title="No notifications" />
       )}
     </ScreenContainer>
   );
@@ -151,7 +150,7 @@ const styles = StyleSheet.create({
   },
   deleteBg: {
     alignItems: "center",
-    backgroundColor: colors.maintenance,
+    backgroundColor: colors.red,
     bottom: 0,
     justifyContent: "center",
     position: "absolute",
@@ -180,7 +179,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 15,
+    fontSize: 14,
   },
   body: {
     color: colors.steel300,

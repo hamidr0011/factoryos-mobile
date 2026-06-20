@@ -13,7 +13,7 @@ const slides = [
     title: "6 Modules, One Command Center",
     body: "Production, inventory, quality, workforce, maintenance, and finance in one operational surface.",
     icon: Workflow,
-    color: colors.production,
+    color: colors.blue,
     insights: [
       ["Modules", "06"],
       ["Queues", "24"],
@@ -35,7 +35,7 @@ const slides = [
     title: "Role-Based Access",
     body: "Admin, manager, supervisor, operator, and viewer experiences stay precise and permission-aware.",
     icon: ShieldCheck,
-    color: colors.quality,
+    color: colors.blue,
     insights: [
       ["Roles", "05"],
       ["RLS", "On"],
@@ -212,14 +212,14 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 21,
     textAlign: "center",
   },
   body: {
     color: colors.steel300,
     fontFamily: typography.body,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 19,
     textAlign: "center",
   },
   insightRail: {
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   insightValue: {
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 15,
   },
   insightLabel: {
     color: colors.steel500,

@@ -49,7 +49,7 @@ export const ParticleLoader = ({ visible, message = "Synchronizing factory floor
 const styles = StyleSheet.create({
   overlay: {
     alignItems: "center",
-    backgroundColor: "rgba(243,245,241,0.92)",
+    backgroundColor: "rgba(242, 244, 247, 0.92)",
     bottom: 0,
     gap: spacing.md,
     justifyContent: "center",

@@ -23,7 +23,7 @@
     "android": {
       "package": "com.factoryos.app",
       "adaptiveIcon": {
-        "backgroundColor": "#F3F5F1",
+        "backgroundColor": "#111827",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -40,9 +40,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "7a5592d7-41d6-4093-a61b-bbdda122fcfb"
+        "projectId": "22f3a7ce-6e7c-4ebc-84e4-0476db83e0e9"
       }
     },
-    "owner": "hamidsaleems-team"
+    "owner": "hamid9061"
   }
 }

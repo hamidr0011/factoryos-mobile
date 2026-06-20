@@ -8,6 +8,7 @@ import { DashboardScreen } from "../screens/dashboard/DashboardScreen";
 import { ProductionListScreen } from "../screens/production/ProductionListScreen";
 import { OrderDetailScreen } from "../screens/production/OrderDetailScreen";
 import { MachineStatusScreen } from "../screens/production/MachineStatusScreen";
+import { CreateProductionOrderScreen } from "../screens/production/CreateProductionOrderScreen";
 import { InventoryListScreen } from "../screens/inventory/InventoryListScreen";
 import { ItemDetailScreen } from "../screens/inventory/ItemDetailScreen";
 import { StockTransactionScreen } from "../screens/inventory/StockTransactionScreen";
@@ -34,6 +35,7 @@ export const ProductionStack = () => (
   <RoleGuard area="production">
     <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="ProductionList" component={ProductionListScreen} />
+      <Stack.Screen name="CreateProductionOrder" component={CreateProductionOrderScreen} />
       <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <Stack.Screen name="MachineStatus" component={MachineStatusScreen} />
     </Stack.Navigator>

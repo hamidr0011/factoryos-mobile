@@ -36,14 +36,14 @@ export const ItemDetailScreen = () => {
 
   if (!item) {
     return (
-      <ScreenContainer title="Item Detail" subtitle="Inventory item">
-        <EmptyState variant="inventory" title="No item selected" subtitle="Open an inventory item from the live stock list." />
+      <ScreenContainer title="Item Detail">
+        <EmptyState variant="inventory" title="No item selected" />
       </ScreenContainer>
     );
   }
 
   const ratio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 0;
-  const color = ratio < 20 ? colors.maintenance : ratio < 50 ? colors.amber400 : colors.inventory;
+  const color = ratio < 20 ? colors.red : ratio < 50 ? colors.orange : colors.blue;
   const openTransaction = (type: "In" | "Out" | "Adjustment") => {
     navigation.navigate("StockTransaction", { item, type });
   };
@@ -61,7 +61,7 @@ export const ItemDetailScreen = () => {
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>30-day Stock Movement</Text>
-        {movement.length ? <LineChart data={movement} color={colors.inventory} /> : <EmptyState variant="inventory" title="No stock movement" subtitle="Transactions for this SKU will chart here." />}
+        {movement.length ? <LineChart data={movement} color={colors.blue} /> : <EmptyState variant="inventory" title="No stock movement" />}
       </Card>
 
       <Card style={styles.section}>
@@ -72,13 +72,13 @@ export const ItemDetailScreen = () => {
               key={tx.id}
               title={tx.reference || (tx.type === "in" ? "Receive Stock" : tx.type === "out" ? "Issue Stock" : "Stock Adjustment")}
               eyebrow={tx.type.toUpperCase()}
-              accentColor={tx.type === "in" ? colors.inventory : tx.type === "out" ? colors.maintenance : colors.production}
+              accentColor={tx.type === "in" ? colors.emerald : tx.type === "out" ? colors.red : colors.blue}
             >
               <Text style={styles.txQty}>{tx.quantity > 0 ? "+" : ""}{tx.quantity} {item.unit}</Text>
             </WorkCard>
           ))
         ) : (
-          <EmptyState variant="inventory" title="No transactions" subtitle="Stock in, stock out, and adjustments will appear here." />
+          <EmptyState variant="inventory" title="No transactions" />
         )}
       </Card>
 
@@ -97,12 +97,13 @@ const styles = StyleSheet.create({
   },
   quantity: {
     fontFamily: typography.display,
-    fontSize: 48,
+    fontSize: 24,
+    lineHeight: 30,
   },
   unit: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
+    fontSize: 12,
   },
   section: {
     gap: spacing.md,
@@ -110,12 +111,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   txQty: {
     color: colors.steel300,
     fontFamily: typography.mono,
-    fontSize: 13,
+    fontSize: 12,
   },
   actions: {
     gap: spacing.sm,

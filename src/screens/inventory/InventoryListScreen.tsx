@@ -35,7 +35,6 @@ export const InventoryListScreen = () => {
   return (
     <ScreenContainer
       title="Inventory"
-      subtitle="Materials, spare parts, and finished goods"
       navigationMode="drawer"
       scroll={false}
       action={
@@ -47,9 +46,9 @@ export const InventoryListScreen = () => {
       }
     >
       <View style={styles.metrics}>
-        <MetricPill label="Total SKUs" value={(data as InventoryItem[]).length.toString()} color={colors.inventory} />
-        <MetricPill label="Low Stock" value={lowStock.toString()} color={colors.amber400} />
-        <MetricPill label="Out" value={outStock.toString()} color={colors.maintenance} />
+        <MetricPill label="Total SKUs" value={(data as InventoryItem[]).length.toString()} color={colors.blue} />
+        <MetricPill label="Low Stock" value={lowStock.toString()} color={colors.orange} />
+        <MetricPill label="Out" value={outStock.toString()} color={colors.red} />
       </View>
       <SearchField value={search} onChangeText={setSearch} placeholder="Search SKU or item" />
       <ChipRow items={categories} active={category} onChange={setCategory} />
@@ -58,19 +57,19 @@ export const InventoryListScreen = () => {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState variant="inventory" title="Inventory is empty" subtitle="Add your first item" />}
+        ListEmptyComponent={<EmptyState variant="inventory" title="Inventory is empty" />}
         renderItem={({ item }) => {
           const stockRatio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 0;
           const danger = item.quantity_on_hand <= 0;
           const low = item.quantity_on_hand > 0 && item.quantity_on_hand <= item.reorder_level;
           return (
-            <WorkCard title={item.name} eyebrow={item.sku} accentColor={danger ? colors.maintenance : low ? colors.amber400 : colors.inventory} onPress={() => navigation.navigate("ItemDetail", { item })}>
+            <WorkCard title={item.name} eyebrow={item.sku} accentColor={danger ? colors.red : low ? colors.orange : colors.blue} onPress={() => navigation.navigate("ItemDetail", { item })}>
               <View style={styles.row}>
                 <Text style={styles.qty}>{item.quantity_on_hand.toLocaleString()} {item.unit}</Text>
                 {danger ? <StatusBadge status="out_of_stock" /> : low ? <StatusBadge status="low_stock" /> : <StatusBadge status="in_stock" />}
               </View>
-              <ProgressBar value={stockRatio} color={danger ? colors.maintenance : low ? colors.amber400 : colors.inventory} />
-              <Text style={styles.meta}>{item.category} · {item.warehouse_location} · Reorder {item.reorder_level}</Text>
+              <ProgressBar value={stockRatio} color={danger ? colors.red : low ? colors.orange : colors.blue} />
+              <Text numberOfLines={1} style={styles.meta}>{item.category} · {item.warehouse_location} · Reorder {item.reorder_level}</Text>
             </WorkCard>
           );
         }}
@@ -87,13 +86,13 @@ const styles = StyleSheet.create({
   fabSmall: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 8,
-    height: 44,
+    borderRadius: 16,
+    height: 48,
     justifyContent: "center",
-    width: 44,
+    width: 48,
   },
   list: {
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: 180,
   },
   row: {
@@ -104,7 +103,7 @@ const styles = StyleSheet.create({
   qty: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 20,
+    fontSize: 18,
   },
   meta: {
     color: colors.steel500,

@@ -9,7 +9,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { isApiConfigured } from "../../services/api";
 import { setupService } from "../../services/setup.service";
 import { isSupabaseConfigured } from "../../services/supabase";
-import { colors, spacing, typography } from "../../utils/constants";
+import { colors, radii, spacing, typography } from "../../utils/constants";
 import { isEmail } from "../../utils/validators";
 
 type SetupState = "checking" | "ready" | "needed" | "unavailable";
@@ -19,8 +19,8 @@ export const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [department, setDepartment] = useState("Administration");
-  const [employeeId, setEmployeeId] = useState("FOS-0001");
+  const [department, setDepartment] = useState("");
+  const [employeeId, setEmployeeId] = useState("");
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -161,14 +161,14 @@ export const LoginScreen = () => {
               {setupMode ? (
                 <>
                   <Input label="Full name" value={fullName} onChangeText={setFullName} placeholder="Owner Name" />
-                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="owner@company.com" />
+                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="Work email" />
                   <Input label="Temporary password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Minimum 8 characters" />
-                  <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="FOS-0001" />
-                  <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Administration" />
+                  <Input label="Employee ID" value={employeeId} onChangeText={setEmployeeId} autoCapitalize="characters" placeholder="Employee ID" />
+                  <Input label="Department" value={department} onChangeText={setDepartment} placeholder="Department" />
                 </>
               ) : (
                 <>
-                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="name@company.com" />
+                  <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="Work email" />
                   <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry placeholder="Password" />
                   <Pressable style={styles.remember} onPress={() => setRemember((value) => !value)}>
                     <View style={[styles.toggle, remember && styles.toggleOn]}>
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   wordmark: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 34,
+    fontSize: 24,
     marginTop: spacing.sm,
   },
   tagline: {
@@ -253,9 +253,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   card: {
-    backgroundColor: "rgba(255,252,245,0.92)",
+    backgroundColor: "rgba(255, 255, 255, 0.90)",
     borderColor: colors.steel700,
-    borderRadius: 16,
+    borderRadius: radii.card,
     borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   heading: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 19,
   },
   subheading: {
     color: colors.steel500,
@@ -283,11 +283,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   warning: {
-    backgroundColor: `${colors.maintenance}16`,
-    borderColor: `${colors.maintenance}44`,
+    backgroundColor: `${colors.red}16`,
+    borderColor: `${colors.red}44`,
     borderRadius: 8,
     borderWidth: 1,
-    color: colors.maintenance,
+    color: colors.red,
     fontFamily: typography.bodyMedium,
     fontSize: 12,
     lineHeight: 17,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   error: {
-    color: colors.maintenance,
+    color: colors.red,
     fontFamily: typography.bodyMedium,
     fontSize: 13,
   },

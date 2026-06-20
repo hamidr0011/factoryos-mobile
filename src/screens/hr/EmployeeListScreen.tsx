@@ -1,16 +1,17 @@
 import { useNavigation } from "@react-navigation/native";
 import { Pencil, ShieldCheck, UserPlus, Users } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PermissionGate } from "../../components/ui/PermissionGate";
+import { usePermissions } from "../../hooks/usePermissions";
 import { hrService } from "../../services/hr.service";
 import type { Profile, Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
-import { roleDescriptions, roleLabels } from "../../utils/permissions";
+import { roleLabels } from "../../utils/permissions";
 import { ChipRow, ScreenContainer, SearchField, WorkCard } from "../shared/ScreenScaffold";
 
 const assignableRoles: Role[] = ["admin", "manager", "supervisor", "operator", "viewer"];
@@ -24,6 +25,7 @@ const roleColors: Record<Role, string> = {
 
 export const EmployeeListScreen = () => {
   const navigation = useNavigation<any>();
+  const { isAdmin } = usePermissions();
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All");
   const { data = [] } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
@@ -51,14 +53,13 @@ export const EmployeeListScreen = () => {
   return (
     <ScreenContainer
       title="Access Management"
-      subtitle="Create accounts and assign role permissions"
       scroll={false}
       action={
-        <PermissionGate roles={["admin"]}>
+        isAdmin ? (
           <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("CreateStaffAccount")}>
             <UserPlus color={colors.steel950} size={21} />
           </Pressable>
-        </PermissionGate>
+        ) : null
       }
     >
       <PermissionGate roles={["admin"]}>
@@ -68,18 +69,17 @@ export const EmployeeListScreen = () => {
               <ShieldCheck color={colors.steel950} size={24} />
             </View>
             <View style={styles.adminCopy}>
-              <Text style={styles.adminTitle}>Role-based access control</Text>
-              <Text style={styles.adminSubtitle}>Create manager, supervisor, operator, and viewer accounts. Tap any staff card to edit role access.</Text>
+              <Text style={styles.adminTitle}>Role Access</Text>
             </View>
           </View>
-          <View style={styles.roleStats}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.roleStats}>
             {roleCounts.map((item) => (
               <View key={item.role} style={[styles.roleStatCard, { borderColor: `${roleColors[item.role]}55` }]}>
                 <Text style={[styles.roleStatValue, { color: roleColors[item.role] }]}>{item.count}</Text>
-                <Text style={styles.roleStatLabel}>{roleLabels[item.role]}</Text>
+                <Text numberOfLines={1} style={styles.roleStatLabel}>{roleLabels[item.role]}</Text>
               </View>
             ))}
-          </View>
+          </ScrollView>
           <Button title="Create Staff Account" icon={<UserPlus color={colors.steel950} size={18} />} onPress={() => navigation.navigate("CreateStaffAccount")} />
         </View>
       </PermissionGate>
@@ -92,23 +92,21 @@ export const EmployeeListScreen = () => {
         ListEmptyComponent={
           <PermissionGate
             roles={["admin"]}
-            fallback={<EmptyState variant="hr" title="No employees found" subtitle="Ask an admin to create staff accounts and assign role access." />}
+            fallback={<EmptyState variant="hr" title="No employees found" />}
           >
             <EmptyState
               variant="hr"
               title="No employees found"
-              subtitle="Create staff accounts and assign access roles"
               cta="Create account"
               onPress={() => navigation.navigate("CreateStaffAccount")}
             />
           </PermissionGate>
         }
         renderItem={({ item }) => (
-          <WorkCard title={item.full_name} eyebrow={item.employee_id} accentColor={roleColors[item.role]} onPress={() => navigation.navigate("EditStaffAccess", { employee: item })}>
+          <WorkCard title={item.full_name} eyebrow={item.employee_id} accentColor={roleColors[item.role]} onPress={isAdmin ? () => navigation.navigate("EditStaffAccess", { employee: item }) : undefined}>
             <View style={styles.row}>
               <View style={styles.employeeMeta}>
-                <Text style={styles.meta}>{item.department}</Text>
-                <Text style={styles.roleHint}>{roleDescriptions[item.role]}</Text>
+                <Text numberOfLines={1} style={styles.meta}>{item.department}</Text>
               </View>
               <View style={styles.roleAction}>
                 <Badge label={roleLabels[item.role]} color={roleColors[item.role]} />
@@ -128,13 +126,13 @@ const styles = StyleSheet.create({
   fabSmall: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 8,
-    height: 44,
+    borderRadius: 16,
+    height: 48,
     justifyContent: "center",
-    width: 44,
+    width: 48,
   },
   list: {
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: 180,
   },
   adminPanel: {
@@ -164,30 +162,23 @@ const styles = StyleSheet.create({
   adminTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
-  },
-  adminSubtitle: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 3,
+    fontSize: 15,
   },
   roleStats: {
-    flexDirection: "row",
     gap: spacing.xs,
+    paddingRight: spacing.xs,
   },
   roleStatCard: {
     backgroundColor: colors.steel800,
     borderRadius: 8,
     borderWidth: 1,
-    flex: 1,
     minHeight: 64,
     padding: spacing.xs,
+    width: 82,
   },
   roleStatValue: {
     fontFamily: typography.display,
-    fontSize: 20,
+    fontSize: 18,
   },
   roleStatLabel: {
     color: colors.steel500,
@@ -208,13 +199,6 @@ const styles = StyleSheet.create({
     color: colors.steel500,
     fontFamily: typography.body,
     fontSize: 13,
-  },
-  roleHint: {
-    color: colors.steel300,
-    fontFamily: typography.body,
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 4,
   },
   roleAction: {
     alignItems: "flex-end",

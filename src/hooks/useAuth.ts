@@ -21,7 +21,7 @@ export const useAuth = () => {
 
       const userId = data.session?.user.id;
       if (userId) {
-        const found = await authService.getProfile(userId);
+        const found = await authService.getProfile(userId).catch(() => null);
         if (mounted) setProfile(found);
       } else {
         setProfile(null);
@@ -33,7 +33,7 @@ export const useAuth = () => {
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession);
       const userId = nextSession?.user.id;
-      setProfile(userId ? await authService.getProfile(userId) : null);
+      setProfile(userId ? await authService.getProfile(userId).catch(() => null) : null);
     });
 
     return () => {

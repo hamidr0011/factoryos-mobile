@@ -66,23 +66,23 @@ export const LeaveScreen = () => {
   };
 
   return (
-    <ScreenContainer title="Leave" subtitle="Balances, applications, approvals">
+    <ScreenContainer title="Leave">
       <ChipRow items={["My Leaves", "Manage Leaves", "Apply"]} active={tab} onChange={setTab} />
       {tab === "My Leaves" ? (
         <>
           <View style={styles.metrics}>
-            <MetricPill label="Approved" value={leaves.filter((leave) => leave.status === "approved").length.toString()} color={colors.inventory} />
-            <MetricPill label="Sick" value={leaves.filter((leave) => leave.type === "sick").length.toString()} color={colors.production} />
-            <MetricPill label="Pending" value={pendingLeaves.length.toString()} color={colors.amber400} />
+            <MetricPill label="Approved" value={leaves.filter((leave) => leave.status === "approved").length.toString()} color={colors.emerald} />
+            <MetricPill label="Sick" value={leaves.filter((leave) => leave.type === "sick").length.toString()} color={colors.blue} />
+            <MetricPill label="Pending" value={pendingLeaves.length.toString()} color={colors.orange} />
           </View>
           {leaves.length ? (
             leaves.map((leave) => (
-              <WorkCard key={leave.id} title={leave.type} eyebrow={`${leave.start_date} → ${leave.end_date}`} status={leave.status} accentColor={leave.status === "pending" ? colors.amber400 : colors.inventory}>
-                <Text style={styles.meta}>{leave.reason}</Text>
+              <WorkCard key={leave.id} title={leave.type} eyebrow={`${leave.start_date} → ${leave.end_date}`} status={leave.status} accentColor={leave.status === "pending" ? colors.orange : leave.status === "rejected" ? colors.red : colors.emerald}>
+                <Text numberOfLines={2} style={styles.meta}>{leave.reason}</Text>
               </WorkCard>
             ))
           ) : (
-            <EmptyState variant="hr" title="No leave requests" subtitle="Submitted leave applications will appear here." />
+            <EmptyState variant="hr" title="No leave requests" />
           )}
         </>
       ) : null}
@@ -91,8 +91,8 @@ export const LeaveScreen = () => {
         <PermissionGate roles={["admin", "manager", "supervisor"]} fallback={<Text style={styles.meta}>Manager access required.</Text>}>
           {pendingLeaves.length ? (
             pendingLeaves.map((leave) => (
-              <WorkCard key={leave.id} title={leave.employee?.full_name || "Unknown employee"} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.amber400}>
-                <Text style={styles.meta}>{leave.reason}</Text>
+              <WorkCard key={leave.id} title={leave.employee?.full_name || "Unknown employee"} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.orange}>
+                <Text numberOfLines={2} style={styles.meta}>{leave.reason}</Text>
                 <View style={styles.approvals}>
                   <Button title="Approve" variant="secondary" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "approved" })} />
                   <Button title="Reject" variant="ghost" style={styles.buttonFlex} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "rejected" })} />
@@ -100,7 +100,7 @@ export const LeaveScreen = () => {
               </WorkCard>
             ))
           ) : (
-            <EmptyState variant="hr" title="No approvals pending" subtitle="Leave requests waiting for review will appear here." />
+            <EmptyState variant="hr" title="No approvals pending" />
           )}
         </PermissionGate>
       ) : null}

@@ -53,12 +53,12 @@ const styles = StyleSheet.create({
   label: {
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: 12,
   },
   inputShell: {
-    minHeight: 52,
-    borderRadius: radii.card,
-    backgroundColor: colors.steel900,
+    minHeight: 50,
+    borderRadius: 16,
+    backgroundColor: colors.steel800,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -66,8 +66,10 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     flex: 1,
     fontFamily: typography.body,
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 19,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   eye: {
     alignItems: "center",
@@ -76,8 +78,8 @@ const styles = StyleSheet.create({
     width: 44,
   },
   error: {
-    color: colors.maintenance,
+    color: colors.red,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
   },
 });

@@ -31,7 +31,6 @@ export const MaintenanceListScreen = () => {
   return (
     <ScreenContainer
       title="Maintenance"
-      subtitle="Priority queue and equipment care"
       navigationMode="drawer"
       scroll={false}
       action={
@@ -62,7 +61,7 @@ export const MaintenanceListScreen = () => {
           data={tasks}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<EmptyState variant="maintenance" title="All machines running" subtitle="Schedule preventive maintenance" />}
+          ListEmptyComponent={<EmptyState variant="maintenance" title="No tasks" />}
           renderItem={({ item }) => (
             <WorkCard
               title={item.title}
@@ -71,8 +70,8 @@ export const MaintenanceListScreen = () => {
               accentColor={item.priority === "critical" ? colors.maintenance : item.priority === "high" ? colors.amber400 : colors.production}
               onPress={() => navigation.navigate("TaskDetail", { task: item })}
             >
-              <Text style={styles.meta}>Assigned: {item.assigned_to?.full_name || "Unassigned"}</Text>
-              <Text style={styles.meta}>Scheduled: {formatDate(item.scheduled_date, "dd MMM HH:mm")} · Est {item.estimated_hours} hrs</Text>
+              <Text numberOfLines={1} style={styles.meta}>Assigned: {item.assigned_to?.full_name || "Unassigned"}</Text>
+              <Text numberOfLines={1} style={styles.meta}>Scheduled: {formatDate(item.scheduled_date, "dd MMM HH:mm")} · Est {item.estimated_hours} hrs</Text>
             </WorkCard>
           )}
         />
@@ -89,21 +88,21 @@ const styles = StyleSheet.create({
   iconButton: {
     alignItems: "center",
     backgroundColor: colors.steel800,
-    borderRadius: 8,
-    height: 44,
+    borderRadius: 16,
+    height: 48,
     justifyContent: "center",
-    width: 44,
+    width: 48,
   },
   fabSmall: {
     alignItems: "center",
     backgroundColor: colors.amber400,
-    borderRadius: 8,
-    height: 44,
+    borderRadius: 16,
+    height: 48,
     justifyContent: "center",
-    width: 44,
+    width: 48,
   },
   list: {
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingBottom: 180,
   },
   meta: {

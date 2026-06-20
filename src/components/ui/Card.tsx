@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { PropsWithChildren } from "react";
-import { Pressable, StyleProp, StyleSheet, ViewStyle } from "react-native";
+import { Platform, Pressable, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { colors, radii, spacing } from "../../utils/constants";
 
@@ -29,7 +29,8 @@ export const Card = ({ children, accentColor, onPress, style }: CardProps) => {
         scale.value = withSpring(1, { damping: 18, mass: 0.8 });
       }}
     >
-      <Animated.View style={[styles.card, accentColor ? { borderLeftColor: accentColor, borderLeftWidth: 2 } : null, style, animatedStyle]}>
+      <Animated.View style={[styles.card, style, animatedStyle]}>
+        {accentColor ? <View style={[styles.accentStrip, { backgroundColor: accentColor }]} /> : null}
         {children}
       </Animated.View>
     </Pressable>
@@ -42,10 +43,18 @@ const styles = StyleSheet.create({
     borderColor: colors.steel700,
     borderRadius: radii.card,
     borderWidth: 1,
+    overflow: "hidden",
     padding: spacing.md,
-    shadowColor: "#2F362F",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
+    shadowColor: "#111827",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: Platform.OS === "ios" ? 0.05 : 0,
+    shadowRadius: 12,
+  },
+  accentStrip: {
+    height: "100%",
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: 4,
   },
 });

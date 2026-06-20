@@ -1,26 +1,50 @@
-import { Bell, Database, Shield, UserPlus } from "lucide-react-native";
-import { StyleSheet, Text, View } from "react-native";
+import { Bell, Database, Moon, UserPlus } from "lucide-react-native";
+import { Platform, StyleSheet, Switch, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { PermissionGate } from "../../components/ui/PermissionGate";
+import { useAppStore } from "../../store/appStore";
 import { colors, spacing, typography } from "../../utils/constants";
-import { roleDescriptions, roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
 const rows = [
-  { title: "Realtime Channels", subtitle: "Machines, production, maintenance, notifications", icon: Database },
-  { title: "Notification Haptics", subtitle: "Warning and success feedback enabled", icon: Bell },
-  { title: "Role Permissions", subtitle: "Admin, manager, supervisor, operator, viewer", icon: Shield },
+  { title: "Realtime Channels", icon: Database },
+  { title: "Notification Haptics", icon: Bell },
 ];
-
-const roleMatrix = (Object.keys(roleLabels) as Array<keyof typeof roleLabels>).map((role) => ({ role, access: roleDescriptions[role] }));
 
 export const SettingsScreen = () => {
   const navigation = useNavigation<any>();
+  const isDarkMode = useAppStore((state) => state.isDarkMode);
+  const setDarkMode = useAppStore((state) => state.setDarkMode);
+  const showToast = useAppStore((state) => state.showToast);
+
+  const toggleDarkMode = (enabled: boolean) => {
+    setDarkMode(enabled);
+    showToast("success", `${enabled ? "Dark" : "Light"} mode enabled.`);
+
+    if (Platform.OS === "web") {
+      setTimeout(() => globalThis.location?.reload(), 150);
+    }
+  };
 
   return (
-    <ScreenContainer title="Settings" subtitle="App controls and operational preferences" navigationMode="drawer">
+    <ScreenContainer title="Settings" navigationMode="drawer">
+      <Card style={styles.card}>
+        <View style={styles.icon}>
+          <Moon color={colors.amber400} size={21} />
+        </View>
+        <View style={styles.copy}>
+          <Text style={styles.title}>Dark Mode</Text>
+        </View>
+        <Switch
+          value={isDarkMode}
+          onValueChange={toggleDarkMode}
+          trackColor={{ false: colors.steel700, true: `${colors.amber400}66` }}
+          thumbColor={isDarkMode ? colors.amber400 : colors.steel500}
+        />
+      </Card>
+
       {rows.map((row) => {
         const Icon = row.icon;
         return (
@@ -30,20 +54,18 @@ export const SettingsScreen = () => {
             </View>
             <View style={styles.copy}>
               <Text style={styles.title}>{row.title}</Text>
-              <Text style={styles.subtitle}>{row.subtitle}</Text>
             </View>
           </Card>
         );
       })}
 
-      <Card style={styles.matrixCard} accentColor={colors.hr}>
+      <Card style={styles.matrixCard} accentColor={colors.blue}>
         <View style={styles.matrixHead}>
           <View style={styles.icon}>
-            <UserPlus color={colors.hr} size={21} />
+            <UserPlus color={colors.blue} size={21} />
           </View>
           <View style={styles.copy}>
             <Text style={styles.title}>Account Provisioning</Text>
-            <Text style={styles.subtitle}>Open HR Employees, then tap + to create a user and assign a role.</Text>
           </View>
         </View>
         <PermissionGate roles={["admin"]}>
@@ -53,12 +75,6 @@ export const SettingsScreen = () => {
             onPress={() => navigation.navigate("MainTabs", { screen: "HR", params: { screen: "EmployeeList" } })}
           />
         </PermissionGate>
-        {roleMatrix.map((item) => (
-          <View key={item.role} style={styles.roleRow}>
-            <Text style={styles.roleName}>{roleLabels[item.role]}</Text>
-            <Text style={styles.roleAccess}>{item.access}</Text>
-          </View>
-        ))}
       </Card>
     </ScreenContainer>
   );
@@ -94,29 +110,5 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: 15,
-  },
-  subtitle: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    marginTop: 3,
-  },
-  roleRow: {
-    borderTopColor: colors.steel700,
-    borderTopWidth: 1,
-    gap: spacing.xs,
-    paddingTop: spacing.sm,
-  },
-  roleName: {
-    color: colors.hr,
-    fontFamily: typography.display,
-    fontSize: 13,
-    textTransform: "capitalize",
-  },
-  roleAccess: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 17,
   },
 });

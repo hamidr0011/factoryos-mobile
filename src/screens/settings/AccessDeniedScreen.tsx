@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { usePermissions } from "../../hooks/usePermissions";
 import { colors, spacing, typography } from "../../utils/constants";
 import type { AccessLevel, AppArea } from "../../utils/permissions";
-import { moduleDeniedMessage, roleLabels } from "../../utils/permissions";
+import { roleLabels } from "../../utils/permissions";
 import { ScreenContainer } from "../shared/ScreenScaffold";
 
 export const AccessDeniedScreen = ({ area = "dashboard", level = "read" }: { area?: AppArea; level?: AccessLevel }) => {
@@ -21,13 +21,12 @@ export const AccessDeniedScreen = ({ area = "dashboard", level = "read" }: { are
   };
 
   return (
-    <ScreenContainer title="Access Restricted" subtitle={`${roleLabels[userRole]} role`} navigationMode="drawer">
+    <ScreenContainer title="Access Restricted" navigationMode="drawer">
       <View style={styles.panel}>
         <View style={styles.icon}>
           <LockKeyhole color={colors.amber400} size={28} />
         </View>
-        <Text style={styles.title}>This area is role protected</Text>
-        <Text style={styles.copy}>{moduleDeniedMessage(userRole, area, level)}</Text>
+        <Text style={styles.title}>{roleLabels[userRole]} access required</Text>
         <Button title="Back to Dashboard" onPress={goDashboard} />
       </View>
     </ScreenContainer>
@@ -57,14 +56,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
-    textAlign: "center",
-  },
-  copy: {
-    color: colors.steel500,
-    fontFamily: typography.body,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 19,
     textAlign: "center",
   },
 });

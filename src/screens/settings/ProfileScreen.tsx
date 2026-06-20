@@ -8,7 +8,7 @@ import { DetailRow, ScreenContainer } from "../shared/ScreenScaffold";
 export const ProfileScreen = () => {
   const { profile } = useAuth();
   return (
-    <ScreenContainer title="Profile" subtitle="FactoryOS identity" navigationMode="drawer">
+    <ScreenContainer title="Profile" navigationMode="drawer">
       <Card style={styles.card} accentColor={colors.amber400}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{profile?.full_name?.slice(0, 1) || "F"}</Text>
@@ -38,11 +38,12 @@ const styles = StyleSheet.create({
   avatarText: {
     color: colors.steel950,
     fontFamily: typography.display,
-    fontSize: 38,
+    fontSize: 24,
   },
   name: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 18,
+    lineHeight: 23,
   },
 });

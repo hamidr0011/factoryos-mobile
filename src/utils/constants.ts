@@ -1,31 +1,58 @@
 import type { ModuleDefinition } from "../types";
+import { readInitialDarkMode } from "./themePreference";
 
-export const colors = {
-  steel950: "#F3F5F1",
+const lightColors = {
+  steel950: "#F6F7FA",
   steel900: "#FFFFFF",
-  steel800: "#E8EEE8",
-  steel700: "#D3DDD4",
-  steel500: "#727F77",
-  steel300: "#4D5B52",
-  steel100: "#16211A",
-  amber400: "#4E6657",
-  amber300: "#6F8475",
-  production: "#536B78",
-  inventory: "#627C63",
-  quality: "#766D7A",
-  hr: "#82725D",
-  maintenance: "#A0615E",
-  finance: "#587A7E",
-  red: "#A0615E",
-  emerald: "#627C63",
-  cyan: "#587A7E",
-  blue: "#536B78",
-  violet: "#766D7A",
-  orange: "#82725D",
+  steel800: "#EEF0F4",
+  steel700: "#DDE1E8",
+  steel500: "#6F7785",
+  steel300: "#303640",
+  steel100: "#111827",
+  amber400: "#1A62E8",
+  amber300: "#4D8AF5",
+  production: "#2B63E5",
+  inventory: "#1FA869",
+  quality: "#7E57C2",
+  hr: "#E65100",
+  maintenance: "#D32F2F",
+  finance: "#00838F",
+  red: "#D32F2F",
+  emerald: "#2E7D32",
+  cyan: "#0097A7",
+  blue: "#0067FF",
+  violet: "#8E24AA",
+  orange: "#E65100",
 };
 
+const darkColors: typeof lightColors = {
+  steel950: "#080B10",
+  steel900: "#141922",
+  steel800: "#202633",
+  steel700: "#343B49",
+  steel500: "#9AA4B2",
+  steel300: "#D1D6DE",
+  steel100: "#F7F8FA",
+  amber400: "#6EA8FF",
+  amber300: "#93BEFF",
+  production: "#6EA8FF",
+  inventory: "#22C55E",
+  quality: "#A78BFA",
+  hr: "#FDBA74",
+  maintenance: "#F87171",
+  finance: "#22D3EE",
+  red: "#F87171",
+  emerald: "#34D399",
+  cyan: "#22D3EE",
+  blue: "#60A5FA",
+  violet: "#A78BFA",
+  orange: "#FB923C",
+};
+
+export const colors = readInitialDarkMode() ? darkColors : lightColors;
+
 export const typography = {
-  display: "SpaceGrotesk_700Bold",
+  display: "Inter_700Bold",
   body: "Inter_400Regular",
   bodyMedium: "Inter_500Medium",
   mono: "JetBrainsMono_400Regular",
@@ -43,10 +70,20 @@ export const spacing = {
 };
 
 export const radii = {
-  cell: 4,
-  card: 8,
-  modal: 16,
-  sheet: 24,
+  cell: 10,
+  card: 24,
+  modal: 28,
+  sheet: 32,
+};
+
+export const typeScale = {
+  hero: 22,
+  title: 19,
+  section: 15,
+  body: 13,
+  bodySmall: 12,
+  caption: 11,
+  micro: 10,
 };
 
 export const modules: ModuleDefinition[] = [

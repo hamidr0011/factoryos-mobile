@@ -29,7 +29,7 @@ export const HRDashboardScreen = () => {
   const departmentData = Object.values(
     attendance.reduce<Record<string, ChartPoint>>((acc, record) => {
       const department = record.employee?.department || "Unassigned";
-      acc[department] = acc[department] || { label: department, value: 0, color: colors.hr };
+      acc[department] = acc[department] || { label: department, value: 0, color: colors.blue };
       acc[department].value += 1;
       return acc;
     }, {}),
@@ -50,28 +50,28 @@ export const HRDashboardScreen = () => {
   });
 
   return (
-    <ScreenContainer title="HR & Workforce" subtitle="Attendance, leave, and shift coverage" navigationMode="drawer">
+    <ScreenContainer title="HR & Workforce" navigationMode="drawer">
       <View style={styles.metrics}>
-        <MetricPill label="Present" value={present.toString()} color={colors.inventory} />
-        <MetricPill label="Absent" value={absent.toString()} color={colors.maintenance} />
-        <MetricPill label="Late" value={late.toString()} color={colors.amber400} />
+        <MetricPill label="Present" value={present.toString()} color={colors.emerald} />
+        <MetricPill label="Absent" value={absent.toString()} color={colors.red} />
+        <MetricPill label="Late" value={late.toString()} color={colors.orange} />
       </View>
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Attendance by Department</Text>
-        {departmentData.length ? <DonutChart data={departmentData} /> : <EmptyState variant="hr" title="No attendance records" subtitle="Clock-ins and roster records will build this chart." />}
+        {departmentData.length ? <DonutChart data={departmentData} /> : <EmptyState variant="hr" title="No attendance records" />}
       </Card>
 
       <Card style={styles.section}>
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Pending Leave Requests</Text>
-          <Badge label={`${pendingLeaves.length} pending`} color={colors.amber400} />
+          <Badge label={`${pendingLeaves.length} pending`} color={colors.orange} />
         </View>
         {pendingLeaves.length ? (
           pendingLeaves.map((leave) => (
-            <WorkCard key={leave.id} title={leave.employee?.full_name || "Unknown employee"} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.amber400}>
+            <WorkCard key={leave.id} title={leave.employee?.full_name || "Unknown employee"} eyebrow={leave.type.toUpperCase()} status={leave.status} accentColor={colors.orange}>
               <Text style={styles.meta}>{leave.start_date} → {leave.end_date}</Text>
-              <Text style={styles.metaReason}>{leave.reason}</Text>
+              <Text numberOfLines={2} style={styles.metaReason}>{leave.reason}</Text>
               <View style={styles.approvals}>
                 <Button title="Approve" variant="secondary" style={styles.approvalButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "approved" })} />
                 <Button title="Reject" variant="ghost" style={styles.approvalButton} loading={reviewMutation.isPending} onPress={() => reviewMutation.mutate({ id: leave.id, status: "rejected" })} />
@@ -79,7 +79,7 @@ export const HRDashboardScreen = () => {
             </WorkCard>
           ))
         ) : (
-          <EmptyState variant="hr" title="No pending leave" subtitle="Requests submitted by employees will appear here." />
+          <EmptyState variant="hr" title="No pending leave" />
         )}
       </Card>
 
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   meta: {
     color: colors.steel500,

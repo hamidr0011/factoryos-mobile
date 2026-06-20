@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     borderRadius: radii.cell,
     borderWidth: 1,
-    minHeight: 24,
+    minHeight: 26,
     justifyContent: "center",
     paddingHorizontal: spacing.xs,
   },

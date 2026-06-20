@@ -2,11 +2,12 @@ import { ChevronLeft, Menu, Search } from "lucide-react-native";
 import { PropsWithChildren, ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { PersistentBottomNav } from "../../components/layout/PersistentBottomNav";
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
 import { StatusBadge } from "../../components/ui/StatusBadge";
-import { colors, spacing, typography } from "../../utils/constants";
+import { colors, radii, spacing, typography, typeScale } from "../../utils/constants";
 
 interface ScreenContainerProps extends PropsWithChildren {
   title?: string;
@@ -31,12 +32,29 @@ const findDrawerNavigation = (navigation: any) => {
   return undefined;
 };
 
+const isInsidePrimaryTabs = (navigation: any) => {
+  let current = navigation;
+
+  while (current) {
+    const state = current.getState?.();
+    const names = state?.routeNames || [];
+    if (state?.type === "tab") return true;
+    if (["Dashboard", "Production", "Inventory", "HR", "More"].every((name) => names.includes(name))) return true;
+    current = current.getParent?.();
+  }
+
+  return false;
+};
+
 export const ScreenContainer = ({ title, subtitle, action, children, navigationMode = "auto", scroll = true, style }: ScreenContainerProps) => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const drawerNavigation = findDrawerNavigation(navigation);
   const canGoBack = navigation.canGoBack?.() ?? false;
   const showNavButton = navigationMode !== "none" && (canGoBack || drawerNavigation);
   const useBackButton = navigationMode === "back" || (navigationMode === "auto" && canGoBack);
+  const showPersistentBottomNav = !isInsidePrimaryTabs(navigation) && Boolean(drawerNavigation);
+  const bottomSpace = 118 + insets.bottom;
 
   const handleNavigation = () => {
     if (useBackButton && canGoBack) {
@@ -57,8 +75,8 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
             </Pressable>
           ) : null}
           <View style={styles.titleCopy}>
-            <Text style={styles.title}>{title}</Text>
-            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={2} style={styles.title}>{title}</Text>
+            {subtitle ? <Text numberOfLines={1} style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
           {action}
         </View>
@@ -70,12 +88,13 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomSpace }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {content}
         </ScrollView>
       ) : (
         content
       )}
+      {showPersistentBottomNav ? <PersistentBottomNav /> : null}
     </SafeAreaView>
   );
 };
@@ -88,7 +107,7 @@ export const ProgressBar = ({ value, color = colors.amber400 }: { value: number;
 
 export const MetricPill = ({ label, value, color = colors.amber400 }: { label: string; value: string; color?: string }) => (
   <View style={[styles.metric, { borderColor: `${color}44` }]}>
-    <Text style={[styles.metricValue, { color }]}>{value}</Text>
+    <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={[styles.metricValue, { color }]}>{value}</Text>
     <Text style={styles.metricLabel}>{label}</Text>
   </View>
 );
@@ -132,8 +151,8 @@ export const WorkCard = ({
   <Card accentColor={accentColor} onPress={onPress} style={styles.workCard}>
     <View style={styles.cardHead}>
       <View style={styles.cardCopy}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-        <Text style={styles.cardTitle}>{title}</Text>
+        {eyebrow ? <Text numberOfLines={1} style={styles.eyebrow}>{eyebrow}</Text> : null}
+        <Text numberOfLines={2} style={styles.cardTitle}>{title}</Text>
       </View>
       {status ? <StatusBadge status={status} /> : badge ? <Badge label={badge} color={accentColor} /> : null}
     </View>
@@ -147,23 +166,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    paddingBottom: 110,
+    paddingBottom: 112,
   },
   content: {
-    gap: spacing.md,
-    padding: spacing.md,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
   },
   titleRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.md,
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+    minHeight: 50,
+    paddingBottom: spacing.xs,
   },
   navButton: {
     alignItems: "center",
-    backgroundColor: colors.steel800,
+    backgroundColor: colors.steel900,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
     height: 44,
     justifyContent: "center",
@@ -171,51 +192,58 @@ const styles = StyleSheet.create({
   },
   titleCopy: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 25,
+    fontSize: typeScale.title,
+    lineHeight: 23,
   },
   subtitle: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
-    marginTop: 3,
+    fontSize: typeScale.caption,
+    lineHeight: 15,
+    marginTop: 1,
   },
   progressTrack: {
     backgroundColor: colors.steel800,
-    borderRadius: 4,
+    borderRadius: 8,
     height: 8,
     overflow: "hidden",
   },
   progressFill: {
-    borderRadius: 4,
+    borderRadius: 8,
     height: "100%",
   },
   metric: {
     backgroundColor: colors.steel900,
-    borderRadius: 8,
+    borderColor: colors.steel700,
+    borderRadius: radii.card,
     borderWidth: 1,
     flex: 1,
+    minWidth: 0,
     minHeight: 72,
-    padding: spacing.sm,
+    padding: spacing.md,
   },
   metricValue: {
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 18,
+    lineHeight: 22,
   },
   metricLabel: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 11,
+    fontSize: typeScale.micro,
     marginTop: 4,
   },
   search: {
     alignItems: "center",
     backgroundColor: colors.steel800,
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
     gap: spacing.xs,
@@ -226,7 +254,7 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     flex: 1,
     fontFamily: typography.body,
-    fontSize: 15,
+    fontSize: typeScale.body,
   },
   chips: {
     gap: spacing.xs,
@@ -234,20 +262,21 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderColor: colors.steel700,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     minHeight: 36,
     justifyContent: "center",
     paddingHorizontal: spacing.md,
   },
   chipActive: {
-    backgroundColor: `${colors.amber400}1F`,
+    backgroundColor: `${colors.amber400}12`,
     borderColor: colors.amber400,
   },
   chipText: {
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: typeScale.bodySmall,
+    lineHeight: 17,
   },
   chipTextActive: {
     color: colors.amber400,
@@ -262,13 +291,17 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     color: colors.steel500,
+    flex: 1,
     fontFamily: typography.body,
-    fontSize: 13,
+    fontSize: typeScale.bodySmall,
+    lineHeight: 17,
   },
   detailValue: {
     color: colors.steel100,
+    flex: 1,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: typeScale.bodySmall,
+    lineHeight: 17,
     maxWidth: "58%",
     textAlign: "right",
   },
@@ -287,12 +320,13 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: colors.steel500,
     fontFamily: typography.mono,
-    fontSize: 11,
+    fontSize: typeScale.micro,
     marginBottom: 4,
   },
   cardTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: typeScale.body,
+    lineHeight: 18,
   },
 });

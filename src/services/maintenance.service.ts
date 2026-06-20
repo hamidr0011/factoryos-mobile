@@ -1,8 +1,9 @@
 import { apiRequest } from "./api";
+import { stripSeedData } from "./seedDataGuard";
 
 export const maintenanceService = {
   async getTasks() {
-    return apiRequest("/api/maintenance/tasks");
+    return stripSeedData("maintenance", await apiRequest("/api/maintenance/tasks"));
   },
 
   async createTask(input: {

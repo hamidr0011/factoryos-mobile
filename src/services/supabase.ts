@@ -1,6 +1,6 @@
 import "react-native-url-polyfill/auto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -11,18 +11,26 @@ export const isSupabaseConfigured =
   supabaseAnonKey !== "your-anon-key" &&
   supabaseAnonKey !== "your-publishable-key";
 
-export const supabase = createClient(
-  supabaseUrl || "https://example.supabase.co",
-  supabaseAnonKey || "placeholder-anon-key",
-  {
+const createSupabaseClient = () => {
+  if (!isSupabaseConfigured || !supabaseUrl || !supabaseAnonKey) return null;
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       storage: AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
     },
+  });
+};
+
+const missingSupabaseClient = new Proxy({} as SupabaseClient, {
+  get() {
+    throw new Error("Supabase is not configured for this build.");
   },
-);
+});
+
+export const supabase: SupabaseClient = createSupabaseClient() || missingSupabaseClient;
 
 export const getSupabaseSession = async () => {
   if (!isSupabaseConfigured) return null;

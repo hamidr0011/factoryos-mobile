@@ -12,16 +12,16 @@ import { Badge } from "../../components/ui/Badge";
 import { productionService } from "../../services/production.service";
 import { qualityService } from "../../services/quality.service";
 import { useAppStore } from "../../store/appStore";
-import type { ProductionOrder } from "../../types";
+import type { DefectType, ProductionOrder } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { ChipRow, ProgressBar, ScreenContainer } from "../shared/ScreenScaffold";
 
 const steps = ["Batch", "Results", "Evidence"];
-const defectTypes = [
-  { label: "Burr", severity: "minor", color: colors.production },
-  { label: "Surface", severity: "major", color: colors.amber400 },
-  { label: "Dimension", severity: "critical", color: colors.maintenance },
-];
+const severityColors: Record<NonNullable<DefectType["severity"]>, string> = {
+  minor: colors.blue,
+  major: colors.orange,
+  critical: colors.red,
+};
 
 export const InspectionFormScreen = () => {
   const navigation = useNavigation<any>();
@@ -40,7 +40,12 @@ export const InspectionFormScreen = () => {
     queryKey: ["production_orders"],
     queryFn: () => productionService.getOrders(),
   });
+  const { data: defectData = [] } = useQuery({
+    queryKey: ["defect_types"],
+    queryFn: qualityService.getDefectTypes,
+  });
   const typedOrders = orders as ProductionOrder[];
+  const defectTypes = defectData as DefectType[];
   const selectedOrder = typedOrders.find((order) => order.order_number === orderNumber);
 
   useEffect(() => {
@@ -96,7 +101,7 @@ export const InspectionFormScreen = () => {
   };
 
   return (
-    <ScreenContainer title="New Inspection" subtitle="Three-step QC capture">
+    <ScreenContainer title="New Inspection">
       <Card style={styles.progressCard}>
         <View style={styles.stepRow}>
           {steps.map((name, index) => (
@@ -105,7 +110,7 @@ export const InspectionFormScreen = () => {
             </Pressable>
           ))}
         </View>
-        <ProgressBar value={((step + 1) / steps.length) * 100} color={colors.quality} />
+        <ProgressBar value={((step + 1) / steps.length) * 100} color={colors.blue} />
       </Card>
 
       {step === 0 ? (
@@ -118,7 +123,7 @@ export const InspectionFormScreen = () => {
               <Button title="Continue" onPress={() => setStep(1)} />
             </>
           ) : (
-            <EmptyState variant="quality" title="No production orders" subtitle="Create a production order before starting an inspection." />
+            <EmptyState variant="quality" title="No production orders" />
           )}
         </Card>
       ) : null}
@@ -127,22 +132,27 @@ export const InspectionFormScreen = () => {
         <Card style={styles.form}>
           <Text style={styles.sectionTitle}>Results</Text>
           <View style={styles.counterRow}>
-            <Counter label="Passed" value={passed} color={colors.inventory} onMinus={() => setPassed(Math.max(0, passed - 1))} onPlus={() => setPassed(passed + 1)} />
-            <Counter label="Failed" value={failed} color={colors.maintenance} onMinus={() => setFailed(Math.max(0, failed - 1))} onPlus={() => setFailed(failed + 1)} />
+            <Counter label="Passed" value={passed} color={colors.emerald} onMinus={() => setPassed(Math.max(0, passed - 1))} onPlus={() => setPassed(passed + 1)} />
+            <Counter label="Failed" value={failed} color={colors.red} onMinus={() => setFailed(Math.max(0, failed - 1))} onPlus={() => setFailed(failed + 1)} />
           </View>
           <Text style={styles.label}>Defect Types</Text>
           <View style={styles.defects}>
-            {defectTypes.map((defect) => {
-              const selected = selectedDefects.includes(defect.label);
+            {defectTypes.length ? defectTypes.map((defect) => {
+              const value = defect.code || defect.name || defect.id;
+              const label = defect.name || defect.code || "Unnamed defect";
+              const severity = defect.severity || "minor";
+              const selected = selectedDefects.includes(value);
               return (
                 <Pressable
-                  key={defect.label}
-                  onPress={() => setSelectedDefects((items) => (selected ? items.filter((item) => item !== defect.label) : [...items, defect.label]))}
+                  key={defect.id}
+                  onPress={() => setSelectedDefects((items) => (selected ? items.filter((item) => item !== value) : [...items, value]))}
                 >
-                  <Badge label={`${defect.label} · ${defect.severity}`} color={defect.color} subtle={!selected} />
+                  <Badge label={`${label} · ${severity}`} color={severityColors[severity]} subtle={!selected} />
                 </Pressable>
               );
-            })}
+            }) : (
+              <Text style={styles.meta}>No defect types</Text>
+            )}
           </View>
           <Input label="Notes" placeholder="Inspection notes" value={notes} onChangeText={setNotes} />
           <Button title="Continue" onPress={() => setStep(2)} />
@@ -155,7 +165,6 @@ export const InspectionFormScreen = () => {
           <Pressable style={styles.photoBox} onPress={pickImage}>
             {image ? <Image source={{ uri: image }} style={styles.photo} /> : <Camera color={colors.amber400} size={48} />}
           </Pressable>
-          <Text style={styles.meta}>Photos upload to the `quality-evidence` bucket when Supabase is active.</Text>
           <Button title="Submit Inspection" loading={submitMutation.isPending} onPress={submitInspection} />
         </Card>
       ) : null}
@@ -191,8 +200,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   stepActive: {
-    borderColor: colors.quality,
-    backgroundColor: `${colors.quality}22`,
+    borderColor: colors.blue,
+    backgroundColor: `${colors.blue}22`,
   },
   stepText: {
     color: colors.steel500,
@@ -201,7 +210,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   stepTextActive: {
-    color: colors.quality,
+    color: colors.blue,
   },
   form: {
     gap: spacing.md,
@@ -209,7 +218,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 16,
   },
   counterRow: {
     flexDirection: "row",
@@ -224,7 +233,7 @@ const styles = StyleSheet.create({
   },
   counterValue: {
     fontFamily: typography.display,
-    fontSize: 34,
+    fontSize: 22,
   },
   counterLabel: {
     color: colors.steel500,
