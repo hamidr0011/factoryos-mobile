@@ -14,7 +14,6 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + spacing.sm }]}>
-      {/* Top action row */}
       <View style={styles.topActions}>
         <Pressable style={styles.iconButton} onPress={onMenu}>
           <Menu color={colors.steel100} size={22} />
@@ -34,10 +33,9 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
         </View>
       </View>
 
-      {/* Large One UI Title Area */}
       <View style={styles.oneUiTitleArea}>
-        <Text style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "Supervisor"}`}</Text>
-        <Text style={styles.subtitle}>{subtitle || defaultSubtitle}</Text>
+        <Text numberOfLines={2} style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "FactoryOS"}`}</Text>
+        <Text numberOfLines={1} style={styles.subtitle}>{subtitle || defaultSubtitle}</Text>
       </View>
     </View>
   );
@@ -46,7 +44,7 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
 const styles = StyleSheet.create({
   wrap: {
     backgroundColor: colors.steel950,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,
   },
   topActions: {
@@ -65,14 +63,15 @@ const styles = StyleSheet.create({
     width: 40,
   },
   oneUiTitleArea: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
     paddingHorizontal: spacing.xs,
   },
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "700",
+    lineHeight: 31,
   },
   subtitle: {
     color: colors.steel500,

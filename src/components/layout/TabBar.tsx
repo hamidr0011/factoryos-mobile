@@ -1,6 +1,7 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Home, MoreHorizontal } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { colors, spacing, typography } from "../../utils/constants";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
@@ -42,28 +43,33 @@ const TabBarItem = ({
   );
 };
 
-export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => (
-  <View style={styles.bar}>
-    {state.routes.map((route, index) => {
-      const label = descriptors[route.key].options.tabBarLabel?.toString() || route.name;
-      return (
-        <TabBarItem
-          key={route.key}
-          routeName={route.name}
-          label={label}
-          isFocused={state.index === index}
-          onPress={() => {
-            if (route.name === "More") {
-              (navigation.getParent() as any)?.openDrawer?.();
-              return;
-            }
-            navigation.navigate(route.name);
-          }}
-        />
-      );
-    })}
-  </View>
-);
+export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, spacing.sm);
+
+  return (
+    <View style={[styles.bar, { paddingBottom: bottomPad }]}>
+      {state.routes.map((route, index) => {
+        const label = descriptors[route.key].options.tabBarLabel?.toString() || route.name;
+        return (
+          <TabBarItem
+            key={route.key}
+            routeName={route.name}
+            label={label}
+            isFocused={state.index === index}
+            onPress={() => {
+              if (route.name === "More") {
+                (navigation.getParent() as any)?.openDrawer?.();
+                return;
+              }
+              navigation.navigate(route.name);
+            }}
+          />
+        );
+      })}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   bar: {
@@ -71,15 +77,15 @@ const styles = StyleSheet.create({
     borderTopColor: colors.steel700,
     borderTopWidth: 1,
     flexDirection: "row",
-    minHeight: 76,
-    paddingBottom: spacing.xs,
+    minHeight: 78,
     paddingTop: spacing.xs,
   },
   item: {
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
-    minHeight: 44,
+    minHeight: 48,
+    paddingHorizontal: 2,
   },
   iconWrap: {
     alignItems: "center",
@@ -90,7 +96,7 @@ const styles = StyleSheet.create({
   iconWrapActive: {},
   label: {
     fontFamily: typography.bodyMedium,
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 2,
   },
   underline: {

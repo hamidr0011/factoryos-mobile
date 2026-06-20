@@ -518,6 +518,52 @@ app.get(
   }),
 );
 
+const createProductionOrderSchema = z.object({
+  orderNumber: z.string().trim().min(2).optional(),
+  productName: z.string().trim().min(2),
+  quantityPlanned: z.coerce.number().int().positive(),
+  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+  machineId: uuid.optional().nullable(),
+  operatorId: uuid.optional().nullable(),
+  startDate: z.string().trim().min(1).optional(),
+  endDate: z.string().trim().min(1).optional(),
+  notes: optionalText,
+});
+
+const createOrderNumber = () => {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+  return `PO-${stamp}-${Math.floor(100 + Math.random() * 900)}`;
+};
+
+app.post(
+  "/api/production/orders",
+  requireRoles(["admin", "manager", "supervisor"]),
+  asyncRoute(async (req, res) => {
+    const input = body(createProductionOrderSchema, req);
+    sendSupabaseResult(
+      res,
+      await req.supabase
+        .from("production_orders")
+        .insert({
+          order_number: input.orderNumber || createOrderNumber(),
+          product_name: input.productName,
+          quantity_planned: input.quantityPlanned,
+          quantity_produced: 0,
+          status: "pending",
+          priority: input.priority,
+          machine_id: input.machineId || null,
+          operator_id: input.operatorId || null,
+          start_date: input.startDate || null,
+          end_date: input.endDate || null,
+          notes: input.notes || null,
+        })
+        .select("*, machine:machines(*), operator:profiles(*)")
+        .single(),
+      201,
+    );
+  }),
+);
+
 app.get(
   "/api/production/orders/:orderId/logs",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),

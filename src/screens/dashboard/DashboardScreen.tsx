@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Activity, Package, Wrench, CheckCircle2, ChevronRight } from "lucide-react-native";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Card } from "../../components/ui/Card";
@@ -26,13 +26,26 @@ import { ProgressBar } from "../shared/ScreenScaffold";
 
 const percent = (value: number, total: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
 
+const findDrawerNavigation = (navigation: any) => {
+  let current = navigation;
+
+  while (current) {
+    if (typeof current.openDrawer === "function") return current;
+    current = current.getParent?.();
+  }
+
+  return undefined;
+};
+
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
+  const drawerNavigation = findDrawerNavigation(navigation);
   const { canAccessArea, userRole } = usePermissions();
   const notifications = useAppStore((state) => state.notifications);
   const setNotifications = useAppStore((state) => state.setNotifications);
   const addNotification = useAppStore((state) => state.addNotification);
   const tabModules = new Set(["Production", "Inventory", "HR"]);
+  const openMachineStatus = useCallback(() => navigation.navigate("Production", { screen: "MachineStatus" }), [navigation]);
   const machinesQuery = useQuery({ queryKey: ["machines"], queryFn: productionService.getMachines, refetchInterval: 20_000 });
   const ordersQuery = useQuery({ queryKey: ["production_orders", "all"], queryFn: () => productionService.getOrders("all"), refetchInterval: 30_000 });
   const inventoryQuery = useQuery({ queryKey: ["inventory_items"], queryFn: inventoryService.getItems, refetchInterval: 30_000 });
@@ -58,7 +71,7 @@ export const DashboardScreen = () => {
       return;
     }
 
-    navigation.getParent()?.navigate(screen);
+    drawerNavigation?.navigate(screen);
   };
 
   useRealtime("machines");
@@ -124,7 +137,7 @@ export const DashboardScreen = () => {
         value: `${runningMachines}/${machineData.length}`,
         icon: <Wrench size={18} color={colors.amber400} />,
         bgColor: colors.steel800,
-        onPress: () => navigation.navigate("MachineStatus"),
+        onPress: openMachineStatus,
       },
       {
         label: "Total Output",
@@ -134,7 +147,7 @@ export const DashboardScreen = () => {
         onPress: () => navigation.navigate("Production"),
       },
     ];
-  }, [averageEfficiency, inventoryData.length, machineData.length, runningMachines, totalOutput, navigation]);
+  }, [averageEfficiency, inventoryData.length, machineData.length, openMachineStatus, runningMachines, totalOutput, navigation]);
 
   const moduleStats = useMemo(() => {
     const activeOrders = orderData.filter((order) => ["pending", "in_progress", "on_hold"].includes(order.status)).length;
@@ -233,7 +246,7 @@ export const DashboardScreen = () => {
             {machineData.length ? machineData.map((machine) => {
               const palette = statusPalette(machine.status);
               return (
-                <Card key={machine.id} style={styles.machineCard} onPress={() => navigation.navigate("MachineStatus")}>
+                <Card key={machine.id} style={styles.machineCard} onPress={openMachineStatus}>
                   <View style={styles.machineHeader}>
                     <Text style={styles.machineName}>{machine.name}</Text>
                     <StatusBadge status={machine.status} />
@@ -282,7 +295,7 @@ export const DashboardScreen = () => {
           <SectionHeader title="Today's Alerts" />
           {alerts.length ? (
             alerts.map((alert) => (
-              <Card key={alert.id} accentColor={alert.module === "maintenance" ? colors.red : colors.orange} style={styles.alertCard} onPress={() => navigation.getParent()?.navigate(alert.action_url || "Notifications")}>
+              <Card key={alert.id} accentColor={alert.module === "maintenance" ? colors.red : colors.orange} style={styles.alertCard} onPress={() => drawerNavigation?.navigate(alert.action_url || "Notifications")}>
                 <AlertTriangle color={alert.module === "maintenance" ? colors.red : colors.orange} size={18} />
                 <View style={styles.alertCopy}>
                   <Text style={styles.alertTitle}>{alert.title}</Text>

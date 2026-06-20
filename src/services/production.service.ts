@@ -11,6 +11,23 @@ export const productionService = {
     return apiRequest(`/api/production/orders/${orderId}/logs`);
   },
 
+  async createOrder(input: {
+    orderNumber?: string;
+    productName: string;
+    quantityPlanned: number;
+    priority: "low" | "medium" | "high" | "critical";
+    machineId?: string | null;
+    operatorId?: string | null;
+    startDate?: string;
+    endDate?: string;
+    notes?: string;
+  }) {
+    return apiRequest("/api/production/orders", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
   async getMachines() {
     return stripSeedData("machines", await apiRequest("/api/production/machines"));
   },

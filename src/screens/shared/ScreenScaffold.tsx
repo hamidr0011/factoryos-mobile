@@ -2,7 +2,8 @@ import { ChevronLeft, Menu, Search } from "lucide-react-native";
 import { PropsWithChildren, ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { PersistentBottomNav } from "../../components/layout/PersistentBottomNav";
 import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
 import { StatusBadge } from "../../components/ui/StatusBadge";
@@ -31,12 +32,29 @@ const findDrawerNavigation = (navigation: any) => {
   return undefined;
 };
 
+const isInsidePrimaryTabs = (navigation: any) => {
+  let current = navigation;
+
+  while (current) {
+    const state = current.getState?.();
+    const names = state?.routeNames || [];
+    if (state?.type === "tab") return true;
+    if (["Dashboard", "Production", "Inventory", "HR", "More"].every((name) => names.includes(name))) return true;
+    current = current.getParent?.();
+  }
+
+  return false;
+};
+
 export const ScreenContainer = ({ title, subtitle, action, children, navigationMode = "auto", scroll = true, style }: ScreenContainerProps) => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const drawerNavigation = findDrawerNavigation(navigation);
   const canGoBack = navigation.canGoBack?.() ?? false;
   const showNavButton = navigationMode !== "none" && (canGoBack || drawerNavigation);
   const useBackButton = navigationMode === "back" || (navigationMode === "auto" && canGoBack);
+  const showPersistentBottomNav = !isInsidePrimaryTabs(navigation) && Boolean(drawerNavigation);
+  const bottomSpace = 118 + insets.bottom;
 
   const handleNavigation = () => {
     if (useBackButton && canGoBack) {
@@ -70,12 +88,13 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: bottomSpace }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {content}
         </ScrollView>
       ) : (
         content
       )}
+      {showPersistentBottomNav ? <PersistentBottomNav /> : null}
     </SafeAreaView>
   );
 };
@@ -158,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.xs,
-    minHeight: 56,
+    minHeight: 52,
     paddingBottom: spacing.xs,
   },
   navButton: {
@@ -175,8 +194,8 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 26,
-    lineHeight: 31,
+    fontSize: 24,
+    lineHeight: 29,
   },
   subtitle: {
     color: colors.steel500,

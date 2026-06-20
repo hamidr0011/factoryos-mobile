@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { PermissionGate } from "../../components/ui/PermissionGate";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { productionService } from "../../services/production.service";
 import type { ProductionOrder } from "../../types";
@@ -38,6 +39,13 @@ export const ProductionListScreen = () => {
       title="Production Orders"
       navigationMode="drawer"
       scroll={false}
+      action={
+        <PermissionGate area="production" level="write">
+          <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("CreateProductionOrder")}>
+            <Plus color={colors.steel950} size={22} />
+          </Pressable>
+        </PermissionGate>
+      }
     >
       <SearchField value={search} onChangeText={setSearch} placeholder="Search order or product" />
       <ChipRow items={filters} active={filter} onChange={setFilter} />
@@ -47,7 +55,15 @@ export const ProductionListScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.amber400} />}
-        ListEmptyComponent={<EmptyState variant="production" title="No orders yet" cta="Create order" />}
+        ListEmptyComponent={
+          <PermissionGate
+            area="production"
+            level="write"
+            fallback={<EmptyState variant="production" title="No orders yet" />}
+          >
+            <EmptyState variant="production" title="No orders yet" cta="Create order" onPress={() => navigation.navigate("CreateProductionOrder")} />
+          </PermissionGate>
+        }
         renderItem={({ item }) => {
           const progress = (item.quantity_produced / item.quantity_planned) * 100;
           return (
