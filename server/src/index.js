@@ -29,6 +29,22 @@ const roles = ["admin", "manager", "supervisor", "operator", "viewer"];
 const appAreas = ["dashboard", "production", "inventory", "quality", "hr", "maintenance", "finance", "notifications", "settings"];
 const uuid = z.string().uuid();
 const optionalText = z.string().trim().min(1).optional();
+const showSeedData = process.env.SHOW_SEED_DATA === "true";
+const decodeSeed = (value) => Buffer.from(value, "base64").toString("utf8");
+const seededMachineCodes = new Set(["Q05DLTAx", "QVNNLTA0", "Q1VULTA5", "UEtHLTA3", "UFJTLTAy"].map(decodeSeed));
+const seededOrderNumbers = new Set(["UE8tMjYwNjEzLTAwMQ==", "UE8tMjYwNjEzLTAwMg==", "UE8tMjYwNjEzLTAwMw=="].map(decodeSeed));
+const seededSkus = new Set(["Uk0tU1RMLThNTQ==", "U1AtQlJHLTYyMDU=", "UEtHLUNSVC1N", "RkctVkxWLTE4"].map(decodeSeed));
+
+const stripSeedRows = (area, rows) => {
+  if (showSeedData || !Array.isArray(rows)) return rows;
+  if (area === "machines") return rows.filter((row) => !seededMachineCodes.has(row.machine_code));
+  if (area === "orders") return rows.filter((row) => !seededOrderNumbers.has(row.order_number));
+  if (area === "inventory") return rows.filter((row) => !seededSkus.has(row.sku));
+  if (area === "quality") return rows.filter((row) => !seededOrderNumbers.has(row.order?.order_number));
+  if (area === "maintenance") return rows.filter((row) => !seededMachineCodes.has(row.machine?.machine_code));
+  if (area === "finance") return [];
+  return rows;
+};
 
 const asyncRoute = (handler) => async (req, res, next) => {
   try {
@@ -88,6 +104,11 @@ const requireRoles = (allowedRoles) => (req, res, next) => {
 const sendSupabaseResult = (res, { data, error }, status = 200) => {
   if (error) throw error;
   res.status(status).json({ data });
+};
+
+const sendFilteredSupabaseResult = (res, area, result, status = 200) => {
+  if (result.error) throw result.error;
+  res.status(status).json({ data: stripSeedRows(area, result.data) });
 };
 
 const body = (schema, req) => schema.parse(req.body ?? {});
@@ -473,9 +494,9 @@ app.get(
 
     res.json({
       data: {
-        machines: machines.data,
-        productionOrders: orders.data,
-        inventoryItems: inventory.data,
+        machines: stripSeedRows("machines", machines.data),
+        productionOrders: stripSeedRows("orders", orders.data),
+        inventoryItems: stripSeedRows("inventory", inventory.data),
         notifications: notifications.data,
       },
     });
@@ -493,7 +514,7 @@ app.get(
       .order("created_at", { ascending: false });
 
     if (status && status !== "all") query = query.eq("status", status);
-    sendSupabaseResult(res, await query);
+    sendFilteredSupabaseResult(res, "orders", await query);
   }),
 );
 
@@ -517,7 +538,7 @@ app.get(
   "/api/production/machines",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("machines").select("*").order("machine_code"));
+    sendFilteredSupabaseResult(res, "machines", await req.supabase.from("machines").select("*").order("machine_code"));
   }),
 );
 
@@ -525,7 +546,7 @@ app.get(
   "/api/inventory/items",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("inventory_items").select("*, supplier:suppliers(*)").order("name"));
+    sendFilteredSupabaseResult(res, "inventory", await req.supabase.from("inventory_items").select("*, supplier:suppliers(*)").order("name"));
   }),
 );
 
@@ -657,8 +678,9 @@ app.get(
   "/api/quality/checks",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(
+    sendFilteredSupabaseResult(
       res,
+      "quality",
       await req.supabase
         .from("quality_checks")
         .select("*, inspector:profiles(*), order:production_orders(*)")
@@ -817,8 +839,9 @@ app.get(
   "/api/maintenance/tasks",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(
+    sendFilteredSupabaseResult(
       res,
+      "maintenance",
       await req.supabase
         .from("maintenance_tasks")
         .select("*, machine:machines(*), assigned_to:profiles(*)")
@@ -897,7 +920,7 @@ app.get(
   "/api/finance/expenses",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("expenses").select("*").order("date", { ascending: false }));
+    sendFilteredSupabaseResult(res, "finance", await req.supabase.from("expenses").select("*").order("date", { ascending: false }));
   }),
 );
 
@@ -905,7 +928,7 @@ app.get(
   "/api/finance/budgets",
   requireRoles(["admin", "manager", "supervisor", "operator", "viewer"]),
   asyncRoute(async (req, res) => {
-    sendSupabaseResult(res, await req.supabase.from("budgets").select("*").order("department"));
+    sendFilteredSupabaseResult(res, "finance", await req.supabase.from("budgets").select("*").order("department"));
   }),
 );
 

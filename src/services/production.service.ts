@@ -1,9 +1,10 @@
 import { apiRequest } from "./api";
+import { stripSeedData } from "./seedDataGuard";
 
 export const productionService = {
   async getOrders(status?: string) {
     const params = status && status !== "all" ? `?status=${encodeURIComponent(status)}` : "";
-    return apiRequest(`/api/production/orders${params}`);
+    return stripSeedData("orders", await apiRequest(`/api/production/orders${params}`));
   },
 
   async getOrderLogs(orderId: string) {
@@ -11,7 +12,7 @@ export const productionService = {
   },
 
   async getMachines() {
-    return apiRequest("/api/production/machines");
+    return stripSeedData("machines", await apiRequest("/api/production/machines"));
   },
 
   async updateProgress(orderId: string, quantityDelta: number, notes?: string) {

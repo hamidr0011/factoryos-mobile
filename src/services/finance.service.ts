@@ -1,12 +1,13 @@
 import { apiRequest } from "./api";
+import { stripSeedData } from "./seedDataGuard";
 
 export const financeService = {
   async getExpenses() {
-    return apiRequest("/api/finance/expenses");
+    return stripSeedData("finance", await apiRequest("/api/finance/expenses"));
   },
 
   async getBudgets() {
-    return apiRequest("/api/finance/budgets");
+    return stripSeedData("finance", await apiRequest("/api/finance/budgets"));
   },
 
   async createExpense(input: {

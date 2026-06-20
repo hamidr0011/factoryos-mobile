@@ -1,8 +1,9 @@
 import { apiRequest } from "./api";
+import { stripSeedData } from "./seedDataGuard";
 
 export const inventoryService = {
   async getItems() {
-    return apiRequest("/api/inventory/items");
+    return stripSeedData("inventory", await apiRequest("/api/inventory/items"));
   },
 
   async getTransactions(itemId?: string) {

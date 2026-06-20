@@ -1,9 +1,10 @@
 import { apiRequest } from "./api";
+import { stripSeedData } from "./seedDataGuard";
 import { shouldUseSupabase, supabase } from "./supabase";
 
 export const qualityService = {
   async getChecks() {
-    return apiRequest("/api/quality/checks");
+    return stripSeedData("quality", await apiRequest("/api/quality/checks"));
   },
 
   async getDefectTypes() {

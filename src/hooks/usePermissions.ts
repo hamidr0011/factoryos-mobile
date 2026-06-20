@@ -18,6 +18,7 @@ export const usePermissions = () => {
   const currentRoleAccess = useMemo(() => accessQuery.data?.currentRoleAccess || [], [accessQuery.data]);
   const can = (roles: Role[]) => roles.includes(userRole);
   const canAccessArea = (area: AppArea, level: AccessLevel = "read") => {
+    if (accessQuery.isError || currentRoleAccess.length === 0) return level === "read";
     const row = currentRoleAccess.find((entry) => entry.area === area);
     if (!row) return false;
     if (level === "admin") return row.canAdmin;
