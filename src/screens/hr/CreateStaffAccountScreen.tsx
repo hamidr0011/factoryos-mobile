@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccessMatrixEditor, accessForRole } from "../../components/access/AccessMatrixEditor";
 import { Button } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
@@ -106,7 +107,14 @@ export const CreateStaffAccountScreen = () => {
   };
 
   return (
-    <PermissionGate roles={["admin"]}>
+    <PermissionGate
+      roles={["admin"]}
+      fallback={
+        <ScreenContainer title="Create Staff Account" subtitle="Admin access required" navigationMode="back">
+          <EmptyState variant="hr" title="Admin access required" subtitle="Only admins can create staff accounts and assign role permissions." />
+        </ScreenContainer>
+      }
+    >
       <ScreenContainer title="Create Staff Account" subtitle="Email, password, role, and access permissions" navigationMode="back">
         <View style={styles.hero}>
           <View style={styles.heroIcon}>

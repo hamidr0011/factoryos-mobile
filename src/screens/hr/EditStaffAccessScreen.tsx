@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccessDraft, AccessMatrixEditor, accessForRole } from "../../components/access/AccessMatrixEditor";
 import { Button } from "../../components/ui/Button";
+import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { hrService } from "../../services/hr.service";
@@ -78,7 +79,14 @@ export const EditStaffAccessScreen = () => {
   };
 
   return (
-    <PermissionGate roles={["admin"]}>
+    <PermissionGate
+      roles={["admin"]}
+      fallback={
+        <ScreenContainer title="Edit Staff Access" subtitle="Admin access required" navigationMode="back">
+          <EmptyState variant="hr" title="Admin access required" subtitle="Only admins can edit staff roles and permission overrides." />
+        </ScreenContainer>
+      }
+    >
       <ScreenContainer title="Edit Staff Access" subtitle={`${employee.full_name} · ${employee.employee_id}`} navigationMode="back">
         <View style={styles.hero}>
           <View style={styles.heroIcon}>

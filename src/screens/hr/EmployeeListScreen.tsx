@@ -7,6 +7,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PermissionGate } from "../../components/ui/PermissionGate";
+import { usePermissions } from "../../hooks/usePermissions";
 import { hrService } from "../../services/hr.service";
 import type { Profile, Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
@@ -24,6 +25,7 @@ const roleColors: Record<Role, string> = {
 
 export const EmployeeListScreen = () => {
   const navigation = useNavigation<any>();
+  const { isAdmin } = usePermissions();
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All");
   const { data = [] } = useQuery({ queryKey: ["employees"], queryFn: hrService.getEmployees });
@@ -51,14 +53,14 @@ export const EmployeeListScreen = () => {
   return (
     <ScreenContainer
       title="Access Management"
-      subtitle="Create accounts and assign role permissions"
+      subtitle={isAdmin ? "Create accounts and assign role permissions" : "View employees and current role access"}
       scroll={false}
       action={
-        <PermissionGate roles={["admin"]}>
+        isAdmin ? (
           <Pressable style={styles.fabSmall} onPress={() => navigation.navigate("CreateStaffAccount")}>
             <UserPlus color={colors.steel950} size={21} />
           </Pressable>
-        </PermissionGate>
+        ) : null
       }
     >
       <PermissionGate roles={["admin"]}>
@@ -104,7 +106,7 @@ export const EmployeeListScreen = () => {
           </PermissionGate>
         }
         renderItem={({ item }) => (
-          <WorkCard title={item.full_name} eyebrow={item.employee_id} accentColor={roleColors[item.role]} onPress={() => navigation.navigate("EditStaffAccess", { employee: item })}>
+          <WorkCard title={item.full_name} eyebrow={item.employee_id} accentColor={roleColors[item.role]} onPress={isAdmin ? () => navigation.navigate("EditStaffAccess", { employee: item }) : undefined}>
             <View style={styles.row}>
               <View style={styles.employeeMeta}>
                 <Text style={styles.meta}>{item.department}</Text>
