@@ -10,7 +10,8 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
   const insets = useSafeAreaInsets();
   const unreadCount = useAppStore((state) => state.unreadCount);
   const profile = useAuthStore((state) => state.profile);
-  const defaultSubtitle = `${format(new Date(), "EEEE, d MMMM")} · ${profile?.department || "Operations"}`;
+  const profileLabel = profile?.full_name || "FactoryOS";
+  const defaultSubtitle = `${profileLabel} · ${format(new Date(), "EEEE, d MMMM")} · ${profile?.department || "Operations"}`;
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + spacing.sm }]}>
@@ -34,7 +35,7 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
       </View>
 
       <View style={styles.oneUiTitleArea}>
-        <Text adjustsFontSizeToFit minimumFontScale={0.88} numberOfLines={2} style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "FactoryOS"}`}</Text>
+        <Text adjustsFontSizeToFit minimumFontScale={0.82} numberOfLines={1} style={styles.title}>{title || "Good morning"}</Text>
         <Text numberOfLines={1} style={styles.subtitle}>{subtitle || defaultSubtitle}</Text>
       </View>
     </View>
@@ -73,9 +74,9 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 21,
     fontWeight: "700",
-    lineHeight: 29,
+    lineHeight: 25,
   },
   subtitle: {
     color: colors.steel500,

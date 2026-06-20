@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   meta: {
     color: colors.steel500,
@@ -83,6 +83,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
 });

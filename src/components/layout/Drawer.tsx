@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: "#FFFFFF",
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 22,
   },
   profileCopy: {
     flex: 1,
@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
   name: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 18,
   },
   meta: {
     color: colors.steel500,

@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   meta: {
     color: colors.steel500,

@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   adminTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   roleStats: {
     gap: spacing.xs,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   roleStatValue: {
     fontFamily: typography.display,
-    fontSize: 20,
+    fontSize: 18,
   },
   roleStatLabel: {
     color: colors.steel500,

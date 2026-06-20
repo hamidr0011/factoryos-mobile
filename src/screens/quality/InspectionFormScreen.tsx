@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 16,
   },
   counterRow: {
     flexDirection: "row",
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   counterValue: {
     fontFamily: typography.display,
-    fontSize: 28,
+    fontSize: 22,
   },
   counterLabel: {
     color: colors.steel500,

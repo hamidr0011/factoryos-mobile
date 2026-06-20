@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { colors, spacing, typography } from "../../utils/constants";
+import { colors, spacing, typography, typeScale } from "../../utils/constants";
 
 export const SectionHeader = ({ title, meta }: { title: string; meta?: string }) => (
   <View style={styles.row}>
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: typeScale.section,
   },
   meta: {
     color: colors.steel500,

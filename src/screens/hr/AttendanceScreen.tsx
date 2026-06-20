@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   month: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 16,
   },
   grid: {
     flexDirection: "row",
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 18,
   },
   sheetRow: {
     alignItems: "center",

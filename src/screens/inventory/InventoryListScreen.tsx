@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   qty: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 20,
+    fontSize: 18,
   },
   meta: {
     color: colors.steel500,

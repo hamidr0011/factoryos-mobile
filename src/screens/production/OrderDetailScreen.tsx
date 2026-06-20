@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
   big: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 24,
+    lineHeight: 30,
   },
   muted: {
     color: colors.steel500,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   timelineRow: {
     alignItems: "center",
@@ -225,6 +225,6 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 20,
+    fontSize: 18,
   },
 });

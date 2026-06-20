@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   actions: {
     gap: spacing.sm,
@@ -186,6 +186,6 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 18,
   },
 });

@@ -75,7 +75,7 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
             </Pressable>
           ) : null}
           <View style={styles.titleCopy}>
-            <Text adjustsFontSizeToFit minimumFontScale={0.88} numberOfLines={1} style={styles.title}>{title}</Text>
+            <Text adjustsFontSizeToFit minimumFontScale={0.8} numberOfLines={2} style={styles.title}>{title}</Text>
             {subtitle ? <Text numberOfLines={1} style={styles.subtitle}>{subtitle}</Text> : null}
           </View>
           {action}
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: spacing.xs,
-    minHeight: 52,
+    minHeight: 50,
     paddingBottom: spacing.xs,
   },
   navButton: {
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: typeScale.title,
-    lineHeight: 26,
+    lineHeight: 23,
   },
   subtitle: {
     color: colors.steel500,
@@ -230,8 +230,8 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontFamily: typography.display,
-    fontSize: 19,
-    lineHeight: 23,
+    fontSize: 18,
+    lineHeight: 22,
   },
   metricLabel: {
     color: colors.steel500,

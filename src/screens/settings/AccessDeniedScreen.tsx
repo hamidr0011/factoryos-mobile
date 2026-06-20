@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 19,
     textAlign: "center",
   },
 });

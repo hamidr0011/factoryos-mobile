@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   wordmark: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 29,
+    fontSize: 24,
     marginTop: spacing.sm,
   },
   tagline: {
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   heading: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 19,
   },
   subheading: {
     color: colors.steel500,

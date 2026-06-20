@@ -212,14 +212,14 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 21,
     textAlign: "center",
   },
   body: {
     color: colors.steel300,
     fontFamily: typography.body,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 19,
     textAlign: "center",
   },
   insightRail: {
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   insightValue: {
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 15,
   },
   insightLabel: {
     color: colors.steel500,

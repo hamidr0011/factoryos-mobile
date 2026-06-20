@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
   },
   quantity: {
     fontFamily: typography.display,
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 24,
+    lineHeight: 30,
   },
   unit: {
     color: colors.steel500,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   txQty: {
     color: colors.steel300,

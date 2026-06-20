@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 15,
+    fontSize: 14,
   },
   body: {
     color: colors.steel300,

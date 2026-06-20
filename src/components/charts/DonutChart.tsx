@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   webDonutText: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 16,
   },
   webDonutCompact: {
     borderRadius: 42,

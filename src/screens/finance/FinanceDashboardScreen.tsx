@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   gaugeRow: {
     alignItems: "center",
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   big: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 20,
   },
   meta: {
     color: colors.steel500,

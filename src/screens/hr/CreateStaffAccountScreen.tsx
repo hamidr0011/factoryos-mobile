@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 16,
   },
   section: {
     backgroundColor: colors.steel900,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   passwordRow: {
     alignItems: "flex-end",

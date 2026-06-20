@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   logo: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 30,
+    fontSize: 24,
   },
   tagline: {
     color: colors.steel500,

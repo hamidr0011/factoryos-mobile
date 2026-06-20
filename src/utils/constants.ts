@@ -77,10 +77,10 @@ export const radii = {
 };
 
 export const typeScale = {
-  hero: 24,
-  title: 21,
-  section: 16,
-  body: 14,
+  hero: 22,
+  title: 19,
+  section: 15,
+  body: 13,
   bodySmall: 12,
   caption: 11,
   micro: 10,

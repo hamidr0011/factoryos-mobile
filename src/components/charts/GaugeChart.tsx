@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   value: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 22,
   },
   label: {
     color: colors.steel500,

@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   gaugeScore: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 23,
+    fontSize: 20,
     fontWeight: "700",
   },
   gaugeMax: {
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   careStatusText: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
   careSubstatusText: {

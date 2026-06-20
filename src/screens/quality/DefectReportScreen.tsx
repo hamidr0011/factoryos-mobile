@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 15,
   },
   defectCard: {
     alignItems: "center",
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   defectTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 15,
   },
   defectMeta: {
     color: colors.steel500,
