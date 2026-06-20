@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   counterValue: {
     fontFamily: typography.display,
-    fontSize: 34,
+    fontSize: 28,
   },
   counterLabel: {
     color: colors.steel500,

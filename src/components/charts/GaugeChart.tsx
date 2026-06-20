@@ -67,12 +67,12 @@ const styles = StyleSheet.create({
   value: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 28,
+    fontSize: 24,
   },
   label: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 11,
+    fontSize: 10,
   },
 });
 

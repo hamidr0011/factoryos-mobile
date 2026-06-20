@@ -163,14 +163,14 @@ const styles = StyleSheet.create({
   quickTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 18,
   },
   quickMeta: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 15,
     marginTop: 2,
   },
   section: {
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 16,
   },
   gaugeRow: {
     alignItems: "center",
@@ -192,12 +192,12 @@ const styles = StyleSheet.create({
   big: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 25,
+    fontSize: 22,
   },
   meta: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
   },
   budget: {
     gap: spacing.sm,
@@ -209,6 +209,6 @@ const styles = StyleSheet.create({
   budgetTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 15,
+    fontSize: 14,
   },
 });

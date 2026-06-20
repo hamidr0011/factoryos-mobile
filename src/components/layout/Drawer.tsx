@@ -102,13 +102,13 @@ const styles = StyleSheet.create({
   name: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 19,
   },
   meta: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 2,
     textTransform: "capitalize",
   },
@@ -139,8 +139,8 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     flex: 1,
     fontFamily: typography.bodyMedium,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 17,
   },
   footer: {
     borderTopColor: colors.steel700,
@@ -164,6 +164,6 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
-    fontSize: 14,
+    fontSize: 13,
   },
 });

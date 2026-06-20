@@ -38,11 +38,12 @@ const styles = StyleSheet.create({
   avatarText: {
     color: colors.steel950,
     fontFamily: typography.display,
-    fontSize: 38,
+    fontSize: 32,
   },
   name: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 24,
+    fontSize: 20,
+    lineHeight: 25,
   },
 });

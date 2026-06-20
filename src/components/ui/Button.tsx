@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: typography.bodyMedium,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 18,
   },
 });

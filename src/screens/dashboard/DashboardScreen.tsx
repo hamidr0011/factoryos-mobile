@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   gaugeScore: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 26,
+    fontSize: 23,
     fontWeight: "700",
   },
   gaugeMax: {
@@ -362,15 +362,15 @@ const styles = StyleSheet.create({
   careStatusText: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
   },
   careSubstatusText: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 15,
     marginTop: 2,
-    lineHeight: 16,
   },
   careDivider: {
     height: 1,
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   careLabel: {
     color: colors.steel100,
     fontFamily: typography.bodyMedium,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   careValueWrapper: {
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   careValue: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
   },
   careRowDivider: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   machineName: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 15,
+    fontSize: 14,
   },
   machineMeta: {
     color: colors.steel500,
@@ -494,17 +494,17 @@ const styles = StyleSheet.create({
   },
   moduleStat: {
     fontFamily: typography.mono,
-    fontSize: 12,
+    fontSize: 11,
   },
   moduleLabel: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 15,
+    fontSize: 14,
   },
   moduleDelta: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
   },
   moduleRail: {

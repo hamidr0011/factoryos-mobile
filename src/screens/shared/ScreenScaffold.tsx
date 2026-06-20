@@ -199,13 +199,13 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     fontFamily: typography.display,
     fontSize: typeScale.title,
-    lineHeight: 28,
+    lineHeight: 26,
   },
   subtitle: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: typeScale.caption,
+    lineHeight: 15,
     marginTop: 1,
   },
   progressTrack: {
@@ -230,13 +230,13 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontFamily: typography.display,
-    fontSize: 21,
-    lineHeight: 26,
+    fontSize: 19,
+    lineHeight: 23,
   },
   metricLabel: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 11,
+    fontSize: typeScale.micro,
     marginTop: 4,
   },
   search: {
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     color: colors.steel100,
     flex: 1,
     fontFamily: typography.body,
-    fontSize: 15,
+    fontSize: typeScale.body,
   },
   chips: {
     gap: spacing.xs,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.steel300,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: typeScale.bodySmall,
     lineHeight: 17,
   },
   chipTextActive: {
@@ -293,15 +293,15 @@ const styles = StyleSheet.create({
     color: colors.steel500,
     flex: 1,
     fontFamily: typography.body,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: typeScale.bodySmall,
+    lineHeight: 17,
   },
   detailValue: {
     color: colors.steel100,
     flex: 1,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: typeScale.bodySmall,
+    lineHeight: 17,
     maxWidth: "58%",
     textAlign: "right",
   },
@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: colors.steel500,
     fontFamily: typography.mono,
-    fontSize: 11,
+    fontSize: typeScale.micro,
     marginBottom: 4,
   },
   cardTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: typeScale.body,
+    lineHeight: 18,
   },
 });

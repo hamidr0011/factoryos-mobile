@@ -34,7 +34,7 @@ export const Header = ({ title, subtitle, onMenu }: { title?: string; subtitle?:
       </View>
 
       <View style={styles.oneUiTitleArea}>
-        <Text adjustsFontSizeToFit minimumFontScale={0.9} numberOfLines={2} style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "FactoryOS"}`}</Text>
+        <Text adjustsFontSizeToFit minimumFontScale={0.88} numberOfLines={2} style={styles.title}>{title || `Good morning, ${profile?.full_name?.split(" ")[0] || "FactoryOS"}`}</Text>
         <Text numberOfLines={1} style={styles.subtitle}>{subtitle || defaultSubtitle}</Text>
       </View>
     </View>
@@ -73,14 +73,14 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "700",
-    lineHeight: 31,
+    lineHeight: 29,
   },
   subtitle: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
+    fontSize: 12,
     marginTop: spacing.xxs,
   },
   bellWrap: {

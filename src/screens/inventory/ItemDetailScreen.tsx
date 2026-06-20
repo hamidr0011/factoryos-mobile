@@ -97,12 +97,13 @@ const styles = StyleSheet.create({
   },
   quantity: {
     fontFamily: typography.display,
-    fontSize: 48,
+    fontSize: 32,
+    lineHeight: 38,
   },
   unit: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
+    fontSize: 12,
   },
   section: {
     gap: spacing.md,
@@ -110,12 +111,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 16,
   },
   txQty: {
     color: colors.steel300,
     fontFamily: typography.mono,
-    fontSize: 13,
+    fontSize: 12,
   },
   actions: {
     gap: spacing.sm,

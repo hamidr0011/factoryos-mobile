@@ -187,16 +187,16 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 20,
   },
   amount: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 19,
+    fontSize: 17,
   },
   meta: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
   },
 });

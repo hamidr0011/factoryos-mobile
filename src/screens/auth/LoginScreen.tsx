@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   wordmark: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 34,
+    fontSize: 29,
     marginTop: spacing.sm,
   },
   tagline: {

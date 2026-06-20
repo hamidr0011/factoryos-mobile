@@ -170,12 +170,13 @@ const styles = StyleSheet.create({
   big: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 36,
+    fontSize: 30,
+    lineHeight: 36,
   },
   muted: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
+    fontSize: 12,
   },
   section: {
     gap: spacing.sm,
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 16,
   },
   timelineRow: {
     alignItems: "center",
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   timelineTitle: {
     color: colors.steel100,
     fontFamily: typography.bodyMedium,
-    fontSize: 13,
+    fontSize: 12,
   },
   timelineMeta: {
     color: colors.steel500,
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   timelineNotes: {
     color: colors.steel300,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 3,
   },
   actions: {
@@ -224,6 +225,6 @@ const styles = StyleSheet.create({
   sheetTitle: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 22,
+    fontSize: 20,
   },
 });

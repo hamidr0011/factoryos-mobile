@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Home, MoreHorizontal } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { colors, spacing, typography } from "../../utils/constants";
@@ -37,7 +37,14 @@ const TabBarItem = ({
           <Icon color={isFocused ? colors.amber400 : colors.steel300} size={22} />
         )}
       </Animated.View>
-      <Text style={[styles.label, { color: isFocused ? colors.amber400 : colors.steel500 }]}>{label}</Text>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.72}
+        numberOfLines={1}
+        style={[styles.label, { color: isFocused ? colors.amber400 : colors.steel500 }]}
+      >
+        {label}
+      </Text>
       <View style={[styles.underline, { opacity: isFocused ? 1 : 0 }]} />
     </Pressable>
   );
@@ -45,7 +52,7 @@ const TabBarItem = ({
 
 export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, spacing.sm);
+  const bottomPad = Math.max(insets.bottom, Platform.OS === "android" ? spacing.md : spacing.sm);
 
   return (
     <View style={[styles.bar, { paddingBottom: bottomPad }]}>
@@ -85,6 +92,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     minHeight: 52,
+    minWidth: 0,
     paddingHorizontal: 2,
   },
   iconWrap: {
@@ -99,9 +107,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: typography.bodyMedium,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 9,
+    lineHeight: 11,
     marginTop: 3,
+    maxWidth: "100%",
+    textAlign: "center",
   },
   underline: {
     backgroundColor: colors.amber400,

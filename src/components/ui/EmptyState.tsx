@@ -43,15 +43,15 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 18,
-    lineHeight: 23,
+    fontSize: 16,
+    lineHeight: 21,
     textAlign: "center",
   },
   subtitle: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
     textAlign: "center",
   },
   cta: {

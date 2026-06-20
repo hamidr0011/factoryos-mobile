@@ -18,11 +18,11 @@ const styles = StyleSheet.create({
   title: {
     color: colors.steel100,
     fontFamily: typography.display,
-    fontSize: 17,
+    fontSize: 16,
   },
   meta: {
     color: colors.steel500,
     fontFamily: typography.body,
-    fontSize: 12,
+    fontSize: 11,
   },
 });

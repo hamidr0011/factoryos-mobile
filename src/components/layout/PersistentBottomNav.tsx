@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { Home, MoreHorizontal } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing, typography } from "../../utils/constants";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
@@ -28,7 +28,7 @@ export const PersistentBottomNav = ({ activeRoute = "More" }: { activeRoute?: st
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const drawerNavigation = findDrawerNavigation(navigation);
-  const bottomPad = Math.max(insets.bottom, spacing.sm);
+  const bottomPad = Math.max(insets.bottom, Platform.OS === "android" ? spacing.md : spacing.sm);
 
   const openRoute = (route: string) => {
     if (route === "More") {
@@ -53,7 +53,12 @@ export const PersistentBottomNav = ({ activeRoute = "More" }: { activeRoute?: st
                 <Icon color={focused ? colors.amber400 : colors.steel300} size={item.route === "More" ? 24 : 21} />
               )}
             </View>
-            <Text numberOfLines={1} style={[styles.label, { color: focused ? colors.amber400 : colors.steel500 }]}>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={0.72}
+              numberOfLines={1}
+              style={[styles.label, { color: focused ? colors.amber400 : colors.steel500 }]}
+            >
               {item.label}
             </Text>
             <View style={[styles.underline, { opacity: focused ? 1 : 0 }]} />
@@ -82,6 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     minHeight: 52,
+    minWidth: 0,
     paddingHorizontal: 2,
   },
   iconWrap: {
@@ -96,9 +102,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: typography.bodyMedium,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 9,
+    lineHeight: 11,
     marginTop: 3,
+    maxWidth: "100%",
+    textAlign: "center",
   },
   underline: {
     backgroundColor: colors.amber400,
