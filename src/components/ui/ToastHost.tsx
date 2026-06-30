@@ -1,10 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useEffect } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { useAppStore } from "../../store/appStore";
-import { Button } from "./Button";
 
 export const ToastHost = () => {
+  const insets = useSafeAreaInsets();
   const toast = useAppStore((state) => state.toast);
   const clearToast = useAppStore((state) => state.clearToast);
 
@@ -18,7 +20,7 @@ export const ToastHost = () => {
 
   const color = toast.tone === "success" ? colors.emerald : toast.tone === "warning" ? colors.orange : colors.red;
   return (
-    <View style={[styles.toast, { borderColor: `${color}66` }]}>
+    <View style={[styles.toast, { borderColor: `${color}66`, bottom: getBottomSafePadding(insets.bottom, spacing.xl) }]}>
       <View style={[styles.dot, { backgroundColor: color }]} />
       <Text style={styles.message}>{toast.message}</Text>
       <Pressable onPress={clearToast} style={styles.retry}>
@@ -34,7 +36,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.steel800,
     borderRadius: 8,
     borderWidth: 1,
-    bottom: 24,
     flexDirection: "row",
     gap: spacing.sm,
     left: spacing.md,

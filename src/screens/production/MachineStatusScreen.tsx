@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GaugeChart } from "../../components/charts/GaugeChart";
 import { Button } from "../../components/ui/Button";
 import { BottomSheet } from "../../components/ui/BottomSheet";
@@ -12,10 +13,12 @@ import { useAppStore } from "../../store/appStore";
 import type { Machine } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { formatDate } from "../../utils/formatters";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
 
 export const MachineStatusScreen = () => {
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const showToast = useAppStore((state) => state.showToast);
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [status, setStatus] = useState<Machine["status"]>("running");
@@ -45,7 +48,7 @@ export const MachineStatusScreen = () => {
       <FlatList
         data={data as Machine[]}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: getBottomSafePadding(insets.bottom, 180) }]}
         ListEmptyComponent={<EmptyState variant="maintenance" title="No machines connected" />}
         renderItem={({ item }) => {
           const palette = statusPalette(item.status);

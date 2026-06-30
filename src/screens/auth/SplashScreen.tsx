@@ -2,8 +2,10 @@ import { Canvas, Circle, Line } from "@shopify/react-native-skia";
 import { StackScreenProps } from "@react-navigation/stack";
 import { useEffect } from "react";
 import { Platform, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming } from "react-native-reanimated";
 import { colors, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 
 type Props = StackScreenProps<any, "Splash">;
 
@@ -65,6 +67,7 @@ const Gear = ({ reverse = false, size = 104 }: { reverse?: boolean; size?: numbe
 export const SplashScreen = ({ navigation }: Props) => {
   const progress = useSharedValue(0);
   const exit = useSharedValue(0);
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const frameWidth = Platform.OS === "web" ? Math.min(width, 430) : width;
 
@@ -111,7 +114,7 @@ export const SplashScreen = ({ navigation }: Props) => {
         </View>
         <Text style={styles.tagline}>OPERATIONS INTELLIGENCE</Text>
       </View>
-      <View style={styles.progressTrack}>
+      <View style={[styles.progressTrack, { bottom: getBottomSafePadding(insets.bottom, 62) }]}>
         <Animated.View style={[styles.progressFill, progressStyle]} />
       </View>
     </Animated.View>

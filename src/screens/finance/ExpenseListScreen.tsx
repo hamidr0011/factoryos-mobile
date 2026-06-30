@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BottomSheet } from "../../components/ui/BottomSheet";
 import { Button } from "../../components/ui/Button";
@@ -12,12 +13,14 @@ import { useAppStore } from "../../store/appStore";
 import type { Expense } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { formatCurrency, formatDate } from "../../utils/formatters";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ChipRow, ScreenContainer, SearchField, WorkCard } from "../shared/ScreenScaffold";
 
 const statuses = ["All", "Pending", "Approved", "Rejected", "Paid"];
 
 export const ExpenseListScreen = () => {
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const showToast = useAppStore((state) => state.showToast);
   const [status, setStatus] = useState("All");
   const [search, setSearch] = useState("");
@@ -105,7 +108,7 @@ export const ExpenseListScreen = () => {
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: getBottomSafePadding(insets.bottom, 180) }]}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.blue} />}
         ListEmptyComponent={
           <PermissionGate

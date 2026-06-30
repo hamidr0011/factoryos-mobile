@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { colors, radii, spacing } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 
 interface BottomSheetProps extends PropsWithChildren {
   visible: boolean;
@@ -44,7 +45,7 @@ export const BottomSheet = ({ visible, onClose, children, snapPoint = screenHeig
         <Animated.View style={[styles.sheet, { height: snapPoint }, style]}>
           <View style={styles.handle} />
           <ScrollView
-            contentContainerStyle={[styles.sheetContent, { paddingBottom: insets.bottom + spacing.lg }]}
+            contentContainerStyle={[styles.sheetContent, { paddingBottom: getBottomSafePadding(insets.bottom, spacing.lg) }]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >

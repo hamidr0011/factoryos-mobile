@@ -2,6 +2,7 @@ import { BlurView } from "expo-blur";
 import { Factory, ShieldCheck } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -10,11 +11,13 @@ import { isApiConfigured } from "../../services/api";
 import { setupService } from "../../services/setup.service";
 import { isSupabaseConfigured } from "../../services/supabase";
 import { colors, radii, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { isEmail } from "../../utils/validators";
 
 type SetupState = "checking" | "ready" | "needed" | "unavailable";
 
 export const LoginScreen = () => {
+  const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -130,7 +133,11 @@ export const LoginScreen = () => {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: getBottomSafePadding(insets.bottom, spacing.lg) }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.top}>
           <Animated.View style={[styles.gear, gearStyle]}>
             <Factory color={colors.amber400} size={34} strokeWidth={1.8} />

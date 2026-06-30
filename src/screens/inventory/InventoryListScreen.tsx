@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PermissionGate } from "../../components/ui/PermissionGate";
@@ -9,12 +10,14 @@ import { StatusBadge } from "../../components/ui/StatusBadge";
 import { inventoryService } from "../../services/inventory.service";
 import type { InventoryItem } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ChipRow, MetricPill, ProgressBar, ScreenContainer, SearchField, WorkCard } from "../shared/ScreenScaffold";
 
 const categories = ["All", "Raw Material", "Packaging", "Finished", "Spare Parts"];
 
 export const InventoryListScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const { data = [] } = useQuery({ queryKey: ["inventory_items"], queryFn: inventoryService.getItems });
@@ -56,7 +59,7 @@ export const InventoryListScreen = () => {
         data={items}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: getBottomSafePadding(insets.bottom, 180) }]}
         ListEmptyComponent={<EmptyState variant="inventory" title="Inventory is empty" />}
         renderItem={({ item }) => {
           const stockRatio = item.reorder_level ? Math.min(100, (item.quantity_on_hand / (item.reorder_level * 3)) * 100) : 0;

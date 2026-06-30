@@ -1,8 +1,9 @@
 import { useNavigation } from "@react-navigation/native";
 import { Home, MoreHorizontal } from "lucide-react-native";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
 const items = [
@@ -28,7 +29,7 @@ export const PersistentBottomNav = ({ activeRoute = "More" }: { activeRoute?: st
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const drawerNavigation = findDrawerNavigation(navigation);
-  const bottomPad = Math.max(insets.bottom, Platform.OS === "android" ? spacing.md : spacing.sm);
+  const bottomPad = getBottomSafePadding(insets.bottom, spacing.sm);
 
   const openRoute = (route: string) => {
     if (route === "More") {

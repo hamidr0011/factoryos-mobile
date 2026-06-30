@@ -1,16 +1,19 @@
 import { useNavigation } from "@react-navigation/native";
 import { Plus } from "lucide-react-native";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PermissionGate } from "../../components/ui/PermissionGate";
 import { qualityService } from "../../services/quality.service";
 import type { QualityCheck } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { MetricPill, ProgressBar, ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
 
 export const QualityCheckListScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const { data = [] } = useQuery({ queryKey: ["quality_checks"], queryFn: qualityService.getChecks });
   const checks = data as QualityCheck[];
 
@@ -35,7 +38,7 @@ export const QualityCheckListScreen = () => {
       <FlatList
         data={checks}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: getBottomSafePadding(insets.bottom, 180) }]}
         ListEmptyComponent={
           <PermissionGate
             area="quality"

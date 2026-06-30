@@ -1,9 +1,10 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Home, MoreHorizontal } from "lucide-react-native";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { colors, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
 const icons = {
@@ -52,7 +53,7 @@ const TabBarItem = ({
 
 export const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, Platform.OS === "android" ? spacing.md : spacing.sm);
+  const bottomPad = getBottomSafePadding(insets.bottom, spacing.sm);
 
   return (
     <View style={[styles.bar, { paddingBottom: bottomPad }]}>

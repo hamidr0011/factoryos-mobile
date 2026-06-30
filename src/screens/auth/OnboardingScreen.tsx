@@ -2,9 +2,11 @@ import { StackScreenProps } from "@react-navigation/stack";
 import { ShieldCheck, Signal, Workflow } from "lucide-react-native";
 import { useRef, useState } from "react";
 import { NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { Button } from "../../components/ui/Button";
 import { colors, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 
 type Props = StackScreenProps<any, "Onboarding">;
 
@@ -48,6 +50,7 @@ export const OnboardingScreen = ({ navigation }: Props) => {
   const [page, setPage] = useState(0);
   const flip = useSharedValue(0);
   const scrollRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const slideWidth = Platform.OS === "web" ? 430 : width;
 
@@ -129,7 +132,7 @@ export const OnboardingScreen = ({ navigation }: Props) => {
           );
         })}
       </ScrollView>
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: getBottomSafePadding(insets.bottom, spacing.lg) }]}>
         <View style={styles.dots}>
           {slides.map((slide, index) => (
             <View key={slide.title} style={[styles.dot, page === index && styles.dotActive]} />

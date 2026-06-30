@@ -8,6 +8,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Card } from "../../components/ui/Card";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { colors, radii, spacing, typography, typeScale } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 
 interface ScreenContainerProps extends PropsWithChildren {
   title?: string;
@@ -54,7 +55,7 @@ export const ScreenContainer = ({ title, subtitle, action, children, navigationM
   const showNavButton = navigationMode !== "none" && (canGoBack || drawerNavigation);
   const useBackButton = navigationMode === "back" || (navigationMode === "auto" && canGoBack);
   const showPersistentBottomNav = !isInsidePrimaryTabs(navigation) && Boolean(drawerNavigation);
-  const bottomSpace = 118 + insets.bottom;
+  const bottomSpace = getBottomSafePadding(insets.bottom, 118);
 
   const handleNavigation = () => {
     if (useBackButton && canGoBack) {

@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Pencil, ShieldCheck, UserPlus, Users } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -12,6 +13,7 @@ import { hrService } from "../../services/hr.service";
 import type { Profile, Role } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { roleLabels } from "../../utils/permissions";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ChipRow, ScreenContainer, SearchField, WorkCard } from "../shared/ScreenScaffold";
 
 const assignableRoles: Role[] = ["admin", "manager", "supervisor", "operator", "viewer"];
@@ -25,6 +27,7 @@ const roleColors: Record<Role, string> = {
 
 export const EmployeeListScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const { isAdmin } = usePermissions();
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All");
@@ -88,7 +91,7 @@ export const EmployeeListScreen = () => {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: getBottomSafePadding(insets.bottom, 180) }]}
         ListEmptyComponent={
           <PermissionGate
             roles={["admin"]}
