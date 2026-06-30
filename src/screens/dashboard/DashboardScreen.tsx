@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Activity, Package, Wrench, CheckCircle2, ChevronRight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
@@ -22,6 +23,7 @@ import { qualityService } from "../../services/quality.service";
 import { useAppStore } from "../../store/appStore";
 import type { AttendanceRecord, Budget, FactoryNotification, InventoryItem, Machine, MaintenanceTask, ProductionOrder, QualityCheck } from "../../types";
 import { colors, modules, radii, spacing, typography } from "../../utils/constants";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ProgressBar } from "../shared/ScreenScaffold";
 
 const percent = (value: number, total: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
@@ -39,6 +41,7 @@ const findDrawerNavigation = (navigation: any) => {
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const drawerNavigation = findDrawerNavigation(navigation);
   const { canAccessArea, userRole } = usePermissions();
   const notifications = useAppStore((state) => state.notifications);
@@ -185,7 +188,7 @@ export const DashboardScreen = () => {
   return (
     <View style={styles.screen}>
       <Header onMenu={() => navigation.getParent()?.openDrawer()} />
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: getBottomSafePadding(insets.bottom, 110) }]} showsVerticalScrollIndicator={false}>
         <View style={styles.careSection}>
           <Card style={styles.careCard}>
             <View style={styles.careHeader}>

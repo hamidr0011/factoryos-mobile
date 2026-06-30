@@ -6,6 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { usePermissions } from "../../hooks/usePermissions";
 import { colors, modules, radii, spacing, typography } from "../../utils/constants";
 import { roleLabels } from "../../utils/permissions";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ModuleIconMark } from "../visuals/ModuleArtwork";
 
 export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
@@ -49,7 +50,7 @@ export const CustomDrawer = ({ navigation }: DrawerContentComponentProps) => {
         ))}
       </View>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: getBottomSafePadding(insets.bottom, spacing.xl) }]}>
         {canAccessArea("settings") ? (
           <Pressable style={styles.footerItem} onPress={() => navigation.navigate("Settings")}>
             <Settings color={colors.steel300} size={19} />
@@ -147,7 +148,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     gap: spacing.xs,
     marginTop: "auto",
-    paddingBottom: spacing.xl,
     paddingTop: spacing.md,
   },
   footerItem: {

@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import { CalendarDays, List, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { PermissionGate } from "../../components/ui/PermissionGate";
@@ -9,6 +10,7 @@ import { maintenanceService } from "../../services/maintenance.service";
 import type { MaintenanceTask } from "../../types";
 import { colors, spacing, typography } from "../../utils/constants";
 import { formatDate } from "../../utils/formatters";
+import { getBottomSafePadding } from "../../utils/safeArea";
 import { ChipRow, ScreenContainer, WorkCard } from "../shared/ScreenScaffold";
 
 const filters = ["All", "Preventive", "Corrective", "Emergency", "Inspection"];
@@ -16,6 +18,7 @@ const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
 
 export const MaintenanceListScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState("All");
   const [calendar, setCalendar] = useState(false);
   const { data = [] } = useQuery({ queryKey: ["maintenance_tasks"], queryFn: maintenanceService.getTasks, refetchInterval: 30_000 });
@@ -48,7 +51,7 @@ export const MaintenanceListScreen = () => {
     >
       <ChipRow items={filters} active={filter} onChange={setFilter} />
       {calendar ? (
-        <View style={styles.calendar}>
+        <View style={[styles.calendar, { paddingBottom: getBottomSafePadding(insets.bottom, 180) }]}>
           {Array.from({ length: 30 }, (_, index) => index + 1).map((day) => (
             <View key={day} style={styles.day}>
               <Text style={styles.dayText}>{day}</Text>
@@ -60,7 +63,7 @@ export const MaintenanceListScreen = () => {
         <FlatList
           data={tasks}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, { paddingBottom: getBottomSafePadding(insets.bottom, 180) }]}
           ListEmptyComponent={<EmptyState variant="maintenance" title="No tasks" />}
           renderItem={({ item }) => (
             <WorkCard
